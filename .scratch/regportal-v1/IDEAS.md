@@ -23,6 +23,7 @@ Backend: ColdFusion REST API at `rest.sinclair.edu`. Authentication: SAML via Si
 - view available programs - search by selected courses; link to schedule builder
 - shopping cart - save, add, remove course sections (backend and localstorage?)
 - booklist
+- my schedule
 - admin control
  - course linkages - url link to course number
  - available terms - name and status (Y - yes; N - no; D - default/current; F - future)
