@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { roleGuard } from './guard'
+import { maintenanceGuard, roleGuard } from './guard'
 
 const routes = [
   {
@@ -17,6 +17,11 @@ const routes = [
     name: '403',
     component: () => import('@/views/ForbiddenView.vue'),
   },
+  {
+    path: '/maintenance',
+    name: 'maintenance',
+    component: () => import('@/views/MaintenanceView.vue'),
+  },
 ]
 
 const router = createRouter({
@@ -24,6 +29,7 @@ const router = createRouter({
   routes,
 })
 
+router.beforeEach(maintenanceGuard)
 router.beforeEach(roleGuard)
 
 export default router

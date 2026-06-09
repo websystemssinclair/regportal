@@ -1,3 +1,7 @@
+# Sinclair Registration Portal
+
+**Important** NO TypeScript in code - only for tests. Just JavaScript.
+
 ## Agent skills
 
 ### Issue tracker

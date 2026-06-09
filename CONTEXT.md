@@ -86,7 +86,7 @@ Admin-entered deadline dates (e.g. "Last day to drop: Oct 15") displayed as a sc
 _Avoid_: Key dates, deadlines
 
 **Intro Banner**:
-Admin-editable copy displayed on the home screen, likely for announcements or welcome messaging.
+Admin-editable copy displayed on the home screen. Used for announcements and notices (e.g. course subject code changes, exam software requirements). Rendered as HTML — sanitized client-side before display.
 _Avoid_: Hero, announcement banner
 
 **Modality**:
@@ -95,10 +95,12 @@ _Avoid_: Format, delivery mode
 
 **Maintenance Mode**:
 An Admin-configured state with a scheduled start/end time and two types:
-- **Site** — full site closed; users see a maintenance page only
-- **Backend** — registration and Cart are disabled, but browsing and search remain usable
+- **Site** — full site closed; users see a maintenance page only. Wire value: `maintType: "regular"`
+- **Backend** — registration and Cart are disabled, but browsing and search remain usable. Wire value: `maintType: "webadvisor"`
 
-Has a **Public Message** (displayed to all users as a notice) and a **Private Message** (internal Admin/Developer record only).
+Has a **Public Message** (`maintCopy` on the wire, displayed to all users as a notice) and a **Private Message** (internal Admin/Developer record only, not surfaced by the API).
+
+The active maintenance state is returned as the `maintenance` array in the reference data payload (`/reference.StaticData`). The backend pre-filters to currently active entries only; an empty array means no active maintenance. The frontend reads `maintenance[0]` when the array is non-empty.
 _Avoid_: Downtime, outage mode
 
 **Course Linkage**:

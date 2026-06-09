@@ -2,7 +2,7 @@
 .env
 .env.*
 .env.*.local
-!.env.development
+.env.development
 
 # Dependencies
 node_modules/
@@ -30,3 +30,4 @@ npm-debug.log*
 
 # Scratch
 .scratch/regportal-v1/samples
+.playwright-mcp/*

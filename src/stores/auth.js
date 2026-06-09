@@ -1,14 +1,68 @@
 import { defineStore } from 'pinia'
+import { sendSamlRequest, retrieveUserFromSaml } from '@/services/authService'
+import router from '@/router'
+
+const SSO_BASE = 'https://sso.sinclair.edu/EasyConnect/REST/default.aspx'
+const RETURN_TO_KEY = 'regportal:returnTo'
+const ROLE_PRIORITY = ['Developer', 'Admin', 'Student', 'Visitor']
+
+function resolveRole(availableRoles) {
+  const roles = availableRoles.map((r) => r.role)
+  return ROLE_PRIORITY.find((r) => roles.includes(r)) ?? 'Visitor'
+}
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    isAuthenticated: false,
-    currentRole: 'Visitor',
-    user: null,
-    apiKey: null,
-  }),
+  state: () => {
+    if (import.meta.env.VITE_SKIP_AUTH === 'true') {
+      return {
+        isAuthenticated: true,
+        currentRole: 'Developer',
+        user: { firstName: 'Dev', lastName: 'User', email: 'dev@sinclair.edu', tartanId: 0, username: 'dev', imageLink: '' },
+        apiKey: null,
+      }
+    }
+    return {
+      isAuthenticated: false,
+      currentRole: 'Visitor',
+      user: null,
+      apiKey: null,
+    }
+  },
   getters: {
     isAdmin: (state) => state.currentRole === 'Admin' || state.currentRole === 'Developer',
     isStudent: (state) => state.currentRole === 'Student',
+  },
+  actions: {
+    async login() {
+      sessionStorage.setItem(RETURN_TO_KEY, window.location.href)
+      const { data: id } = await sendSamlRequest()
+      window.location.href = `${SSO_BASE}?ID=${id}`
+    },
+
+    async handleCallback(samlId) {
+      const { data } = await retrieveUserFromSaml(samlId)
+      this.user = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        tartanId: data.tartanId,
+        username: data.username,
+        imageLink: data.imageLink,
+      }
+      this.currentRole = resolveRole(data.availableRoles)
+      this.isAuthenticated = true
+
+      const returnTo = sessionStorage.getItem(RETURN_TO_KEY)
+      sessionStorage.removeItem(RETURN_TO_KEY)
+      router.replace(returnTo ?? { name: data.targetUrl })
+    },
+
+    logout() {
+      this.isAuthenticated = false
+      this.user = null
+      this.currentRole = 'Visitor'
+      sessionStorage.removeItem(RETURN_TO_KEY)
+      router.replace({ name: 'home' })
+    },
   },
 })
