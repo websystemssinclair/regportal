@@ -46,10 +46,10 @@ A view of a Student's currently registered and waitlisted Sections. Displays a w
 _Avoid_: My registrations, enrollment view
 
 **Term**:
-An academic period (e.g. "Fall 2025"). Has a status that controls frontend visibility and registration availability.
+An academic period (e.g. "Fall 2025"). Has a status that controls frontend visibility and registration availability. Wire field: `toView`.
 
-| Status | Meaning |
-|--------|---------|
+| `toView` | Meaning |
+|----------|---------|
 | `D` | Default — current registration term, pre-selected in the UI |
 | `Y` | Available — open for browsing and registration |
 | `F` | Future — visible to all users, labeled "not open", registration not blocked by frontend |
@@ -104,11 +104,11 @@ The active maintenance state is returned as the `maintenance` array in the refer
 _Avoid_: Downtime, outage mode
 
 **Course Linkage**:
-An Admin-configured URL attached to a Course (e.g. syllabus, department page). Surfaces on the Course Details view alongside course description, prerequisites, and the list of Sections for the current Term.
+An Admin-configured record attached to a Course with two URL fields: `topicLink` (subject/topic URL) and `previewLink` (course preview URL). Either or both may be populated. Only active linkages are returned by the API (`isActive` filtered server-side). Surfaces on the Course Details view alongside course description, prerequisites, co-requisites, and the list of Sections for the current Term. Each URL shown only when non-empty.
 _Avoid_: Course link, external link
 
 **Course Details**:
-A view showing a Course's description, prerequisites, Course Linkage (syllabus/external URL), and its available Sections for the current Term.
+A view showing a Course's description, prerequisites (`preReqs`), co-requisites (`coReqs`), Course Linkage, and its available Sections for the current Term. Prerequisites and co-requisites are shown only when non-empty/non-"None".
 _Avoid_: Course page, course info
 
 ## Roles
