@@ -26,19 +26,24 @@ export function useSearch() {
     limit: 50,
   })
 
+  let fetchGen = 0
+
   async function fetch() {
+    const myGen = ++fetchGen
     isLoading.value = true
     error.value = null
     try {
       const { data } = await searchCourses(filters)
+      if (fetchGen !== myGen) return
       results.value = data.rows ?? []
       total.value = data.results
     } catch (e) {
+      if (fetchGen !== myGen) return
       error.value = e
       results.value = []
       total.value = 0
     } finally {
-      isLoading.value = false
+      if (fetchGen === myGen) isLoading.value = false
     }
   }
 

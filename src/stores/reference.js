@@ -6,6 +6,8 @@ export const useReferenceStore = defineStore('reference', {
     keyDates: [],
     intro: '',
     maintenance: [],
+    terms: [],
+    currentTerm: '',
   }),
   getters: {
     upcomingKeyDates: (state) => {
@@ -21,6 +23,8 @@ export const useReferenceStore = defineStore('reference', {
       this.keyDates = data.keyDates
       this.intro = data.intro
       this.maintenance = data.maintenance
+      this.terms = data.terms ?? []
+      this.currentTerm = data.currentTerm ?? ''
     },
   },
 })

@@ -44,7 +44,7 @@ export function useCardExpansion(filters) {
     } catch {
       if (generation === myGen) sectionErrors.value[course.id] = true
     } finally {
-      if (loadingCard.value === course.id) loadingCard.value = null
+      if (generation === myGen && loadingCard.value === course.id) loadingCard.value = null
     }
   }
 

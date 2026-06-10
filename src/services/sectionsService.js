@@ -7,3 +7,6 @@ export const getCourseDetails = (subject, number, term) =>
 
 export const getCourseSections = (subject, number, term, params) =>
   apiClient.get(`Sections/${subject}/${number}/${term}`, { params })
+
+export const getAvailability = (courseKeys) =>
+  apiClient.get('sections/availability', { params: { courseKeys } })

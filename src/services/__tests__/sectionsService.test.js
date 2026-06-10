@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { apiClient } from '@/http/client'
-import { searchCourses, getCourseDetails, getCourseSections } from '@/services/sectionsService'
+import { searchCourses, getCourseDetails, getCourseSections, getAvailability } from '@/services/sectionsService'
 
 vi.mock('@/http/client', () => ({
   apiClient: { get: vi.fn() },
@@ -34,6 +34,14 @@ describe('sectionsService', () => {
       const params = { term: '26SU', subjectCode: 'ACC' }
       getCourseSections('ACC', '1100', '26SU', params)
       expect(apiClient.get).toHaveBeenCalledWith('Sections/ACC/1100/26SU', { params })
+    })
+  })
+
+  describe('getAvailability', () => {
+    it('calls GET sections/availability with courseKeys as a query param', () => {
+      apiClient.get.mockResolvedValue({ data: { results: 2, success: true, rows: [] } })
+      getAvailability('352071,352072')
+      expect(apiClient.get).toHaveBeenCalledWith('sections/availability', { params: { courseKeys: '352071,352072' } })
     })
   })
 })

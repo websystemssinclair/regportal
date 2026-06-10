@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useSearch } from '@/composables/useSearch'
 import { useCardExpansion } from '@/composables/useCardExpansion'
+import { useCartStore } from '@/stores/cart'
 
 const { filters, results, total, isLoading, error, fetch } = useSearch()
 const {
@@ -17,17 +18,25 @@ const {
   reset: resetExpansion,
 } = useCardExpansion(filters)
 
+const cartStore = useCartStore()
 const drawerOpen = ref(false)
 
 const totalPages = computed(() => Math.ceil(total.value / filters.limit) || 1)
+const pageWindow = computed(() => {
+  const lo = Math.max(1, filters.page - 2)
+  const hi = Math.min(totalPages.value, filters.page + 2)
+  return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i)
+})
 const activeFilterCount = computed(() => {
   let n = 0
   if (filters.keyword) n++
+  if (filters.term) n++
   if (filters.subjectCode && filters.subjectCode !== 'ANY') n++
   if (filters.termFormat !== 'all') n++
   if (filters.building !== 'any') n++
   if (filters.segOptions !== 'any') n++
   if (filters.creditHoursMin > 0 || filters.creditHoursMax < 15) n++
+  if (selectedDays.value.length < DAYS.length) n++
   return n
 })
 
@@ -285,9 +294,9 @@ fetch()
               </div>
               <div class="flex shrink-0 items-center gap-2">
                 <span
-                  :class="(course.isOpen === true || course.isOpen === 'true') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
+                  :class="course.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
                   class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                >{{ (course.isOpen === true || course.isOpen === 'true') ? 'Open' : 'Closed' }}</span>
+                >{{ course.isOpen ? 'Open' : 'Closed' }}</span>
                 <svg
                   :class="expanded === course.id ? 'rotate-180' : ''"
                   class="h-4 w-4 text-gray-400 transition-transform"
@@ -354,10 +363,18 @@ fetch()
                     {{ seatBadgeLabel(sec) }}
                   </span>
                   <button
+                    v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
+                    @click="cartStore.add(sec)"
                     class="rounded bg-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
                   >
                     Add to Cart
                   </button>
+                  <span
+                    v-else
+                    class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500"
+                  >
+                    In Cart
+                  </span>
                 </div>
               </li>
             </ul>
@@ -388,8 +405,7 @@ fetch()
             class="rounded border border-gray-300 px-3 py-1.5 hover:bg-gray-50 disabled:opacity-40"
           >← Prev</button>
           <button
-            v-for="p in totalPages" :key="p"
-            v-show="Math.abs(p - filters.page) <= 2"
+            v-for="p in pageWindow" :key="p"
             @click="goPage(p)"
             :disabled="isLoading"
             :class="p === filters.page

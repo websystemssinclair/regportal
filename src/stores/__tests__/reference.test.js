@@ -14,11 +14,13 @@ describe('referenceStore', () => {
     vi.clearAllMocks()
   })
 
-  it('defaults to empty keyDates, empty intro, and empty maintenance', () => {
+  it('defaults to empty keyDates, empty intro, empty maintenance, empty terms, and empty currentTerm', () => {
     const store = useReferenceStore()
     expect(store.keyDates).toEqual([])
     expect(store.intro).toBe('')
     expect(store.maintenance).toEqual([])
+    expect(store.terms).toEqual([])
+    expect(store.currentTerm).toBe('')
   })
 
   describe('upcomingKeyDates', () => {
@@ -63,7 +65,7 @@ describe('referenceStore', () => {
     const keyDates = [{ id: '1', description: 'Last day to drop', keyDate: '2026-08-01' }]
     const intro = '<p>Welcome to Sinclair.</p>'
     const maintenance = [{ id: '1', maintCopy: 'Down for maintenance.', maintType: 'regular', startTime: '6/1/2026 10:00:00', endTime: '6/1/2026 12:00:00' }]
-    getReferenceData.mockResolvedValue({ data: { keyDates, intro, maintenance } })
+    getReferenceData.mockResolvedValue({ data: { keyDates, intro, maintenance, terms: [], currentTerm: '' } })
 
     const store = useReferenceStore()
     await store.load()
@@ -71,5 +73,21 @@ describe('referenceStore', () => {
     expect(store.keyDates).toEqual(keyDates)
     expect(store.intro).toBe(intro)
     expect(store.maintenance).toEqual(maintenance)
+  })
+
+  it('load() populates terms and currentTerm from the response', async () => {
+    const terms = [
+      { id: '26SU', termName: 'Summer Semester', toView: 'D' },
+      { id: '26FA', termName: 'Fall Semester', toView: 'Y' },
+      { id: '27SP', termName: 'Spring Semester', toView: 'F' },
+    ]
+    const currentTerm = '26SU'
+    getReferenceData.mockResolvedValue({ data: { keyDates: [], intro: '', maintenance: [], terms, currentTerm } })
+
+    const store = useReferenceStore()
+    await store.load()
+
+    expect(store.terms).toEqual(terms)
+    expect(store.currentTerm).toBe(currentTerm)
   })
 })
