@@ -1,5 +1,9 @@
 import { apiClient } from '@/http/client'
 
-export const searchSections = (params) => apiClient.get('sections', { params })
+export const searchCourses = (params) => apiClient.get('Courses', { params })
 
-export const getSectionDetails = (sectionId) => apiClient.get(`sections/${sectionId}`)
+export const getCourseDetails = (subject, number, term) =>
+  apiClient.get(`Courses/${subject}/${number}/${term}`)
+
+export const getCourseSections = (subject, number, term, params) =>
+  apiClient.get(`Sections/${subject}/${number}/${term}`, { params })

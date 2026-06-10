@@ -3,6 +3,11 @@ import { maintenanceGuard, roleGuard } from './guard'
 
 const routes = [
   {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/views/SearchView.vue'),
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('@/views/HomeView.vue'),
