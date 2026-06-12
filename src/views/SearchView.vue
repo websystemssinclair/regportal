@@ -2,7 +2,10 @@
 import { ref, computed, watch } from 'vue'
 import { useSearch } from '@/composables/useSearch'
 import { useCardExpansion } from '@/composables/useCardExpansion'
+import { useRegisterNow } from '@/composables/useRegisterNow'
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
+import { useMaintenanceStore } from '@/stores/maintenance'
 
 const { filters, results, total, isLoading, error, fetch } = useSearch()
 const {
@@ -17,8 +20,11 @@ const {
   sectionsToShow,
   reset: resetExpansion,
 } = useCardExpansion(filters)
+const { sectionResults, registeringSections, registerNow, dismissResult, reset: resetRegisterNow } = useRegisterNow()
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
+const maintenanceStore = useMaintenanceStore()
 const drawerOpen = ref(false)
 
 const totalPages = computed(() => Math.ceil(total.value / filters.limit) || 1)
@@ -79,6 +85,7 @@ function toggleDay(d) {
 function runSearch(resetPage = true) {
   if (resetPage) { filters.page = 1; filters.start = 0 }
   resetExpansion()
+  resetRegisterNow()
   fetch()
 }
 
@@ -86,8 +93,13 @@ function goPage(n) {
   filters.page = n
   filters.start = (n - 1) * filters.limit
   resetExpansion()
+  resetRegisterNow()
   fetch()
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function isActionable(sec) {
+  return sec.status === 'Open' || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
 }
 
 
@@ -362,19 +374,51 @@ fetch()
                   <span :class="seatBadgeClass(sec)" class="rounded-full px-2.5 py-0.5 text-xs font-medium">
                     {{ seatBadgeLabel(sec) }}
                   </span>
-                  <button
-                    v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
-                    @click="cartStore.add(sec)"
-                    class="rounded bg-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
-                  >
-                    Add to Cart
-                  </button>
-                  <span
-                    v-else
-                    class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500"
-                  >
-                    In Cart
-                  </span>
+                  <!-- Success: replace all action buttons with outcome badge -->
+                  <template v-if="sectionResults[sec.CourseKey]?.status === 'success'">
+                    <span class="rounded bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
+                      {{ sectionResults[sec.CourseKey].message }}
+                    </span>
+                  </template>
+                  <template v-else>
+                    <button
+                      v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
+                      @click="cartStore.add(sec)"
+                      class="rounded bg-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
+                    >
+                      Add to Cart
+                    </button>
+                    <span
+                      v-else
+                      class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500"
+                    >
+                      In Cart
+                    </span>
+                    <!-- Register Now / Waitlist Now (Student only, actionable sections) -->
+                    <template v-if="authStore.isStudent && isActionable(sec)">
+                      <template v-if="sectionResults[sec.CourseKey]?.status === 'error'">
+                        <span class="text-xs text-red-600">{{ sectionResults[sec.CourseKey].message }}</span>
+                        <button
+                          @click="dismissResult(sec.CourseKey)"
+                          class="text-xs text-gray-400 underline hover:text-gray-600"
+                        >Dismiss</button>
+                      </template>
+                      <button
+                        v-else
+                        @click="registerNow(sec)"
+                        :disabled="registeringSections.has(sec.CourseKey) || maintenanceStore.isBackendDown"
+                        class="rounded border border-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-[#ac1a2f] hover:bg-[#ac1a2f] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {{ sec.status === 'Open' ? 'Register Now' : 'Waitlist Now' }}
+                      </button>
+                    </template>
+                    <!-- Visitor CTA (actionable sections only) -->
+                    <button
+                      v-else-if="!authStore.isAuthenticated && isActionable(sec)"
+                      @click="authStore.login()"
+                      class="text-xs text-[#ac1a2f] hover:underline"
+                    >Sign in to register</button>
+                  </template>
                 </div>
               </li>
             </ul>

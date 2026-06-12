@@ -1,3 +1,3 @@
 import { apiClient } from '@/http/client'
 
-export const registerSections = (actions) => apiClient.post('registration', { actions })
+export const registerSections = (payload) => apiClient.post('registration', payload)

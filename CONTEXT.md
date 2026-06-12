@@ -17,7 +17,7 @@ A specific scheduled offering of a Course in a given Term, identified by combini
 _Avoid_: Class section, course offering
 
 **Cart**:
-A student's collection of Sections they intend to act on. Persisted to the backend (for logged-in students) and to localStorage (for Visitors before login, merged on login — localStorage cleared after merge). Merge is silent and automatic: the backend deduplicates by Section ID, localStorage is cleared, and a toast confirms how many Sections were carried over. No merge confirmation UI. Not scoped to a single Term — stale Sections (full, closed, cancelled) are shown with status; student removes them manually.
+An authenticated user's collection of Sections they intend to act on. Persisted to the backend (for authenticated users) and to localStorage (for Visitors before login, merged on login — localStorage cleared after merge). Merge is silent and automatic: client-side deduplication by CourseKey (login payload's cart wins for duplicates), localStorage is cleared, and a toast confirms how many new Sections were carried over. No merge confirmation UI. Not scoped to a single Term — stale Sections (full, closed, cancelled) are shown with status; the user removes them manually.
 
 Cart is a save/retrieval mechanism only — it does not track registration state or reserve seats. Section availability (Open, Closed, Closed/Waitlist, Cancelled) is checked live against the backend on each Cart load. Add and Waitlist actions are performed from the Cart; Drop and Waitlist Drop are performed from My Schedule.
 
@@ -33,7 +33,7 @@ _Avoid_: Enrollment (use Registration), signup
 
 **Registration Actions**:
 - **Add** — enroll in a Section when seats are available. Triggered from Cart or Register Now.
-- **Waitlist** — join the waitlist for a full Section. Triggered from Cart.
+- **Waitlist** — join the waitlist for a full Section. Triggered from Cart or Register Now / Waitlist Now.
 - **Drop** — remove yourself from an enrolled Section. Triggered from My Schedule.
 - **Waitlist Drop** — remove yourself from the waitlist. Triggered from My Schedule.
 

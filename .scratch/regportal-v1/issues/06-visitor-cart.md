@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 ## What to build
 
@@ -45,17 +45,17 @@ Add to Cart button on each Section row:
 
 ## Acceptance criteria
 
-- [ ] Visitor can add a Section to Cart; it persists in `localStorage` under `regportal:cart` across page refreshes
-- [ ] Adding a Section already in the cart is a no-op (deduplicates on `CourseKey`)
-- [ ] Visitor can remove a Section from Cart; `localStorage` updates immediately
-- [ ] "Add to Cart" button in SearchView reflects "In Cart" state when the Section is already saved
-- [ ] `referenceStore` populates `terms` and `currentTerm` from `/reference.StaticData`
-- [ ] Cart display groups Sections into Current (D/Y/N) and Future (F) meta-groups with per-Term sub-headers
-- [ ] Sections within each Term are sorted by `SubjectCode.trim() + CourseNo.trim()`, alphabetical ascending
-- [ ] Live availability is fetched on each Cart load via `GET /sections/availability?courseKeys=...`; each Section card shows an Open/Closed/Closed Waitlist/Cancelled badge
-- [ ] Sections with `toView: N` terms appear in the Current meta-group
-- [ ] A Cancelled or Closed Section remains visible in the Cart with its status badge; it is not removed automatically
-- [ ] `useCartStore` tests cover: add (dedup), remove (localStorage read/write), grouping into Current/Future meta-groups, availability overlay on load, stale Section display
+- [x] Visitor can add a Section to Cart; it persists in `localStorage` under `regportal:cart` across page refreshes
+- [x] Adding a Section already in the cart is a no-op (deduplicates on `CourseKey`)
+- [x] Visitor can remove a Section from Cart; `localStorage` updates immediately
+- [x] "Add to Cart" button in SearchView reflects "In Cart" state when the Section is already saved
+- [x] `referenceStore` populates `terms` and `currentTerm` from `/reference.StaticData`
+- [x] Cart display groups Sections into Current (D/Y/N) and Future (F) meta-groups with per-Term sub-headers
+- [x] Sections within each Term are sorted by `SubjectCode.trim() + CourseNo.trim()`, alphabetical ascending
+- [x] Live availability is fetched on each Cart load via `GET /sections/availability?courseKeys=...`; each Section card shows an Open/Closed/Closed Waitlist/Cancelled badge
+- [x] Sections with `toView: N` terms appear in the Current meta-group
+- [x] A Cancelled or Closed Section remains visible in the Cart with its status badge; it is not removed automatically
+- [x] `useCartStore` tests cover: add (dedup), remove (localStorage read/write), grouping into Current/Future meta-groups, availability overlay on load, stale Section display
 
 ## API contracts
 

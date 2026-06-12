@@ -7,7 +7,17 @@ vi.mock('@/services/sectionsService', () => ({
   getAvailability: vi.fn(),
 }))
 
+vi.mock('@/services/cartService', () => ({
+  saveCart: vi.fn(),
+}))
+
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: vi.fn(),
+}))
+
 import { getAvailability } from '@/services/sectionsService'
+import { saveCart } from '@/services/cartService'
+import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'regportal:cart'
 
@@ -23,11 +33,15 @@ const makeSection = (overrides = {}) => ({
   ...overrides,
 })
 
+const mockAuth = (overrides = {}) =>
+  useAuthStore.mockReturnValue({ isAuthenticated: false, colleagueToken: null, user: null, ...overrides })
+
 describe('useCartStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
+    mockAuth()
   })
 
   afterEach(() => {
@@ -118,6 +132,18 @@ describe('useCartStore', () => {
     })
   })
 
+  describe('remove() — auth-aware', () => {
+    it('calls saveCart and does NOT write localStorage when authenticated', () => {
+      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+      saveCart.mockResolvedValue({})
+      const store = useCartStore()
+      store.sections = [makeSection({ CourseKey: 'AAA' })]
+      store.remove('AAA')
+      expect(saveCart).toHaveBeenCalledTimes(1)
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    })
+  })
+
   describe('remove()', () => {
     it('removes the section matching CourseKey and updates localStorage', () => {
       const store = useCartStore()
@@ -131,6 +157,99 @@ describe('useCartStore', () => {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
       expect(stored).toHaveLength(1)
       expect(stored[0].CourseKey).toBe('BBB')
+    })
+  })
+
+  describe('mergeOnLogin()', () => {
+    it('skips entirely when both localStorage and shoppingCart are empty', () => {
+      const store = useCartStore()
+      store.mergeOnLogin([])
+      expect(store.sections).toHaveLength(0)
+      expect(saveCart).not.toHaveBeenCalled()
+      expect(store.mergeCarryOver).toBeNull()
+    })
+
+    it('carries localStorage sections into empty shoppingCart, saves, and sets mergeCarryOver', async () => {
+      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([
+        makeSection({ CourseKey: 'LOCAL1' }),
+        makeSection({ CourseKey: 'LOCAL2' }),
+      ]))
+      saveCart.mockResolvedValue({})
+      const store = useCartStore()
+      store.mergeOnLogin([])
+      expect(store.sections.map((s) => s.CourseKey)).toEqual(['LOCAL1', 'LOCAL2'])
+      expect(saveCart).toHaveBeenCalledTimes(1)
+      expect(store.mergeCarryOver).toBe(2)
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    })
+
+    it('shoppingCart version wins for duplicate CourseKey and does not increment carry-over count', () => {
+      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+      const localVersion = makeSection({ CourseKey: 'DUP', LongName: 'Local Version', status: 'Closed' })
+      const backendVersion = makeSection({ CourseKey: 'DUP', LongName: 'Backend Version', status: 'Open' })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([localVersion, makeSection({ CourseKey: 'LOCAL_ONLY' })]))
+      saveCart.mockResolvedValue({})
+      const store = useCartStore()
+      store.mergeOnLogin([backendVersion])
+      const dup = store.sections.find((s) => s.CourseKey === 'DUP')
+      expect(dup.LongName).toBe('Backend Version')
+      expect(dup.status).toBe('Open')
+      expect(store.mergeCarryOver).toBe(1)
+    })
+
+    it('merges non-overlapping localStorage into shoppingCart and sets mergeCarryOver to localStorage count', () => {
+      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([
+        makeSection({ CourseKey: 'LOCAL1' }),
+        makeSection({ CourseKey: 'LOCAL2' }),
+      ]))
+      saveCart.mockResolvedValue({})
+      const backendSections = [makeSection({ CourseKey: 'BACKEND1' })]
+      const store = useCartStore()
+      store.mergeOnLogin(backendSections)
+      expect(store.sections.map((s) => s.CourseKey).sort()).toEqual(['BACKEND1', 'LOCAL1', 'LOCAL2'])
+      expect(store.mergeCarryOver).toBe(2)
+    })
+
+    it('loads sections from shoppingCart when localStorage is empty — no saveCart, no toast', () => {
+      const backendSections = [makeSection({ CourseKey: 'BACKEND1' }), makeSection({ CourseKey: 'BACKEND2' })]
+      const store = useCartStore()
+      store.mergeOnLogin(backendSections)
+      expect(store.sections).toHaveLength(2)
+      expect(store.sections.map((s) => s.CourseKey)).toEqual(['BACKEND1', 'BACKEND2'])
+      expect(saveCart).not.toHaveBeenCalled()
+      expect(store.mergeCarryOver).toBeNull()
+    })
+  })
+
+  describe('dismissError()', () => {
+    it('removes the error for the given courseKey and leaves others intact', () => {
+      const store = useCartStore()
+      store.sectionErrors = { '111': 'Section is full', '222': 'Time conflict' }
+
+      store.dismissError('111')
+
+      expect(store.sectionErrors['111']).toBeUndefined()
+      expect(store.sectionErrors['222']).toBe('Time conflict')
+    })
+  })
+
+  describe('add() — auth-aware', () => {
+    it('calls saveCart and does NOT write localStorage when authenticated', () => {
+      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+      saveCart.mockResolvedValue({})
+      const store = useCartStore()
+      store.add(makeSection({ CourseKey: 'NEW' }))
+      expect(saveCart).toHaveBeenCalledTimes(1)
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    })
+
+    it('writes localStorage and does NOT call saveCart for Visitor', () => {
+      const store = useCartStore()
+      store.add(makeSection({ CourseKey: 'NEW' }))
+      expect(saveCart).not.toHaveBeenCalled()
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toHaveLength(1)
     })
   })
 

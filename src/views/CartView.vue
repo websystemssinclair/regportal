@@ -2,9 +2,15 @@
 import { onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useReferenceStore } from '@/stores/reference'
+import { useMaintenanceStore } from '@/stores/maintenance'
+import { useCartRegistration } from '@/composables/useCartRegistration'
+import { useToast } from 'primevue/usetoast'
 
 const cartStore = useCartStore()
 const refStore = useReferenceStore()
+const maintenanceStore = useMaintenanceStore()
+const { register } = useCartRegistration()
+const toast = useToast()
 
 onMounted(async () => {
   if (!refStore.terms.length) await refStore.load()
@@ -27,6 +33,30 @@ function availBadgeLabel(sec) {
   if (sec.status === 'Open') return 'Open'
   return sec.waitListAllowed === 'Y' ? 'Closed / Waitlist' : 'Closed'
 }
+
+function isActionable(sec) {
+  return sec.status === 'Open' || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
+}
+
+function actionableInTerm(group) {
+  return group.sections.filter(isActionable)
+}
+
+async function registerSection(termId, sec) {
+  const action = sec.status === 'Open' ? 'add' : 'waitlist'
+  const { succeeded } = await register(termId, [{ sectionId: sec.CourseKey, action }])
+  if (succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${succeeded} section(s)`, life: 4000 })
+}
+
+async function registerAll(group) {
+  const registrations = actionableInTerm(group).map((sec) => ({
+    sectionId: sec.CourseKey,
+    action: sec.status === 'Open' ? 'add' : 'waitlist',
+  }))
+  if (!registrations.length) return
+  const { succeeded } = await register(group.termId, registrations)
+  if (succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${succeeded} section(s)`, life: 4000 })
+}
 </script>
 
 <template>
@@ -38,6 +68,14 @@ function availBadgeLabel(sec) {
     </div>
 
     <main class="mx-auto max-w-3xl px-4 py-6">
+      <!-- Maintenance banner -->
+      <div
+        v-if="maintenanceStore.isBackendDown"
+        class="mb-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+      >
+        {{ maintenanceStore.publicMessage || 'Registration is temporarily unavailable' }}
+      </div>
+
       <div v-if="!cartStore.sections.length"
         class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400">
         <p class="text-lg font-medium">Your cart is empty</p>
@@ -53,8 +91,14 @@ function availBadgeLabel(sec) {
             <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{{ meta.label }}</h2>
 
             <div v-for="group in meta.groups" :key="group.termId" class="mb-4">
-              <h3 class="mb-2 rounded bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
-                {{ termName(group.termId) }}
+              <h3 class="mb-2 flex items-center justify-between rounded bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
+                <span>{{ termName(group.termId) }}</span>
+                <button
+                  v-if="meta.label === 'Current' && actionableInTerm(group).length > 0"
+                  @click="registerAll(group)"
+                  :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
+                  class="rounded bg-[#ac1a2f] px-2.5 py-0.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >Register All</button>
               </h3>
 
               <ul class="space-y-2">
@@ -77,6 +121,21 @@ function availBadgeLabel(sec) {
                     <span :class="availBadgeClass(sec)" class="rounded-full px-2.5 py-0.5 text-xs font-medium">
                       {{ availBadgeLabel(sec) }}
                     </span>
+                    <!-- Inline error (replaces action buttons) -->
+                    <template v-if="cartStore.sectionErrors[sec.CourseKey]">
+                      <span class="text-xs text-red-600">{{ cartStore.sectionErrors[sec.CourseKey] }}</span>
+                      <button
+                        @click="cartStore.dismissError(sec.CourseKey)"
+                        class="text-xs text-gray-400 underline hover:text-gray-600"
+                      >Dismiss</button>
+                    </template>
+                    <!-- Action buttons (Current term, actionable, no error) -->
+                    <button
+                      v-else-if="meta.label === 'Current' && isActionable(sec)"
+                      @click="registerSection(group.termId, sec)"
+                      :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
+                      class="rounded bg-[#ac1a2f] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
                     <button
                       @click="cartStore.remove(sec.CourseKey)"
                       class="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"

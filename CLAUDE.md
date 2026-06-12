@@ -1,6 +1,7 @@
 # Sinclair Registration Portal
 
 **Important** NO TypeScript in code - only for tests. Just JavaScript.
+Assume PowerShell before Bash
 
 ## Agent skills
 

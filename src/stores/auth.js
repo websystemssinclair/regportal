@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { sendSamlRequest, retrieveUserFromSaml } from '@/services/authService'
+import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
+import { useCartStore } from '@/stores/cart'
 import router from '@/router'
 
 const SSO_BASE = 'https://sso.sinclair.edu/EasyConnect/REST/default.aspx'
@@ -26,6 +27,7 @@ export const useAuthStore = defineStore('auth', {
       currentRole: 'Visitor',
       user: null,
       apiKey: null,
+      colleagueToken: null,
     }
   },
   getters: {
@@ -51,6 +53,14 @@ export const useAuthStore = defineStore('auth', {
       }
       this.currentRole = resolveRole(data.availableRoles)
       this.isAuthenticated = true
+
+      try {
+        const { data: userData } = await getUserData({ tartanId: data.tartanId, username: data.username })
+        this.colleagueToken = userData.user.colleagueToken
+        useCartStore().mergeOnLogin(userData.user.shoppingCart)
+      } catch {
+        // login succeeds; cart merge deferred until re-login
+      }
 
       const returnTo = sessionStorage.getItem(RETURN_TO_KEY)
       sessionStorage.removeItem(RETURN_TO_KEY)

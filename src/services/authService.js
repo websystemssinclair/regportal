@@ -19,3 +19,5 @@ export const sendSamlRequest = () =>
     appName: import.meta.env.VITE_APP_NAME,
     targetUrl: import.meta.env.VITE_TARGET_URL,
   })
+
+export const getUserData = (payload) => authClient.post('UserData', payload)

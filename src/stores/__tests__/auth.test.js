@@ -6,14 +6,23 @@ vi.mock('@/services/authService', () => ({
   sendSamlRequest: vi.fn(),
   retrieveUserFromSaml: vi.fn(),
   getApiToken: vi.fn(),
+  getUserData: vi.fn(),
+}))
+
+vi.mock('@/stores/cart', () => ({
+  useCartStore: vi.fn(),
 }))
 
 vi.mock('@/router', () => ({
   default: { replace: vi.fn() },
 }))
 
-import { sendSamlRequest, retrieveUserFromSaml } from '@/services/authService'
+import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
+import { useCartStore } from '@/stores/cart'
 import router from '@/router'
+
+const mockCart = (overrides = {}) =>
+  useCartStore.mockReturnValue({ mergeOnLogin: vi.fn(), ...overrides })
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -22,6 +31,8 @@ describe('authStore', () => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
+    mockCart()
+    getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart: [] } } })
   })
 
   describe('login()', () => {
@@ -145,6 +156,56 @@ describe('authStore', () => {
       await store.handleCallback('SAML_ID')
 
       expect(router.replace).toHaveBeenCalledWith({ name: 'search' })
+    })
+
+    it('calls getUserData with tartanId and username from SAML response', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(getUserData).toHaveBeenCalledWith({ tartanId: 521272, username: 'brian.cooney' })
+    })
+
+    it('stores colleagueToken from getUserData response', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'MY_TOKEN', shoppingCart: [] } } })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.colleagueToken).toBe('MY_TOKEN')
+    })
+
+    it('calls cartStore.mergeOnLogin with shoppingCart before navigation', async () => {
+      const shoppingCart = [{ CourseKey: 'BACKEND1' }]
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart } } })
+      const cartMock = { mergeOnLogin: vi.fn() }
+      mockCart(cartMock)
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(cartMock.mergeOnLogin).toHaveBeenCalledWith(shoppingCart)
+      const mergeCallOrder = cartMock.mergeOnLogin.mock.invocationCallOrder[0]
+      const navCallOrder = router.replace.mock.invocationCallOrder[0]
+      expect(mergeCallOrder).toBeLessThan(navCallOrder)
+    })
+
+    it('login still succeeds and colleagueToken stays null when getUserData fails', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockRejectedValue(new Error('network error'))
+      const cartMock = { mergeOnLogin: vi.fn() }
+      mockCart(cartMock)
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.isAuthenticated).toBe(true)
+      expect(store.colleagueToken).toBeNull()
+      expect(cartMock.mergeOnLogin).not.toHaveBeenCalled()
+      expect(router.replace).toHaveBeenCalled()
     })
   })
 
