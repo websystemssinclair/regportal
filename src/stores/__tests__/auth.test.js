@@ -51,6 +51,18 @@ describe('authStore', () => {
     })
   })
 
+  describe('initial state', () => {
+    it('initializes currentCourses to []', () => {
+      const store = useAuthStore()
+      expect(store.currentCourses).toEqual([])
+    })
+
+    it('initializes waitlist to []', () => {
+      const store = useAuthStore()
+      expect(store.waitlist).toEqual([])
+    })
+  })
+
   describe('handleCallback()', () => {
     const samlResponse = {
       success: true,
@@ -207,6 +219,40 @@ describe('authStore', () => {
       expect(cartMock.mergeOnLogin).not.toHaveBeenCalled()
       expect(router.replace).toHaveBeenCalled()
     })
+
+    it('stores currentCourses from getUserData response', async () => {
+      const currentCourses = [{ CourseKey: '352085', Term: '26SU', Days: '', StartTime: '' }]
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart: [], currentCourses, waitlist: [] } } })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.currentCourses).toEqual(currentCourses)
+    })
+
+    it('stores waitlist from getUserData response', async () => {
+      const waitlist = [{ CourseKey: '352086', Term: '26SU', Days: '', StartTime: '' }]
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart: [], currentCourses: [], waitlist } } })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.waitlist).toEqual(waitlist)
+    })
+
+    it('currentCourses and waitlist stay [] when getUserData fails', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockRejectedValue(new Error('network error'))
+      mockCart({ mergeOnLogin: vi.fn() })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.currentCourses).toEqual([])
+      expect(store.waitlist).toEqual([])
+    })
   })
 
   describe('logout()', () => {
@@ -224,6 +270,17 @@ describe('authStore', () => {
       expect(store.currentRole).toBe('Visitor')
       expect(sessionStorage.getItem('regportal:returnTo')).toBeNull()
       expect(router.replace).toHaveBeenCalledWith({ name: 'home' })
+    })
+
+    it('clears currentCourses and waitlist on logout', () => {
+      const store = useAuthStore()
+      store.currentCourses = [{ CourseKey: '111' }]
+      store.waitlist = [{ CourseKey: '222' }]
+
+      store.logout()
+
+      expect(store.currentCourses).toEqual([])
+      expect(store.waitlist).toEqual([])
     })
   })
 
@@ -243,6 +300,17 @@ describe('authStore', () => {
         username: 'dev',
         imageLink: '',
       })
+    })
+
+    it('initializes currentCourses, waitlist, sectionErrors, and colleagueToken so ScheduleView mounts cleanly', () => {
+      vi.stubEnv('VITE_SKIP_AUTH', 'true')
+
+      const store = useAuthStore()
+
+      expect(store.currentCourses).toEqual([])
+      expect(store.waitlist).toEqual([])
+      expect(store.sectionErrors).toEqual({})
+      expect(store.colleagueToken).toBeNull()
     })
   })
 })

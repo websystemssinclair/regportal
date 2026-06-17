@@ -20,6 +20,10 @@ export const useAuthStore = defineStore('auth', {
         currentRole: 'Developer',
         user: { firstName: 'Dev', lastName: 'User', email: 'dev@sinclair.edu', tartanId: 0, username: 'dev', imageLink: '' },
         apiKey: null,
+        colleagueToken: null,
+        currentCourses: [],
+        waitlist: [],
+        sectionErrors: {},
       }
     }
     return {
@@ -28,6 +32,9 @@ export const useAuthStore = defineStore('auth', {
       user: null,
       apiKey: null,
       colleagueToken: null,
+      currentCourses: [],
+      waitlist: [],
+      sectionErrors: {},
     }
   },
   getters: {
@@ -57,6 +64,8 @@ export const useAuthStore = defineStore('auth', {
       try {
         const { data: userData } = await getUserData({ tartanId: data.tartanId, username: data.username })
         this.colleagueToken = userData.user.colleagueToken
+        this.currentCourses = userData.user.currentCourses ?? []
+        this.waitlist = userData.user.waitlist ?? []
         useCartStore().mergeOnLogin(userData.user.shoppingCart)
       } catch {
         // login succeeds; cart merge deferred until re-login
@@ -71,8 +80,15 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false
       this.user = null
       this.currentRole = 'Visitor'
+      this.currentCourses = []
+      this.waitlist = []
+      this.sectionErrors = {}
       sessionStorage.removeItem(RETURN_TO_KEY)
       router.replace({ name: 'home' })
+    },
+
+    dismissError(courseKey) {
+      delete this.sectionErrors[String(courseKey)]
     },
   },
 })
