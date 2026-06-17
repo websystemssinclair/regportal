@@ -114,4 +114,32 @@ describe('referenceStore', () => {
 
     expect(store.locations).toEqual([])
   })
+
+  it('defaults careers and programs to []', () => {
+    const store = useReferenceStore()
+    expect(store.careers).toEqual([])
+    expect(store.programs).toEqual([])
+  })
+
+  it('load() populates careers and programs from the response', async () => {
+    const careers = [{ id: 12, careerName: 'Business & Information Technology' }]
+    const programs = [{ programCode: 'ACC.S.AAS', programName: 'Accounting (AAS)', careerId: 12 }]
+    getReferenceData.mockResolvedValue({ data: { keyDates: [], intro: '', maintenance: [], terms: [], currentTerm: '', careers, programs } })
+
+    const store = useReferenceStore()
+    await store.load()
+
+    expect(store.careers).toEqual(careers)
+    expect(store.programs).toEqual(programs)
+  })
+
+  it('load() defaults careers and programs to [] when not present in response', async () => {
+    getReferenceData.mockResolvedValue({ data: { keyDates: [], intro: '', maintenance: [], terms: [], currentTerm: '' } })
+
+    const store = useReferenceStore()
+    await store.load()
+
+    expect(store.careers).toEqual([])
+    expect(store.programs).toEqual([])
+  })
 })

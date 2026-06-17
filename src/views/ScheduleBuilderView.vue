@@ -291,7 +291,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from 'vue'
 import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
 import { searchCourses, getCourseSections } from '@/services/sectionsService'
@@ -462,6 +462,18 @@ export default {
     function onRegisterSchedule(schedule, idx) {
       registerSchedule(schedule, idx)
     }
+
+    const instance = getCurrentInstance()
+    onMounted(async () => {
+      const courseParam = instance?.proxy?.$route?.query?.course
+      if (!courseParam) return
+      const dashIdx = courseParam.indexOf('-')
+      if (dashIdx < 1) return
+      const subject = courseParam.slice(0, dashIdx)
+      const number = courseParam.slice(dashIdx + 1)
+      await addCourse({ SubjectCode: subject, CourseNumber: number, LongName: courseParam })
+      router.replace({ path: '/schedule-builder' })
+    })
 
     return {
       registrationTerms,

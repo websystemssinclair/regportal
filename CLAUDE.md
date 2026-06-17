@@ -1,7 +1,8 @@
 # Sinclair Registration Portal
 
 **Important** NO TypeScript in code - only for tests. Just JavaScript.
-Assume PowerShell before Bash
+**Important** Assume PowerShell before Bash
+**Important** use CompositionAPI in Vue3
 
 ## Agent skills
 

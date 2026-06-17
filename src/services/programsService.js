@@ -1,5 +1,3 @@
 import { apiClient } from '@/http/client'
 
-export const getPrograms = () => apiClient.get('programs')
-
-export const getProgramCourses = (programId) => apiClient.get(`programs/${programId}/courses`)
+export const getProgram = (programCode) => apiClient.get(`programs/${programCode}`)

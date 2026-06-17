@@ -22,6 +22,7 @@ export const useAuthStore = defineStore('auth', {
         apiKey: null,
         colleagueToken: null,
         currentCourses: [],
+        completedCourses: [],
         waitlist: [],
         sectionErrors: {},
       }
@@ -33,6 +34,7 @@ export const useAuthStore = defineStore('auth', {
       apiKey: null,
       colleagueToken: null,
       currentCourses: [],
+      completedCourses: [],
       waitlist: [],
       sectionErrors: {},
     }
@@ -65,6 +67,7 @@ export const useAuthStore = defineStore('auth', {
         const { data: userData } = await getUserData({ tartanId: data.tartanId, username: data.username })
         this.colleagueToken = userData.user.colleagueToken
         this.currentCourses = userData.user.currentCourses ?? []
+        this.completedCourses = userData.user.completedCourses ?? []
         this.waitlist = userData.user.waitlist ?? []
         useCartStore().mergeOnLogin(userData.user.shoppingCart)
       } catch {
@@ -81,6 +84,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.currentRole = 'Visitor'
       this.currentCourses = []
+      this.completedCourses = []
       this.waitlist = []
       this.sectionErrors = {}
       sessionStorage.removeItem(RETURN_TO_KEY)

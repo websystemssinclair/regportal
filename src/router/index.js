@@ -8,6 +8,16 @@ const routes = [
     component: () => import('@/views/SearchView.vue'),
   },
   {
+    path: '/programs',
+    name: 'programs',
+    component: () => import('@/views/ProgramsListView.vue'),
+  },
+  {
+    path: '/programs/:programCode',
+    name: 'program-detail',
+    component: () => import('@/views/ProgramDetailView.vue'),
+  },
+  {
     path: '/cart',
     name: 'cart',
     component: () => import('@/views/CartView.vue'),

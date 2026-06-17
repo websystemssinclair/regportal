@@ -26,6 +26,7 @@ Cart display is a three-level hierarchy:
 - Sub-header per Term within each meta-group
 - Flat list of Sections sorted by Course within each Term
 _Avoid_: Basket, wishlist
+_Colleague term_: **Preferred Section** — the ERP's name for a Cart item. Cart items are persisted to Colleague as Preferred Sections; the `shoppingCart` field in the login payload is populated from them.
 
 **Registration**:
 The act of performing an action (Add, Drop, Waitlist, or Waitlist Drop) on a Section in the Cart via the backend.
@@ -34,8 +35,8 @@ _Avoid_: Enrollment (use Registration), signup
 **Registration Actions**:
 - **Add** — enroll in a Section when seats are available. Triggered from Cart or Register Now.
 - **Waitlist** — join the waitlist for a full Section. Triggered from Cart or Register Now / Waitlist Now.
-- **Drop** — remove yourself from an enrolled Section. Triggered from My Schedule.
-- **Waitlist Drop** — remove yourself from the waitlist. Triggered from My Schedule.
+- **Drop** — remove yourself from an enrolled Section. Triggered from My Schedule. Irreversible — the seat is released immediately and may be taken by another student. Requires confirmation before submitting.
+- **Waitlist Drop** — remove yourself from the waitlist. Triggered from My Schedule. Irreversible. Requires confirmation before submitting.
 
 Each Registration Action is processed independently by the backend. A Schedule can have partial success — some Sections register and others fail (e.g., a Section fills between viewing results and submitting). The frontend must surface per-Section outcomes.
 

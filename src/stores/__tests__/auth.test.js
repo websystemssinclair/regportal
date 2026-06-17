@@ -61,6 +61,11 @@ describe('authStore', () => {
       const store = useAuthStore()
       expect(store.waitlist).toEqual([])
     })
+
+    it('initializes completedCourses to []', () => {
+      const store = useAuthStore()
+      expect(store.completedCourses).toEqual([])
+    })
   })
 
   describe('handleCallback()', () => {
@@ -242,6 +247,28 @@ describe('authStore', () => {
       expect(store.waitlist).toEqual(waitlist)
     })
 
+    it('stores completedCourses from getUserData response', async () => {
+      const completedCourses = [{ courseCode: 'ACC-1210', SubjectCode: 'ACC', CourseNo: '1210', Title: 'Intro to Financial Accounting' }]
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart: [], completedCourses } } })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.completedCourses).toEqual(completedCourses)
+    })
+
+    it('completedCourses stays [] when getUserData fails', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockRejectedValue(new Error('network error'))
+      mockCart({ mergeOnLogin: vi.fn() })
+
+      const store = useAuthStore()
+      await store.handleCallback('SAML_ID')
+
+      expect(store.completedCourses).toEqual([])
+    })
+
     it('currentCourses and waitlist stay [] when getUserData fails', async () => {
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockRejectedValue(new Error('network error'))
@@ -272,15 +299,17 @@ describe('authStore', () => {
       expect(router.replace).toHaveBeenCalledWith({ name: 'home' })
     })
 
-    it('clears currentCourses and waitlist on logout', () => {
+    it('clears currentCourses, waitlist, and completedCourses on logout', () => {
       const store = useAuthStore()
       store.currentCourses = [{ CourseKey: '111' }]
       store.waitlist = [{ CourseKey: '222' }]
+      store.completedCourses = [{ courseCode: 'ACC-1210' }]
 
       store.logout()
 
       expect(store.currentCourses).toEqual([])
       expect(store.waitlist).toEqual([])
+      expect(store.completedCourses).toEqual([])
     })
   })
 

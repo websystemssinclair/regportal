@@ -27,6 +27,7 @@ vi.mock('@/services/referenceService', () => ({
 }))
 
 import router from '@/router'
+import { getCourseSections } from '@/services/sectionsService'
 
 const TERM_ID = '26SU'
 
@@ -230,6 +231,50 @@ describe('ScheduleBuilderView — location filter', () => {
     refStore.locations = []
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="location-filter"]').exists()).toBe(false)
+  })
+})
+
+describe('ScheduleBuilderView — course query param handoff', () => {
+  let pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+    seedComposable()
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+  })
+
+  function mountViewWithCourse(courseParam) {
+    return mount(ScheduleBuilderView, {
+      global: {
+        plugins: [pinia],
+        mocks: { $route: { query: { course: courseParam } } },
+      },
+    })
+  }
+
+  it('on mount with ?course=ACC-1210, fetches sections and clears the query param', async () => {
+    const wrapper = mountViewWithCourse('ACC-1210')
+    await nextTick()
+    await nextTick()
+    expect(getCourseSections).toHaveBeenCalledWith('ACC', '1210', TERM_ID)
+    expect(router.replace).toHaveBeenCalledWith({ path: '/schedule-builder' })
+  })
+
+  it('on mount with ?course=ACC-1210, adds the course to selectedCourses', async () => {
+    const wrapper = mountViewWithCourse('ACC-1210')
+    await nextTick()
+    await nextTick()
+    expect(wrapper.vm.selectedCourses.some((c) => c.subjectCode === 'ACC' && c.courseNo === '1210')).toBe(true)
+  })
+
+  it('does not call getCourseSections when no course query param', async () => {
+    mount(ScheduleBuilderView, { global: { plugins: [pinia], mocks: { $route: { query: {} } } } })
+    await nextTick()
+    expect(getCourseSections).not.toHaveBeenCalled()
   })
 })
 

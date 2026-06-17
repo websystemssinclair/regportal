@@ -9,6 +9,8 @@ export const useReferenceStore = defineStore('reference', {
     terms: [],
     locations: [],
     currentTerm: '',
+    careers: [],
+    programs: [],
   }),
   getters: {
     upcomingKeyDates: (state) => {
@@ -27,6 +29,8 @@ export const useReferenceStore = defineStore('reference', {
       this.terms = data.terms ?? []
       this.locations = data.locations ?? []
       this.currentTerm = data.currentTerm ?? ''
+      this.careers = data.careers ?? []
+      this.programs = data.programs ?? []
     },
   },
 })
