@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 ## What to build
 
@@ -16,13 +16,18 @@ Known constraint: SAML redirect triggered from the Schedule Builder discards cur
 
 ## Acceptance criteria
 
-- [ ] Entering Courses and building dispatches to a Web Worker; UI remains responsive during computation
-- [ ] Filter changes re-run the worker without a new network request
-- [ ] Mornings/Afternoons/Evenings presets snap the time range slider to correct bounds
-- [ ] Up to 50 valid, non-conflicting Schedules are returned and displayed as selectable mini-grid cards
-- [ ] "Select Schedule" merges all Sections in the chosen Schedule into the Cart and navigates to `/cart`
-- [ ] Entering more than 7 Courses shows a soft warning (see placeholder copy in Comments)
-- [ ] `/schedule-builder` is accessible without authentication
+- [x] Entering Courses and building dispatches to a Web Worker; UI remains responsive during computation
+- [x] Filter changes re-run the worker without a new network request
+- [x] Mornings/Afternoons/Evenings presets snap the time range slider to correct bounds
+- [x] Up to 50 valid, non-conflicting Schedules are returned and displayed as selectable mini-grid cards
+- [x] "Select Schedule" merges all Sections in the chosen Schedule into the Cart and navigates to `/cart`
+- [x] Entering more than 7 Courses shows a soft warning (see placeholder copy in Comments)
+- [x] `/schedule-builder` is accessible without authentication
+- [x] "Register Now" button appears on each schedule card for authenticated Students only
+- [x] Clicking Register Now fetches availability (batch), derives Add/Waitlist per section, submits one registration call, and shows per-section outcomes inline on the card
+- [x] Availability fetch failure shows a card-level error; does not fall back to assuming Add
+- [x] Button shows "Registering…" and is disabled while the request is in flight
+- [x] Results are cleared when a new Build is triggered
 
 ## Blocked by
 
@@ -47,7 +52,7 @@ Known constraint: SAML redirect triggered from the Schedule Builder discards cur
     rangeEnd: 1320,    // (11pm = 1380 max; slider range)
     days: ['M','T','W','R','F'],
     termFormat: 'all',
-    building: 'any',
+    location: 'any',
   }
 }
 ```
@@ -68,7 +73,7 @@ Cancellation has no message — the composable calls `worker.terminate()` and cr
   startMin: 540,                // null = online/async (never conflicts)
   endMin: 630,
   termFormat: sec.TermFormat,
-  building: sec.Building,
+  building: sec.Building,   // section's physical building ID — not the location filter key
   creditHours: sec.CreditHours,
   subjectCode: sec.SubjectCode?.trim(),
   courseNo: sec.CourseNo?.trim(),
@@ -120,3 +125,31 @@ Typeahead search via existing `searchCourses` API. Selected courses shown as rem
 > "Adding more than 7 courses may significantly increase build time and reduce the number of valid schedules found."
 
 Shown inline below the course chip list when course count exceeds 7. Not blocking — user can still build.
+
+### Register Now
+
+A "Register Now" button appears on each schedule card, **authenticated Students only** (hidden entirely for visitors — no disabled/tooltip state). "Select Schedule" remains available to all roles.
+
+**Click behaviour:**
+1. Fetch `getAvailability(courseKeys.join(','))` — one batch request for all sections in the schedule.
+2. If the availability call fails: abort and show a card-level error — "Could not check seat availability. Please try again." Do not fall back to assuming Add.
+3. Map each section: `status === 'Open'` → `add`, anything else → `waitlist`.
+4. Call `registerSections` with the full batch payload (same shape as `useCartRegistration`). Build `CreditHours` from `_sectionCache`.
+5. Parse per-section outcomes from the response and store in `scheduleResults[scheduleIndex]`.
+
+**`registerSchedule(schedule, scheduleIndex, termId)`** is added to `useScheduleBuilder` (it already holds `_sectionCache`). New reactive state added to the composable:
+```js
+const scheduleResults = reactive({})    // keyed by scheduleIndex: { [courseKey]: { status, message } } | { _error: string }
+const registeringSchedules = reactive(new Set())   // scheduleIndex values currently in flight
+```
+
+**Button label:** Always "Register Now" — availability auto-detection happens behind the scenes. While in flight: button shows "Registering…" and is disabled.
+
+**Outcome display (inline on card):** On completion, replace the Register Now button area with a compact per-section result list:
+- Success: `ACC-1100 — Registered` / `ACC-1100 — Waitlisted`
+- Error: `ACC-1100 — Section full` (backend error message)
+- Card-level error (availability fetch failed): single error message above the button
+
+**Result clearing:** Results are cleared when the student clicks "Build Schedules" (new build replaces the schedule list entirely). No per-card dismiss control.
+
+**Note:** The `sections/availability` backend endpoint (`GET sections/availability?courseKeys=...`) is not yet implemented server-side. Frontend service (`getAvailability`) already exists.
