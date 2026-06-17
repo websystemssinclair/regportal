@@ -203,7 +203,7 @@ describe('ScheduleBuilderView — location filter', () => {
     expect(options[1].text()).toBe('Sinclair Dayton Campus')
   })
 
-  it('passes the selected location as filters.building when build is triggered', async () => {
+  it('passes the selected location as filters.location when build is triggered', async () => {
     const wrapper = mountView()
     await wrapper.find('[data-testid="location-filter"]').setValue('SCC')
     wrapper.vm.selectedCourses.push({ subjectCode: 'ACC', courseNo: '1100', longName: 'Test', rawSections: [] })
@@ -211,7 +211,7 @@ describe('ScheduleBuilderView — location filter', () => {
     await wrapper.find('[data-testid="build-button"]').trigger('click')
     expect(buildMock).toHaveBeenCalledWith(
       wrapper.vm.selectedCourses,
-      expect.objectContaining({ building: 'SCC' }),
+      expect.objectContaining({ location: 'SCC' }),
     )
   })
 

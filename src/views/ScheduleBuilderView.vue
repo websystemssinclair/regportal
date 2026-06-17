@@ -155,7 +155,7 @@
               <label class="mb-1 block text-xs font-medium text-gray-500">Location</label>
               <select
                 data-testid="location-filter"
-                v-model="filters.building"
+                v-model="filters.location"
                 class="w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
               >
                 <option
@@ -321,7 +321,7 @@ export default {
       rangeEnd: 1320,
       days: ['M', 'T', 'W', 'R', 'F'],
       termFormat: 'all',
-      building: 'any',
+      location: 'any',
     })
 
     const hasBuilt = ref(false)

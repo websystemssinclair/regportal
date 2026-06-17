@@ -17,7 +17,7 @@ const DEFAULT_FILTERS = {
   rangeEnd: 1320,
   days: ['M', 'T', 'W', 'R', 'F'],
   termFormat: 'all',
-  building: 'any',
+  location: 'any',
 }
 
 const rawSection = (overrides = {}) => ({

@@ -19,8 +19,8 @@ export function applyFilters(sections, filters) {
     if (filters.termFormat && filters.termFormat !== 'all') {
       if (sec.termFormat !== filters.termFormat) return false
     }
-    if (filters.building && filters.building !== 'any') {
-      if (sec.building !== filters.building) return false
+    if (filters.location && filters.location !== 'any') {
+      if (sec.building !== filters.location) return false
     }
     return true
   })

@@ -26,7 +26,7 @@ const DEFAULT_FILTERS = {
   rangeEnd: 1380,   // 11pm
   days: ['M', 'T', 'W', 'R', 'F', 'S', 'U'],
   termFormat: 'all',
-  building: 'any',
+  location: 'any',
 }
 
 // --- conflicts() ---
@@ -160,21 +160,21 @@ describe('applyFilters()', () => {
     expect(result).toHaveLength(2)
   })
 
-  it('excludes sections in a disallowed building', () => {
+  it('excludes sections not matching the location filter', () => {
     const sections = [
       sec('1', ['M'], 540, 630, { building: 'BLDG-A' }),
       sec('2', ['M'], 540, 630, { building: 'BLDG-B' }),
     ]
-    const result = applyFilters(sections, { ...DEFAULT_FILTERS, building: 'BLDG-A' })
+    const result = applyFilters(sections, { ...DEFAULT_FILTERS, location: 'BLDG-A' })
     expect(result.map((s) => s.id)).toEqual(['1'])
   })
 
-  it('passes all buildings when filter is "any"', () => {
+  it('passes all locations when filter is "any"', () => {
     const sections = [
       sec('1', ['M'], 540, 630, { building: 'BLDG-A' }),
       sec('2', ['M'], 540, 630, { building: 'BLDG-B' }),
     ]
-    const result = applyFilters(sections, { ...DEFAULT_FILTERS, building: 'any' })
+    const result = applyFilters(sections, { ...DEFAULT_FILTERS, location: 'any' })
     expect(result).toHaveLength(2)
   })
 })
