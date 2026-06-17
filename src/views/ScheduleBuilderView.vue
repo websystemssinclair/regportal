@@ -247,6 +247,39 @@
                 >
                   Select Schedule
                 </button>
+
+                <!-- Register Now — Students only -->
+                <div v-if="authStore.isStudent" class="mt-2">
+                  <p
+                    v-if="scheduleResults[idx]?._error"
+                    data-testid="register-card-error"
+                    class="mb-1 text-xs text-red-600"
+                  >{{ scheduleResults[idx]._error }}</p>
+
+                  <ul v-else-if="scheduleResults[idx]" class="mb-2 space-y-0.5">
+                    <li
+                      v-for="sec in schedule"
+                      :key="sec.id"
+                      data-testid="register-section-result"
+                      class="text-[11px]"
+                    >
+                      {{ sec.subjectCode }}-{{ sec.courseNo }} —
+                      <span :class="scheduleResults[idx][String(sec.id)]?.status === 'error' ? 'text-red-600' : 'text-green-700'">
+                        {{ scheduleResults[idx][String(sec.id)]?.message }}
+                      </span>
+                    </li>
+                  </ul>
+
+                  <button
+                    v-if="!scheduleResults[idx] || scheduleResults[idx]._error"
+                    data-testid="register-now-btn"
+                    @click="onRegisterSchedule(schedule, idx)"
+                    :disabled="registeringSchedules.has(idx)"
+                    class="w-full rounded-lg bg-green-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                  >
+                    {{ registeringSchedules.has(idx) ? 'Registering…' : 'Register Now' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -260,6 +293,7 @@
 <script>
 import { ref, reactive, computed, watch } from 'vue'
 import { useReferenceStore } from '@/stores/reference'
+import { useAuthStore } from '@/stores/auth'
 import { searchCourses, getCourseSections } from '@/services/sectionsService'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
 import router from '@/router'
@@ -294,7 +328,8 @@ export default {
   name: 'ScheduleBuilderView',
   setup() {
     const referenceStore = useReferenceStore()
-    const { schedules, isBuilding, error, count, build, selectSchedule } = useScheduleBuilder()
+    const authStore = useAuthStore()
+    const { schedules, isBuilding, error, count, build, selectSchedule, scheduleResults, registeringSchedules, registerSchedule } = useScheduleBuilder()
     const locations = computed(() => referenceStore.locations)
 
     const registrationTerms = computed(() =>
@@ -424,6 +459,10 @@ export default {
       router.push('/cart')
     }
 
+    function onRegisterSchedule(schedule, idx) {
+      registerSchedule(schedule, idx)
+    }
+
     return {
       registrationTerms,
       locations,
@@ -453,6 +492,10 @@ export default {
       onSelectSchedule,
       resolvedTermId,
       formatMinutes,
+      authStore,
+      scheduleResults,
+      registeringSchedules,
+      onRegisterSchedule,
     }
   },
 }

@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, computed, reactive, nextTick } from 'vue'
 import ScheduleBuilderView from '@/views/ScheduleBuilderView.vue'
 import { useReferenceStore } from '@/stores/reference'
+import { useAuthStore } from '@/stores/auth'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
 
 vi.mock('@/composables/useScheduleBuilder')
@@ -31,12 +32,18 @@ const TERM_ID = '26SU'
 
 let buildMock
 let selectScheduleMock
+let registerScheduleMock
 let schedulesRef
+let scheduleResultsObj
+let registeringSchedulesSet
 
 function seedComposable(overrides = {}) {
   buildMock = vi.fn()
   selectScheduleMock = vi.fn()
+  registerScheduleMock = vi.fn()
   schedulesRef = ref(overrides.schedules ?? [])
+  scheduleResultsObj = reactive(overrides.scheduleResults ?? {})
+  registeringSchedulesSet = reactive(overrides.registeringSchedules ?? new Set())
 
   vi.mocked(useScheduleBuilder).mockReturnValue({
     schedules: schedulesRef,
@@ -45,6 +52,9 @@ function seedComposable(overrides = {}) {
     count: computed(() => schedulesRef.value.length),
     build: buildMock,
     selectSchedule: selectScheduleMock,
+    scheduleResults: scheduleResultsObj,
+    registeringSchedules: registeringSchedulesSet,
+    registerSchedule: registerScheduleMock,
   })
 }
 
@@ -220,5 +230,95 @@ describe('ScheduleBuilderView — location filter', () => {
     refStore.locations = []
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="location-filter"]').exists()).toBe(false)
+  })
+})
+
+describe('ScheduleBuilderView — Register Now', () => {
+  let pinia
+  const fakeSchedule = [{ id: '111', subjectCode: 'ACC', courseNo: '1100', days: ['M'], startMin: 540, endMin: 630 }]
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+    seedComposable({ schedules: [fakeSchedule] })
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+  })
+
+  function mountView() {
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
+  }
+
+  it('does not show Register Now button for Visitor', async () => {
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    expect(wrapper.find('[data-testid="register-now-btn"]').exists()).toBe(false)
+  })
+
+  it('shows Register Now button for Student', async () => {
+    const authStore = useAuthStore()
+    authStore.currentRole = 'Student'
+    authStore.isAuthenticated = true
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    expect(wrapper.find('[data-testid="register-now-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="register-now-btn"]').text()).toBe('Register Now')
+  })
+
+  it('calls registerSchedule with schedule and index when Register Now is clicked', async () => {
+    const authStore = useAuthStore()
+    authStore.currentRole = 'Student'
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    await wrapper.find('[data-testid="register-now-btn"]').trigger('click')
+    expect(registerScheduleMock).toHaveBeenCalledWith(fakeSchedule, 0)
+  })
+
+  it('shows Registering… and disables button when in flight', async () => {
+    const authStore = useAuthStore()
+    authStore.currentRole = 'Student'
+    registeringSchedulesSet.add(0)
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    const btn = wrapper.find('[data-testid="register-now-btn"]')
+    expect(btn.text()).toBe('Registering…')
+    expect(btn.attributes('disabled')).toBeDefined()
+  })
+
+  it('shows per-section results and hides button after successful registration', async () => {
+    const authStore = useAuthStore()
+    authStore.currentRole = 'Student'
+    scheduleResultsObj[0] = { '111': { status: 'registered', message: 'Registered' } }
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    expect(wrapper.find('[data-testid="register-now-btn"]').exists()).toBe(false)
+    const results = wrapper.findAll('[data-testid="register-section-result"]')
+    expect(results).toHaveLength(1)
+    expect(results[0].text()).toContain('ACC-1100')
+    expect(results[0].text()).toContain('Registered')
+  })
+
+  it('shows card-level error and keeps button for availability fetch failure', async () => {
+    const authStore = useAuthStore()
+    authStore.currentRole = 'Student'
+    scheduleResultsObj[0] = { _error: 'Could not check seat availability. Please try again.' }
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+    expect(wrapper.find('[data-testid="register-card-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="register-card-error"]').text()).toContain('Could not check seat availability')
+    expect(wrapper.find('[data-testid="register-now-btn"]').exists()).toBe(true)
   })
 })
