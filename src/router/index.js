@@ -13,6 +13,17 @@ const routes = [
     component: () => import('@/views/CartView.vue'),
   },
   {
+    path: '/schedule-builder',
+    name: 'schedule-builder',
+    component: () => import('@/views/ScheduleBuilderView.vue'),
+  },
+  {
+    path: '/my-schedule',
+    name: 'my-schedule',
+    component: () => import('@/views/ScheduleView.vue'),
+    meta: { roles: ['Student', 'Admin', 'Developer'] },
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('@/views/HomeView.vue'),
