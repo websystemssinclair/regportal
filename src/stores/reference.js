@@ -7,6 +7,7 @@ export const useReferenceStore = defineStore('reference', {
     intro: '',
     maintenance: [],
     terms: [],
+    locations: [],
     currentTerm: '',
   }),
   getters: {
@@ -24,6 +25,7 @@ export const useReferenceStore = defineStore('reference', {
       this.intro = data.intro
       this.maintenance = data.maintenance
       this.terms = data.terms ?? []
+      this.locations = data.locations ?? []
       this.currentTerm = data.currentTerm ?? ''
     },
   },

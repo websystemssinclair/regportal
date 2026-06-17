@@ -14,12 +14,13 @@ describe('referenceStore', () => {
     vi.clearAllMocks()
   })
 
-  it('defaults to empty keyDates, empty intro, empty maintenance, empty terms, and empty currentTerm', () => {
+  it('defaults to empty keyDates, empty intro, empty maintenance, empty terms, empty locations, and empty currentTerm', () => {
     const store = useReferenceStore()
     expect(store.keyDates).toEqual([])
     expect(store.intro).toBe('')
     expect(store.maintenance).toEqual([])
     expect(store.terms).toEqual([])
+    expect(store.locations).toEqual([])
     expect(store.currentTerm).toBe('')
   })
 
@@ -89,5 +90,28 @@ describe('referenceStore', () => {
 
     expect(store.terms).toEqual(terms)
     expect(store.currentTerm).toBe(currentTerm)
+  })
+
+  it('load() populates locations from the response', async () => {
+    const locations = [
+      { id: 'any', building: 'All Locations' },
+      { id: 'SCC', building: 'Sinclair Dayton Campus' },
+      { id: 'CENT', building: 'Centerville Campus' },
+    ]
+    getReferenceData.mockResolvedValue({ data: { keyDates: [], intro: '', maintenance: [], terms: [], currentTerm: '', locations } })
+
+    const store = useReferenceStore()
+    await store.load()
+
+    expect(store.locations).toEqual(locations)
+  })
+
+  it('load() defaults locations to [] when not present in response', async () => {
+    getReferenceData.mockResolvedValue({ data: { keyDates: [], intro: '', maintenance: [], terms: [], currentTerm: '' } })
+
+    const store = useReferenceStore()
+    await store.load()
+
+    expect(store.locations).toEqual([])
   })
 })

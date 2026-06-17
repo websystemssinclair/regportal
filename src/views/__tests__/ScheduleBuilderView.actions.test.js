@@ -165,3 +165,60 @@ describe('ScheduleBuilderView — build button', () => {
     expect(buildMock).toHaveBeenCalledWith(wrapper.vm.selectedCourses, expect.any(Object))
   })
 })
+
+describe('ScheduleBuilderView — location filter', () => {
+  let pinia
+
+  const LOCATIONS = [
+    { id: 'any', building: 'All Locations' },
+    { id: 'SCC', building: 'Sinclair Dayton Campus' },
+    { id: 'CENT', building: 'Centerville Campus' },
+  ]
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+    seedComposable()
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+    refStore.locations = LOCATIONS
+  })
+
+  function mountView() {
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
+  }
+
+  it('renders a location dropdown when locations are available', () => {
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="location-filter"]').exists()).toBe(true)
+  })
+
+  it('renders one option per location entry', () => {
+    const wrapper = mountView()
+    const options = wrapper.findAll('[data-testid="location-filter"] option')
+    expect(options).toHaveLength(LOCATIONS.length)
+    expect(options[0].text()).toBe('All Locations')
+    expect(options[1].text()).toBe('Sinclair Dayton Campus')
+  })
+
+  it('passes the selected location as filters.building when build is triggered', async () => {
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="location-filter"]').setValue('SCC')
+    wrapper.vm.selectedCourses.push({ subjectCode: 'ACC', courseNo: '1100', longName: 'Test', rawSections: [] })
+    await nextTick()
+    await wrapper.find('[data-testid="build-button"]').trigger('click')
+    expect(buildMock).toHaveBeenCalledWith(
+      wrapper.vm.selectedCourses,
+      expect.objectContaining({ building: 'SCC' }),
+    )
+  })
+
+  it('does not render location dropdown when no locations in store', () => {
+    const refStore = useReferenceStore()
+    refStore.locations = []
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="location-filter"]').exists()).toBe(false)
+  })
+})

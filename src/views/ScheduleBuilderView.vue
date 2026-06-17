@@ -150,6 +150,22 @@
               </div>
             </div>
 
+            <!-- Location -->
+            <div v-if="locations.length">
+              <label class="mb-1 block text-xs font-medium text-gray-500">Location</label>
+              <select
+                data-testid="location-filter"
+                v-model="filters.building"
+                class="w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
+              >
+                <option
+                  v-for="loc in locations"
+                  :key="loc.id"
+                  :value="loc.id"
+                >{{ loc.building }}</option>
+              </select>
+            </div>
+
             <!-- Modality -->
             <div>
               <label class="mb-1 block text-xs font-medium text-gray-500">Modality</label>
@@ -279,15 +295,19 @@ export default {
   setup() {
     const referenceStore = useReferenceStore()
     const { schedules, isBuilding, error, count, build, selectSchedule } = useScheduleBuilder()
+    const locations = computed(() => referenceStore.locations)
 
     const registrationTerms = computed(() =>
-      referenceStore.terms.filter((t) => t.toView === 'D' || t.toView === 'Y'),
+      referenceStore.terms.filter((t) => t.toView === 'D' || t.toView === 'Y' || t.toView === 'F'),
     )
     const defaultTermId = computed(() => {
       const d = registrationTerms.value.find((t) => t.toView === 'D')
       return (d ?? registrationTerms.value[0])?.id ?? null
     })
     const selectedTermId = ref(null)
+    watch(defaultTermId, (id) => {
+      if (!selectedTermId.value && id) selectedTermId.value = id
+    }, { immediate: true })
     const resolvedTermId = computed(() => selectedTermId.value ?? defaultTermId.value)
 
     const selectedCourses = ref([])
@@ -406,6 +426,7 @@ export default {
 
     return {
       registrationTerms,
+      locations,
       selectedTermId,
       selectedCourses,
       searchQuery,
