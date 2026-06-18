@@ -138,7 +138,7 @@ function seatBadgeClass(status) {
                 <button
                   data-testid="add-to-schedule-btn"
                   @click.stop="addToScheduleBuilder(course.CourseCode)"
-                  class="shrink-0 rounded-md bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+                  class="shrink-0 rounded-md bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
                 >
                   Add to Schedule Builder
                 </button>

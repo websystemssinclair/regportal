@@ -69,7 +69,7 @@ function closeDrawer() {
           <button
             v-else
             @click="authStore.login()"
-            class="bg-crimson text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-crimson-dark transition-colors"
+            class="bg-crimson text-white text-sm font-medium px-4 py-1.5 touch:py-3 rounded-full hover:bg-crimson-dark transition-colors"
           >Sign In</button>
         </div>
 
@@ -127,7 +127,7 @@ function closeDrawer() {
             <button
               v-else
               @click="authStore.login(); closeDrawer()"
-              class="bg-crimson text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-crimson-dark transition-colors"
+              class="bg-crimson text-white text-sm font-medium px-4 py-1.5 touch:py-3 rounded-full hover:bg-crimson-dark transition-colors"
             >Sign In</button>
           </div>
         </div>

@@ -182,7 +182,7 @@ onMounted(async () => {
             :href="buildEcampusUrl(group.sections)"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-block rounded bg-crimson px-4 py-2 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+            class="inline-block rounded bg-crimson px-4 py-2 touch:py-3.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
             data-testid="buy-books-btn"
           >Buy Books at Campus Store</a>
         </div>

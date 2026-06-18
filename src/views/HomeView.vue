@@ -287,7 +287,7 @@ fetch()
               :class="selectedDays.includes(d)
                 ? 'bg-crimson text-white border-crimson'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-crimson'"
-              class="rounded border px-2.5 py-1 text-xs font-medium transition-colors"
+              class="rounded border px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs font-medium transition-colors"
             >{{ DAY_LABELS[d] }}</button>
           </div>
         </div>
@@ -443,7 +443,7 @@ fetch()
                       <button
                         v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
                         @click="cartStore.add(sec)"
-                        class="rounded bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+                        class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
                       >
                         Add to Cart
                       </button>
@@ -465,7 +465,7 @@ fetch()
                           v-else
                           @click="registerNow(sec)"
                           :disabled="registeringSections.has(sec.CourseKey) || maintenanceStore.isBackendDown"
-                          class="rounded border border-crimson px-3 py-1.5 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="rounded border border-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {{ sec.status === 'Open' ? 'Register Now' : 'Waitlist Now' }}
                         </button>
@@ -503,7 +503,7 @@ fetch()
             <button
               :disabled="filters.page <= 1 || isLoading"
               @click="goPage(filters.page - 1)"
-              class="rounded border border-gray-300 px-3 py-1.5 hover:bg-gray-50 disabled:opacity-40"
+              class="rounded border border-gray-300 px-3 py-1.5 touch:py-3 hover:bg-gray-50 disabled:opacity-40"
             >← Prev</button>
             <button
               v-for="p in pageWindow" :key="p"
@@ -512,12 +512,12 @@ fetch()
               :class="p === filters.page
                 ? 'border-crimson bg-crimson text-white'
                 : 'border-gray-300 hover:bg-gray-50'"
-              class="rounded border px-3 py-1.5"
+              class="rounded border px-3 py-1.5 touch:py-3"
             >{{ p }}</button>
             <button
               :disabled="filters.page >= totalPages || isLoading"
               @click="goPage(filters.page + 1)"
-              class="rounded border border-gray-300 px-3 py-1.5 hover:bg-gray-50 disabled:opacity-40"
+              class="rounded border border-gray-300 px-3 py-1.5 touch:py-3 hover:bg-gray-50 disabled:opacity-40"
             >Next →</button>
           </div>
         </div>

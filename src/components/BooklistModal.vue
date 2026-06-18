@@ -93,7 +93,7 @@ onMounted(async () => {
           :href="buildEcampusUrl()"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block rounded bg-crimson px-4 py-2 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+          class="inline-block rounded bg-crimson px-4 py-2 touch:py-3.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
         >Buy Books at Campus Store</a>
       </div>
     </div>

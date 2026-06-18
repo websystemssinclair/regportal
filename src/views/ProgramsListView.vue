@@ -56,7 +56,7 @@ function toggleCareer(id) {
           :key="career.id"
           data-testid="career-filter-chip"
           @click="toggleCareer(career.id)"
-          class="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+          class="rounded-full border px-3 py-1 touch:py-3.5 touch:px-4 text-xs font-medium transition-colors"
           :class="selectedCareerId === career.id
             ? 'border-crimson bg-crimson text-white'
             : 'border-gray-300 bg-white text-gray-700 hover:border-crimson hover:text-crimson'"

@@ -94,7 +94,7 @@
                   v-for="preset in TIME_PRESETS"
                   :key="preset.label"
                   @click="applyPreset(preset)"
-                  class="rounded-md border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
+                  class="rounded-md border border-gray-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs hover:bg-gray-50"
                   :class="isActivePreset(preset) ? 'border-crimson bg-crimson/5 text-crimson font-semibold' : 'text-gray-600'"
                 >{{ preset.label }}</button>
               </div>
@@ -239,7 +239,7 @@
                 <button
                   data-testid="select-schedule-btn"
                   @click="onSelectSchedule(schedule)"
-                  class="w-full rounded-lg bg-crimson px-3 py-1.5 text-xs font-semibold text-white hover:bg-crimson-dark"
+                  class="w-full rounded-lg bg-crimson px-3 py-1.5 touch:py-3.5 text-xs font-semibold text-white hover:bg-crimson-dark"
                 >
                   Select Schedule
                 </button>
@@ -271,7 +271,7 @@
                     data-testid="register-now-btn"
                     @click="onRegisterSchedule(schedule, idx)"
                     :disabled="registeringSchedules.has(idx)"
-                    class="w-full rounded-lg bg-green-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                    class="w-full rounded-lg bg-green-700 px-3 py-1.5 touch:py-3.5 text-xs font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   >
                     {{ registeringSchedules.has(idx) ? 'Registering…' : 'Register Now' }}
                   </button>

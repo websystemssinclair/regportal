@@ -104,7 +104,7 @@ async function registerAll(group) {
                   v-if="meta.label === 'Current' && actionableInTerm(group).length > 0"
                   @click="registerAll(group)"
                   :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
-                  class="rounded bg-crimson px-2.5 py-0.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="rounded bg-crimson px-2.5 py-0.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >Register All</button>
               </h3>
 
@@ -141,15 +141,15 @@ async function registerAll(group) {
                       v-else-if="meta.label === 'Current' && isActionable(sec)"
                       @click="registerSection(group.termId, sec)"
                       :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
-                      class="rounded bg-crimson px-2.5 py-1 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="rounded bg-crimson px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
                     <button
                       @click="activeBooksSection = sec"
-                      class="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                      class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
                     >Books</button>
                     <button
                       @click="cartStore.remove(sec.CourseKey)"
-                      class="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+                      class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
                     >
                       Remove
                     </button>

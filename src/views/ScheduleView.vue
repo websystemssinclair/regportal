@@ -107,7 +107,7 @@
               </div>
               <div class="flex shrink-0 flex-col items-end gap-1">
                 <button
-                  class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
+                  class="rounded border border-gray-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
                   @click="activeBooksSection = entry.section"
                 >Books</button>
                 <template v-if="sectionErrorStore.errors[entry.courseKey]">
@@ -119,13 +119,13 @@
                 </template>
                 <button
                   v-else-if="!entry.isWaitlisted"
-                  class="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  class="rounded border border-red-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
                   :disabled="droppingSections.has(entry.courseKey)"
                   @click="startDrop(entry)"
                 >Drop</button>
                 <button
                   v-else
-                  class="rounded border border-amber-200 px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                  class="rounded border border-amber-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
                   :disabled="droppingSections.has(entry.courseKey)"
                   @click="startWaitlistDrop(entry)"
                 >Waitlist Drop</button>
@@ -202,7 +202,7 @@
                 </div>
                 <div class="mt-0.5 flex shrink-0 flex-col items-end gap-1">
                   <button
-                    class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
+                    class="rounded border border-gray-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
                     @click="activeBooksSection = entry.section"
                   >Books</button>
                   <template v-if="sectionErrorStore.errors[entry.courseKey]">
@@ -214,13 +214,13 @@
                   </template>
                   <button
                     v-else-if="!entry.isWaitlisted"
-                    class="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    class="rounded border border-red-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
                     :disabled="droppingSections.has(entry.courseKey)"
                     @click="startDrop(entry)"
                   >Drop</button>
                   <button
                     v-else
-                    class="rounded border border-amber-200 px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                    class="rounded border border-amber-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
                     :disabled="droppingSections.has(entry.courseKey)"
                     @click="startWaitlistDrop(entry)"
                   >Waitlist Drop</button>

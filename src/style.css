@@ -8,6 +8,15 @@
   --color-canvas: #f6f5f4;
 }
 
+/* touch: variant — applies only on coarse-pointer (finger-touch) devices.
+   Use touch:py-3.5 / touch:py-3 to expand tap targets to ≥44px on mobile
+   without affecting desktop or keyboard-driven layouts. */
+@custom-variant touch {
+  @media (pointer: coarse) {
+    @slot
+  }
+}
+
 :root {
   --color-warm-white: #faf8f5;
   --color-warm-dark: #1a1614;
