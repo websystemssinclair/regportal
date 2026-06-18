@@ -147,7 +147,7 @@ fetch()
         <!-- Intro text -->
         <div
           v-if="reference.intro"
-          class="mb-5 text-sm leading-relaxed text-gray-700"
+          class="intro-banner mb-5 text-sm leading-relaxed text-gray-700"
           v-html="sanitizedIntro"
         />
         <h1 v-else class="mb-5 text-center text-2xl font-semibold text-gray-800">
