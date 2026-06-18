@@ -2,7 +2,7 @@ import { ref, reactive, computed, onUnmounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { getAvailability } from '@/services/sectionsService'
-import { registerSections } from '@/services/registrationService'
+import { useRegistrationAction } from '@/composables/useRegistrationAction'
 
 function parseTimeMinutes(timeStr) {
   if (!timeStr) return null
@@ -128,38 +128,23 @@ export function useScheduleBuilder() {
         return
       }
 
-      const registrations = schedule.map((sec) => ({
+      const { register } = useRegistrationAction()
+      const sections = schedule.map((sec) => ({
         sectionId: sec.id,
         action: availabilityMap[String(sec.id)] === 'Open' ? 'add' : 'waitlist',
+        credits: _sectionCache.get(String(sec.id))?.CreditHours ?? 0,
       }))
 
-      const payload = {
-        token: authStore.colleagueToken,
-        studentId: parseInt(authStore.user.tartanId),
-        username: authStore.user.username,
-        password: '',
-        sections: registrations.map(({ sectionId, action }) => {
-          const raw = _sectionCache.get(String(sectionId))
-          return { SectionId: sectionId, Action: action, Credits: raw?.CreditHours ?? 0 }
-        }),
-      }
-
-      const { data } = await registerSections(payload)
+      const { succeeded, errors: errorMap } = await register(sections)
       if (gen !== _buildGen) return
-
-      const errors = data.rows?.[0]?.errors ?? []
-      const failedMap = {}
-      for (const err of errors) {
-        failedMap[String(err.CourseKey)] = err.Message
-      }
 
       const result = {}
       for (const sec of schedule) {
         const key = String(sec.id)
-        if (failedMap[key]) {
-          result[key] = { status: 'error', message: failedMap[key] }
+        if (errorMap[key]) {
+          result[key] = { status: 'error', message: errorMap[key] }
         } else {
-          const action = registrations.find((r) => String(r.sectionId) === key)?.action
+          const action = sections.find((s) => String(s.sectionId) === key)?.action
           result[key] = {
             status: action === 'waitlist' ? 'waitlisted' : 'registered',
             message: action === 'waitlist' ? 'Waitlisted' : 'Registered',

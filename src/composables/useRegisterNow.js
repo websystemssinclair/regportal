@@ -1,7 +1,6 @@
 import { reactive } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
-import { registerSections } from '@/services/registrationService'
+import { useRegistrationAction } from '@/composables/useRegistrationAction'
 
 export function useRegisterNow() {
   const sectionResults = reactive({})
@@ -10,27 +9,20 @@ export function useRegisterNow() {
   async function registerNow(sec) {
     const courseKey = String(sec.CourseKey)
     const action = sec.status === 'Open' ? 'add' : 'waitlist'
-    const authStore = useAuthStore()
     const cartStore = useCartStore()
+    const { register } = useRegistrationAction()
     registeringSections.add(courseKey)
     try {
-      const payload = {
-        token: authStore.colleagueToken,
-        studentId: parseInt(authStore.user.tartanId),
-        username: authStore.user.username,
-        password: '',
-        sections: [{ SectionId: courseKey, Action: action, Credits: sec.CreditHours ?? 0 }],
-      }
-      const { data } = await registerSections(payload)
-      const errors = data.rows[0]?.errors ?? []
-      const sectionError = errors.find((e) => String(e.CourseKey) === courseKey)
-      if (sectionError) {
-        sectionResults[courseKey] = { status: 'error', message: sectionError.Message }
-      } else {
+      const { succeeded, errors } = await register([
+        { sectionId: courseKey, action, credits: sec.CreditHours ?? 0 },
+      ])
+      if (succeeded.has(courseKey)) {
         sectionResults[courseKey] = { status: 'success', message: action === 'add' ? 'Registered' : 'Waitlisted' }
         if (cartStore.sections.some((s) => String(s.CourseKey) === courseKey)) {
           cartStore.removeRegistered([courseKey])
         }
+      } else {
+        sectionResults[courseKey] = { status: 'error', message: errors[courseKey] ?? 'Registration failed' }
       }
     } catch (e) {
       sectionResults[courseKey] = { status: 'error', message: e.message ?? 'Registration failed' }
