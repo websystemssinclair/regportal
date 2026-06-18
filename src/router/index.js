@@ -4,8 +4,7 @@ import { maintenanceGuard, roleGuard } from './guard'
 const routes = [
   {
     path: '/search',
-    name: 'search',
-    component: () => import('@/views/SearchView.vue'),
+    redirect: '/',
   },
   {
     path: '/programs',
@@ -21,6 +20,11 @@ const routes = [
     path: '/cart',
     name: 'cart',
     component: () => import('@/views/CartView.vue'),
+  },
+  {
+    path: '/booklist',
+    name: 'booklist',
+    component: () => import('@/views/BooklistView.vue'),
   },
   {
     path: '/schedule-builder',

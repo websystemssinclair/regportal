@@ -34,6 +34,10 @@ function closeDrawer() {
         <!-- Desktop center links -->
         <div class="hidden md:flex items-center gap-6 text-sm font-medium">
           <RouterLink
+            to="/"
+            :class="route.path === '/' ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
+          >Courses</RouterLink>
+          <RouterLink
             to="/programs"
             :class="isActive('/programs') ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
           >Programs</RouterLink>
@@ -85,6 +89,11 @@ function closeDrawer() {
       <!-- Mobile drawer -->
       <Transition name="fade">
         <div v-if="drawerOpen" class="md:hidden border-t border-black/10 bg-white px-4 py-4 flex flex-col gap-4">
+          <RouterLink
+            to="/"
+            :class="['text-sm font-medium', route.path === '/' ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            @click="closeDrawer"
+          >Courses</RouterLink>
           <RouterLink
             to="/programs"
             :class="['text-sm font-medium', isActive('/programs') ? 'text-[#ac1a2f]' : 'text-gray-700']"
