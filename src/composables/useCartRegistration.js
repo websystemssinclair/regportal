@@ -1,8 +1,10 @@
 import { useCartStore } from '@/stores/cart'
 import { useRegistrationAction } from '@/composables/useRegistrationAction'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 export function useCartRegistration() {
   const cartStore = useCartStore()
+  const sectionErrorStore = useSectionErrorStore()
   const { register: doRegister } = useRegistrationAction()
 
   async function register(termId, registrations) {
@@ -15,7 +17,7 @@ export function useCartRegistration() {
       const { succeeded, errors } = await doRegister(sections)
       cartStore.removeRegistered([...succeeded])
       for (const [key, msg] of Object.entries(errors)) {
-        cartStore.sectionErrors[key] = msg
+        sectionErrorStore.set(key, msg)
       }
       return { succeeded: succeeded.size }
     } finally {

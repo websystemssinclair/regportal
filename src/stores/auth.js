@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
 import { useCartStore } from '@/stores/cart'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 import router from '@/router'
 
 const SSO_BASE = 'https://sso.sinclair.edu/EasyConnect/REST/default.aspx'
@@ -15,28 +16,26 @@ function resolveRole(availableRoles) {
 export const useAuthStore = defineStore('auth', {
   state: () => {
     if (import.meta.env.VITE_SKIP_AUTH === 'true') {
-      return {
-        isAuthenticated: true,
-        currentRole: 'Developer',
-        user: { firstName: 'Dev', lastName: 'User', email: 'dev@sinclair.edu', tartanId: 0, username: 'dev', imageLink: '' },
-        apiKey: null,
-        colleagueToken: null,
-        currentCourses: [],
-        completedCourses: [],
-        waitlist: [],
-        sectionErrors: {},
-      }
-    }
     return {
-      isAuthenticated: false,
-      currentRole: 'Visitor',
-      user: null,
+      isAuthenticated: true,
+      currentRole: 'Developer',
+      user: { firstName: 'Dev', lastName: 'User', email: 'dev@sinclair.edu', tartanId: 0, username: 'dev', imageLink: '' },
       apiKey: null,
       colleagueToken: null,
       currentCourses: [],
       completedCourses: [],
       waitlist: [],
-      sectionErrors: {},
+    }
+    }
+    return {
+    isAuthenticated: false,
+    currentRole: 'Visitor',
+    user: null,
+    apiKey: null,
+    colleagueToken: null,
+    currentCourses: [],
+    completedCourses: [],
+    waitlist: [],
     }
   },
   getters: {
@@ -86,13 +85,9 @@ export const useAuthStore = defineStore('auth', {
       this.currentCourses = []
       this.completedCourses = []
       this.waitlist = []
-      this.sectionErrors = {}
+      useSectionErrorStore().clear()
       sessionStorage.removeItem(RETURN_TO_KEY)
       router.replace({ name: 'home' })
-    },
-
-    dismissError(courseKey) {
-      delete this.sectionErrors[String(courseKey)]
     },
   },
 })

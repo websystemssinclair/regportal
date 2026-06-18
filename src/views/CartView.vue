@@ -4,12 +4,14 @@ import { useCartStore } from '@/stores/cart'
 import { useReferenceStore } from '@/stores/reference'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCartRegistration } from '@/composables/useCartRegistration'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 import { useToast } from 'primevue/usetoast'
 import BooklistModal from '@/components/BooklistModal.vue'
 
 const cartStore = useCartStore()
 const refStore = useReferenceStore()
 const maintenanceStore = useMaintenanceStore()
+const sectionErrorStore = useSectionErrorStore()
 const { register } = useCartRegistration()
 const toast = useToast()
 
@@ -125,10 +127,10 @@ async function registerAll(group) {
                       {{ availBadgeLabel(sec) }}
                     </span>
                     <!-- Inline error (replaces action buttons) -->
-                    <template v-if="cartStore.sectionErrors[sec.CourseKey]">
-                      <span class="text-xs text-red-600">{{ cartStore.sectionErrors[sec.CourseKey] }}</span>
+                    <template v-if="sectionErrorStore.errors[sec.CourseKey]">
+                      <span class="text-xs text-red-600">{{ sectionErrorStore.errors[sec.CourseKey] }}</span>
                       <button
-                        @click="cartStore.dismissError(sec.CourseKey)"
+                        @click="sectionErrorStore.dismiss(sec.CourseKey)"
                         class="text-xs text-gray-400 underline hover:text-gray-600"
                       >Dismiss</button>
                     </template>

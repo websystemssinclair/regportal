@@ -1,8 +1,10 @@
 import { useAuthStore } from '@/stores/auth'
 import { useRegistrationAction } from '@/composables/useRegistrationAction'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 export function useScheduleRegistration() {
   const authStore = useAuthStore()
+  const sectionErrorStore = useSectionErrorStore()
   const { register } = useRegistrationAction()
 
   async function drop(sectionId) {
@@ -17,11 +19,11 @@ export function useScheduleRegistration() {
         if (idx !== -1) authStore.currentCourses.splice(idx, 1)
       } else {
         for (const [key, msg] of Object.entries(errors)) {
-          authStore.sectionErrors[key] = msg
+          sectionErrorStore.set(key, msg)
         }
       }
     } catch {
-      authStore.sectionErrors[String(sectionId)] = 'Network error — drop failed. Please try again.'
+      sectionErrorStore.set(sectionId, 'Network error — drop failed. Please try again.')
     }
   }
 
@@ -37,11 +39,11 @@ export function useScheduleRegistration() {
         if (idx !== -1) authStore.waitlist.splice(idx, 1)
       } else {
         for (const [key, msg] of Object.entries(errors)) {
-          authStore.sectionErrors[key] = msg
+          sectionErrorStore.set(key, msg)
         }
       }
     } catch {
-      authStore.sectionErrors[String(sectionId)] = 'Network error — drop failed. Please try again.'
+      sectionErrorStore.set(sectionId, 'Network error — drop failed. Please try again.')
     }
   }
 

@@ -331,14 +331,13 @@ describe('authStore', () => {
       })
     })
 
-    it('initializes currentCourses, waitlist, sectionErrors, and colleagueToken so ScheduleView mounts cleanly', () => {
+    it('initializes currentCourses, waitlist, and colleagueToken so ScheduleView mounts cleanly', () => {
       vi.stubEnv('VITE_SKIP_AUTH', 'true')
 
       const store = useAuthStore()
 
       expect(store.currentCourses).toEqual([])
       expect(store.waitlist).toEqual([])
-      expect(store.sectionErrors).toEqual({})
       expect(store.colleagueToken).toBeNull()
     })
   })

@@ -110,11 +110,11 @@
                   class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
                   @click="activeBooksSection = entry.section"
                 >Books</button>
-                <template v-if="authStore.sectionErrors[entry.courseKey]">
-                  <span class="text-xs text-red-600">{{ authStore.sectionErrors[entry.courseKey] }}</span>
+                <template v-if="sectionErrorStore.errors[entry.courseKey]">
+                  <span class="text-xs text-red-600">{{ sectionErrorStore.errors[entry.courseKey] }}</span>
                   <button
                     class="ml-1 text-xs text-gray-500 hover:text-gray-700"
-                    @click="authStore.dismissError(entry.courseKey)"
+                    @click="sectionErrorStore.dismiss(entry.courseKey)"
                   >Dismiss</button>
                 </template>
                 <button
@@ -205,11 +205,11 @@
                     class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
                     @click="activeBooksSection = entry.section"
                   >Books</button>
-                  <template v-if="authStore.sectionErrors[entry.courseKey]">
-                    <span class="text-xs text-red-600">{{ authStore.sectionErrors[entry.courseKey] }}</span>
+                  <template v-if="sectionErrorStore.errors[entry.courseKey]">
+                    <span class="text-xs text-red-600">{{ sectionErrorStore.errors[entry.courseKey] }}</span>
                     <button
                       class="ml-1 text-xs text-gray-500"
-                      @click="authStore.dismissError(entry.courseKey)"
+                      @click="sectionErrorStore.dismiss(entry.courseKey)"
                     >Dismiss</button>
                   </template>
                   <button
@@ -246,6 +246,7 @@ import { ref, computed, watch, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 import BooklistModal from '@/components/BooklistModal.vue'
 import { parseTimeMinutes, formatTime } from '@/utils/time'
 
@@ -262,6 +263,7 @@ function toGridPercent(minutes) {
 
     const authStore = useAuthStore()
     const referenceStore = useReferenceStore()
+    const sectionErrorStore = useSectionErrorStore()
     const { drop, waitlistDrop } = useScheduleRegistration()
 
     const selectedDay = ref('M')

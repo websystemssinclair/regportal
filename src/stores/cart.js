@@ -22,7 +22,6 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     sections: readStorage(),
     mergeCarryOver: null,
-    sectionErrors: {},
     registeringTerms: [],
   }),
   getters: {
@@ -115,9 +114,6 @@ export const useCartStore = defineStore('cart', {
       } else {
         writeStorage(this.sections)
       }
-    },
-    dismissError(courseKey) {
-      delete this.sectionErrors[String(courseKey)]
     },
     async loadAvailability() {
       if (!this.sections.length) return

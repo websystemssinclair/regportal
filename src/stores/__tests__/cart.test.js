@@ -223,17 +223,7 @@ describe('useCartStore', () => {
     })
   })
 
-  describe('dismissError()', () => {
-    it('removes the error for the given courseKey and leaves others intact', () => {
-      const store = useCartStore()
-      store.sectionErrors = { '111': 'Section is full', '222': 'Time conflict' }
-
-      store.dismissError('111')
-
-      expect(store.sectionErrors['111']).toBeUndefined()
-      expect(store.sectionErrors['222']).toBe('Time conflict')
-    })
-  })
+  // dismissError and sectionErrors moved to useSectionErrorStore (src/stores/sectionErrors.js)
 
   describe('add() — auth-aware', () => {
     it('calls saveCart and does NOT write localStorage when authenticated', () => {

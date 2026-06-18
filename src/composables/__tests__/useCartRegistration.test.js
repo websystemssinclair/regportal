@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useCartRegistration } from '@/composables/useCartRegistration'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 vi.mock('@/services/registrationService', () => ({
   registerSections: vi.fn(),
@@ -68,6 +69,7 @@ describe('useCartRegistration', () => {
     it('leaves failed sections in the cart and populates sectionErrors on the store', async () => {
       const cartStore = useCartStore()
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
 
       cartStore.sections = [
@@ -89,7 +91,7 @@ describe('useCartRegistration', () => {
       await register('26SU', [{ sectionId: '111', action: 'add' }])
 
       expect(cartStore.sections).toHaveLength(1)
-      expect(cartStore.sectionErrors['111']).toBe('Section is full')
+      expect(sectionErrorStore.errors['111']).toBe('Section is full')
     })
   })
 
@@ -97,6 +99,7 @@ describe('useCartRegistration', () => {
     it('removes succeeded sections and leaves failed ones with errors', async () => {
       const cartStore = useCartStore()
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
 
       cartStore.sections = [
@@ -122,8 +125,8 @@ describe('useCartRegistration', () => {
       ])
 
       expect(cartStore.sections.map((s) => s.CourseKey)).toEqual(['222'])
-      expect(cartStore.sectionErrors['222']).toBe('Time conflict')
-      expect(cartStore.sectionErrors['111']).toBeUndefined()
+      expect(sectionErrorStore.errors['222']).toBe('Time conflict')
+      expect(sectionErrorStore.errors['111']).toBeUndefined()
     })
   })
 

@@ -7,6 +7,7 @@ import { useCartStore } from '@/stores/cart'
 import { useReferenceStore } from '@/stores/reference'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCartRegistration } from '@/composables/useCartRegistration'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 import { useToast } from 'primevue/usetoast'
 
 vi.mock('@/composables/useCartRegistration')
@@ -189,20 +190,20 @@ describe('CartView — registration actions', () => {
   describe('inline error and dismiss', () => {
     it('shows inline error replacing action button when sectionErrors has entry', async () => {
       useCartStore().sections = [makeSection({ CourseKey: '111', status: 'Open' })]
-      useCartStore().sectionErrors['111'] = 'Time conflict'
+      useSectionErrorStore().set('111', 'Time conflict')
       const wrapper = mountView()
       expect(wrapper.text()).toContain('Time conflict')
       expect(wrapper.text()).toContain('Dismiss')
       expect(wrapper.text()).not.toContain('Add')
     })
 
-    it('calls dismissError with courseKey when Dismiss is clicked', async () => {
+    it('calls dismiss with courseKey when Dismiss is clicked', async () => {
       useCartStore().sections = [makeSection({ CourseKey: '111', status: 'Open' })]
-      useCartStore().sectionErrors['111'] = 'Time conflict'
+      useSectionErrorStore().set('111', 'Time conflict')
       const wrapper = mountView()
       const dismissBtn = wrapper.findAll('button').find((b) => b.text() === 'Dismiss')
       await dismissBtn?.trigger('click')
-      expect(useCartStore().sectionErrors['111']).toBeUndefined()
+      expect(useSectionErrorStore().errors['111']).toBeUndefined()
     })
   })
 

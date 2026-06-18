@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
 import { useAuthStore } from '@/stores/auth'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 vi.mock('@/services/registrationService', () => ({
   registerSections: vi.fn(),
@@ -101,8 +102,9 @@ describe('useScheduleRegistration', () => {
       expect(authStore.currentCourses).toHaveLength(0)
     })
 
-    it('records error on authStore.sectionErrors when drop fails', async () => {
+    it('records error on sectionErrorStore when drop fails', async () => {
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
       authStore.currentCourses = [makeSection({ CourseKey: '111' })]
       registerSections.mockResolvedValue(errorResponse('111', 'Cannot drop after deadline'))
@@ -111,7 +113,7 @@ describe('useScheduleRegistration', () => {
       await drop('111')
 
       expect(authStore.currentCourses).toHaveLength(1)
-      expect(authStore.sectionErrors['111']).toBe('Cannot drop after deadline')
+      expect(sectionErrorStore.errors['111']).toBe('Cannot drop after deadline')
     })
 
     it('does not affect waitlist', async () => {
@@ -156,8 +158,9 @@ describe('useScheduleRegistration', () => {
       expect(authStore.waitlist).toHaveLength(0)
     })
 
-    it('records error on authStore.sectionErrors when waitlistDrop fails', async () => {
+    it('records error on sectionErrorStore when waitlistDrop fails', async () => {
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
       authStore.waitlist = [makeSection({ CourseKey: '333' })]
       registerSections.mockResolvedValue(errorResponse('333', 'Waitlist drop failed'))
@@ -166,7 +169,7 @@ describe('useScheduleRegistration', () => {
       await waitlistDrop('333')
 
       expect(authStore.waitlist).toHaveLength(1)
-      expect(authStore.sectionErrors['333']).toBe('Waitlist drop failed')
+      expect(sectionErrorStore.errors['333']).toBe('Waitlist drop failed')
     })
 
     it('does not affect currentCourses', async () => {
@@ -187,6 +190,7 @@ describe('useScheduleRegistration', () => {
   describe('network error handling (issue 20)', () => {
     it('sets sectionErrors when drop() network call rejects', async () => {
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
       authStore.currentCourses = [makeSection({ CourseKey: '111' })]
       registerSections.mockRejectedValue(new Error('Network Error'))
@@ -194,12 +198,13 @@ describe('useScheduleRegistration', () => {
       const { drop } = useScheduleRegistration()
       await drop('111')
 
-      expect(authStore.sectionErrors['111']).toMatch(/network error/i)
+      expect(sectionErrorStore.errors['111']).toMatch(/network error/i)
       expect(authStore.currentCourses).toHaveLength(1)
     })
 
     it('sets sectionErrors when waitlistDrop() network call rejects', async () => {
       const authStore = useAuthStore()
+      const sectionErrorStore = useSectionErrorStore()
       seedAuth(authStore)
       authStore.waitlist = [makeSection({ CourseKey: '333' })]
       registerSections.mockRejectedValue(new Error('Network Error'))
@@ -207,7 +212,7 @@ describe('useScheduleRegistration', () => {
       const { waitlistDrop } = useScheduleRegistration()
       await waitlistDrop('333')
 
-      expect(authStore.sectionErrors['333']).toMatch(/network error/i)
+      expect(sectionErrorStore.errors['333']).toMatch(/network error/i)
       expect(authStore.waitlist).toHaveLength(1)
     })
   })

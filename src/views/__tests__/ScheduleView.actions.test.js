@@ -5,6 +5,7 @@ import { nextTick } from 'vue'
 import ScheduleView from '@/views/ScheduleView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
+import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 vi.mock('@/composables/useScheduleRegistration')
 vi.mock('@/router', () => ({ default: { replace: vi.fn() } }))
@@ -453,19 +454,18 @@ describe('ScheduleView — inline errors', () => {
 
   it('shows inline error when sectionErrors has an entry for the section', () => {
     seedStudent([makeSection({ CourseKey: '111' })])
-    useAuthStore().sectionErrors['111'] = 'Cannot drop after deadline'
+    useSectionErrorStore().set('111', 'Cannot drop after deadline')
     const wrapper = mountView()
     expect(wrapper.text()).toContain('Cannot drop after deadline')
     expect(wrapper.text()).toContain('Dismiss')
   })
 
-  it('calls dismissError when Dismiss is clicked', async () => {
+  it('calls dismiss when Dismiss is clicked', async () => {
     seedStudent([makeSection({ CourseKey: '111' })])
-    const authStore = useAuthStore()
-    authStore.sectionErrors['111'] = 'Cannot drop after deadline'
+    useSectionErrorStore().set('111', 'Cannot drop after deadline')
     const wrapper = mountView()
     const dismissBtn = wrapper.findAll('button').find((b) => b.text() === 'Dismiss')
     await dismissBtn.trigger('click')
-    expect(authStore.sectionErrors['111']).toBeUndefined()
+    expect(useSectionErrorStore().errors['111']).toBeUndefined()
   })
 })
