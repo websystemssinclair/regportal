@@ -241,7 +241,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, watch, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
@@ -282,10 +282,6 @@ function formatTime(timeStr) {
   return `${displayH}:${String(min).padStart(2, '0')}${period}`
 }
 
-export default {
-  name: 'ScheduleView',
-  components: { BooklistModal },
-  setup() {
     const authStore = useAuthStore()
     const referenceStore = useReferenceStore()
     const { drop, waitlistDrop } = useScheduleRegistration()
@@ -424,29 +420,6 @@ export default {
       }
     }
 
-    return {
-      authStore,
-      DAYS,
-      DAY_LABELS,
-      DAY_SHORT_LABELS,
-      DAY_LONG_LABELS,
-      selectedDay,
-      showListPanel,
-      registrationTerms,
-      selectedTermId,
-      gridBlocks,
-      omittedCount,
-      summaryList,
-      selectedDayCourses,
-      activeBooksSection,
-      pendingAction,
-      droppingSections,
-      startDrop,
-      startWaitlistDrop,
-      confirmAction,
-    }
-  },
-}
 </script>
 
 <style scoped>

@@ -5,13 +5,9 @@
   </main>
 </template>
 
-<script>
+<script setup>
 import { useMaintenanceStore } from '@/stores/maintenance'
 
-export default {
-  setup() {
-    const store = useMaintenanceStore()
-    return { message: store.publicMessage }
-  },
-}
+const store = useMaintenanceStore()
+const message = store.publicMessage
 </script>

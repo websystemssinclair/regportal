@@ -286,12 +286,13 @@
   </div>
 </template>
 
-<script>
-import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from 'vue'
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
 import { searchCourses, getCourseSections } from '@/services/sectionsService'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
+import { useRoute } from 'vue-router'
 import router from '@/router'
 
 const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
@@ -320,9 +321,6 @@ function formatMinutes(min) {
   return `${displayH}:${String(m).padStart(2, '0')}${period}`
 }
 
-export default {
-  name: 'ScheduleBuilderView',
-  setup() {
     const referenceStore = useReferenceStore()
     const authStore = useAuthStore()
     const { schedules, isBuilding, error, count, build, selectSchedule, scheduleResults, registeringSchedules, registerSchedule } = useScheduleBuilder()
@@ -459,9 +457,9 @@ export default {
       registerSchedule(schedule, idx)
     }
 
-    const instance = getCurrentInstance()
+    const route = useRoute()
     onMounted(async () => {
-      const courseParam = instance?.proxy?.$route?.query?.course
+      const courseParam = route.query.course
       if (!courseParam) return
       const dashIdx = courseParam.indexOf('-')
       if (dashIdx < 1) return
@@ -471,40 +469,4 @@ export default {
       router.replace({ path: '/schedule-builder' })
     })
 
-    return {
-      registrationTerms,
-      locations,
-      selectedTermId,
-      selectedCourses,
-      searchQuery,
-      searchResults,
-      showDropdown,
-      filters,
-      schedules,
-      isBuilding,
-      error,
-      count,
-      hasBuilt,
-      GRID_DAYS,
-      TIME_PRESETS,
-      ALL_DAYS,
-      triggerBuild,
-      onSearchInput,
-      onSearchBlur,
-      addCourse,
-      removeCourse,
-      applyPreset,
-      isActivePreset,
-      blocksForDay,
-      blockStyle,
-      onSelectSchedule,
-      resolvedTermId,
-      formatMinutes,
-      authStore,
-      scheduleResults,
-      registeringSchedules,
-      onRegisterSchedule,
-    }
-  },
-}
 </script>
