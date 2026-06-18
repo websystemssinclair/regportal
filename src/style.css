@@ -17,6 +17,20 @@
   }
 }
 
+/* Honour prefers-reduced-motion globally.
+   Collapses every transition and animation duration to near-zero so state
+   changes remain visible but motion stops. The ticker gets an additional
+   animation:none override in HomeView's scoped styles because collapsing its
+   duration leaves it stuck mid-loop at translateX(-50%). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 :root {
   --color-warm-white: #faf8f5;
   --color-warm-dark: #1a1614;

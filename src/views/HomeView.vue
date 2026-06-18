@@ -203,7 +203,7 @@ fetch()
         <!-- Key dates ticker -->
         <div
           v-if="upcomingKeyDates.length"
-          class="mt-4 overflow-hidden rounded bg-canvas"
+          class="mt-4 rounded bg-canvas motion-safe:overflow-hidden motion-reduce:overflow-x-auto"
           aria-label="Important Dates"
           role="marquee"
           @mouseenter="tickerPaused = true"
@@ -554,4 +554,15 @@ fetch()
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Reduced-motion: stop the marquee and let users scroll the dates instead
+   of seeing it stuck at translateX(-50%) (which the global 0.01ms rule
+   would cause for an infinite-loop animation). */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+    /* Truncated first item is still readable; no overflow needed since
+       the parent already clips, but scrolling is enabled on the wrapper. */
+  }
+}
 </style>
