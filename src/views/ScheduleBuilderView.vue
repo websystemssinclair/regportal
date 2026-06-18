@@ -292,6 +292,7 @@ import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
 import { searchCourses, getCourseSections } from '@/services/sectionsService'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
+import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { formatMinutes } from '@/utils/time'
@@ -316,7 +317,8 @@ const ALL_DAYS = [
 
     const referenceStore = useReferenceStore()
     const authStore = useAuthStore()
-    const { schedules, isBuilding, error, count, build, selectSchedule, scheduleResults, registeringSchedules, registerSchedule } = useScheduleBuilder()
+    const { schedules, isBuilding, error, count, build, selectSchedule, getCredits } = useScheduleBuilder()
+    const { scheduleResults, registeringSchedules, registerSchedule, reset: resetRegistration } = useRegisterSchedule()
     const locations = computed(() => referenceStore.locations)
 
     const registrationTerms = computed(() =>
@@ -350,11 +352,13 @@ const ALL_DAYS = [
 
     function triggerBuild() {
       hasBuilt.value = true
+      resetRegistration()
       build(selectedCourses.value, { ...filters })
     }
 
     watch(filters, () => {
       if (hasBuilt.value && selectedCourses.value.length > 0) {
+        resetRegistration()
         build(selectedCourses.value, { ...filters })
       }
     }, { deep: true })
@@ -447,7 +451,7 @@ const ALL_DAYS = [
     }
 
     function onRegisterSchedule(schedule, idx) {
-      registerSchedule(schedule, idx)
+      registerSchedule(schedule, idx, getCredits)
     }
 
     const route = useRoute()

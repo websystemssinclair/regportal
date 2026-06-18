@@ -6,8 +6,10 @@ import ScheduleBuilderView from '@/views/ScheduleBuilderView.vue'
 import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
+import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 
 vi.mock('@/composables/useScheduleBuilder')
+vi.mock('@/composables/useRegisterSchedule')
 vi.mock('@/router', () => ({ default: { push: vi.fn(), replace: vi.fn() } }))
 vi.mock('@/services/authService', () => ({
   sendSamlRequest: vi.fn(),
@@ -53,9 +55,14 @@ function seedComposable(overrides = {}) {
     count: computed(() => schedulesRef.value.length),
     build: buildMock,
     selectSchedule: selectScheduleMock,
+    getCredits: vi.fn(() => 3),
+  })
+
+  vi.mocked(useRegisterSchedule).mockReturnValue({
     scheduleResults: scheduleResultsObj,
     registeringSchedules: registeringSchedulesSet,
     registerSchedule: registerScheduleMock,
+    reset: vi.fn(),
   })
 }
 
@@ -323,7 +330,7 @@ describe('ScheduleBuilderView — Register Now', () => {
     wrapper.vm.hasBuilt = true
     await nextTick()
     await wrapper.find('[data-testid="register-now-btn"]').trigger('click')
-    expect(registerScheduleMock).toHaveBeenCalledWith(fakeSchedule, 0)
+    expect(registerScheduleMock).toHaveBeenCalledWith(fakeSchedule, 0, expect.any(Function))
   })
 
   it('shows Registering… and disables button when in flight', async () => {

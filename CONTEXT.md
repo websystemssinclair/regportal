@@ -63,7 +63,7 @@ A degree or certificate path offered by the college (e.g. "AAS in Accounting"). 
 _Avoid_: Degree, major, curriculum
 
 **Booklist**:
-Required textbooks for Sections. Has two surfaces: (1) a top-level view aggregating books across all Cart and registered Sections; (2) a per-Section modal accessible from Cart and My Schedule showing that Section's books only. Each book entry has an external link button (e.g., campus bookstore). Visible to all roles including Visitors (who have a localStorage Cart).
+Required textbooks for Sections. Has two surfaces: (1) a top-level aggregate view at `/booklist` grouping books by Section across all Cart Sections, registered Sections, and waitlisted Sections; (2) a per-Section modal accessible from Cart and My Schedule cards showing books for that Section only. Books for registered and waitlisted Sections are pre-loaded in the login payload (`booklist` field on each Section); Cart-only Sections require a fetch. Sections with no books render an explicit "no books required" state. The aggregate view includes one "Buy Books at Campus Store" button per Term group (not per book), linking to the ecampus bookstore with all Sections for that Term. Waitlisted Sections are included in the aggregate view alongside registered and Cart Sections. Sections that appear in multiple sources (Cart and registered) are deduplicated — the registered copy takes precedence. Visible to all roles including Visitors.
 _Avoid_: Book list, textbook list
 
 **Completed Course**:

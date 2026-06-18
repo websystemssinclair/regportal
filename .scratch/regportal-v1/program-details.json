@@ -1,0 +1,40 @@
+{
+  "results": 1,
+  "success": true,
+  "rows": [
+    {
+      "careerOps": "",
+      "programName": "Accounting",
+      "certificateType": "Associate of Applied Science",
+      "description": "Accountants prepare, analyze and verify financial reports and monitor information systems that furnish this information to management. Business executives, bankers, government leaders and investors all rely on financial statements and other reports prepared by accountants that summarize and interpret financial transactions that occur in every business. An accountant must have the ability to develop reliable analyses of business operations which can be used in making business decisions. Students who complete the accounting program can qualify to sit for the CPA exam in Ohio after completing a few additional courses and a qualifying exam as determined by the Ohio Board of Accountancy.",
+      "accreditation": "This program is fully accredited by the Accreditation Council for Business Schools and Programs (ACBSP), a specialized accreditation recognized by the Council on Higher Education Accreditation (CHEA).",
+      "programCode": "ACC.S.AAS",
+      "programcourses": [
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Introduction to Financial Accounting", "CourseCode": "ACC-1210" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Introduction to Managerial Accounting", "CourseCode": "ACC-1220" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Computerized Accounting Systems", "CourseCode": "ACC-1510" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Intermediate Accounting I", "CourseCode": "ACC-2101" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Intermediate Accounting II", "CourseCode": "ACC-2102" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Cost Accounting", "CourseCode": "ACC-2211" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Managerial Accounting & Finance", "CourseCode": "ACC-2212" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Federal Taxation", "CourseCode": "ACC-2321" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Auditing", "CourseCode": "ACC-2435" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Introduction to Software Applications", "CourseCode": "BIS-1120" },
+        { "dspType": "Add.Req", "creditHours": 3.0, "LongName": "COM 2211 OR COM 2225", "CourseCode": "" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Principles of Macroeconomics", "CourseCode": "ECO-2160" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Principles of Microeconomics", "CourseCode": "ECO-2180" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "English Composition I", "CourseCode": "ENG-1101" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Business Law", "CourseCode": "LAW-1101" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Foundations of Business", "CourseCode": "MAN-1107" },
+        { "dspType": "Add.Req", "creditHours": 3.0, "LongName": "MAT 1470 OR MAT 1460", "CourseCode": "" },
+        { "dspType": "Course", "creditHours": 4.0, "LongName": "Business Statistics I", "CourseCode": "MAT-2170" },
+        { "dspType": "Course", "creditHours": 3.0, "LongName": "Principles of Marketing Management", "CourseCode": "MRK-2101" },
+        { "dspType": "Elective", "creditHours": 3.0, "LongName": "Ohio Transfer 36: Arts & Humanities Elective", "CourseCode": "" },
+        { "dspType": "Elective", "creditHours": 3.0, "LongName": "Accounting Elective", "CourseCode": "" }
+      ],
+      "creditHours": "64 Credit Hours",
+      "department": "Accounting",
+      "division": "Business and Public Services"
+    }
+  ]
+}

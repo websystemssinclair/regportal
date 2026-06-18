@@ -1,0 +1,54 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - heading "Schedule Builder" [level=1] [ref=e6]
+    - combobox [ref=e7]:
+      - option "Summer Semester" [selected]
+      - option "Fall Semester"
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Add Courses
+        - textbox "Search by subject or keyword…" [active] [ref=e14]: english
+      - generic [ref=e15]:
+        - heading "Filters" [level=2] [ref=e16]
+        - generic [ref=e17]:
+          - paragraph [ref=e18]: Time of Day
+          - generic [ref=e19]:
+            - button "Mornings" [ref=e20]
+            - button "Afternoons" [ref=e21]
+            - button "Evenings" [ref=e22]
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]: 8:00am
+            - generic [ref=e26]: 10:00pm
+          - generic [ref=e27]:
+            - slider [ref=e28]: "480"
+            - slider [ref=e29]: "1320"
+        - generic [ref=e30]:
+          - paragraph [ref=e31]: Days
+          - generic [ref=e32]:
+            - generic [ref=e33] [cursor=pointer]:
+              - checkbox "Mon" [checked] [ref=e34]
+              - text: Mon
+            - generic [ref=e35] [cursor=pointer]:
+              - checkbox "Tue" [checked] [ref=e36]
+              - text: Tue
+            - generic [ref=e37] [cursor=pointer]:
+              - checkbox "Wed" [checked] [ref=e38]
+              - text: Wed
+            - generic [ref=e39] [cursor=pointer]:
+              - checkbox "Thu" [checked] [ref=e40]
+              - text: Thu
+            - generic [ref=e41] [cursor=pointer]:
+              - checkbox "Fri" [checked] [ref=e42]
+              - text: Fri
+        - generic [ref=e43]:
+          - generic [ref=e44]: Modality
+          - combobox [ref=e45]:
+            - option "Any" [selected]
+            - option "Lecture (In-Person)"
+            - option "Online"
+            - option "Hybrid"
+            - option "Web-Enhanced"
+      - button "Build Schedules" [disabled] [ref=e46]
+    - paragraph [ref=e48]: Add courses and click Build Schedules to see options.

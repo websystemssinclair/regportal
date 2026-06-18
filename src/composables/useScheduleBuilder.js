@@ -1,8 +1,5 @@
-import { ref, reactive, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import { useAuthStore } from '@/stores/auth'
-import { getAvailability } from '@/services/sectionsService'
-import { useRegistrationAction } from '@/composables/useRegistrationAction'
 import { parseTimeMinutes } from '@/utils/time'
 
 function normalizeSection(sec) {
@@ -27,15 +24,10 @@ export function useScheduleBuilder() {
   const error = ref(null)
   const count = computed(() => schedules.value.length)
 
-  const scheduleResults = reactive({})
-  const registeringSchedules = reactive(new Set())
-
   const _sectionCache = new Map()
   let _worker = null
-  let _buildGen = 0
 
   function build(coursesWithSections, filters) {
-    _buildGen++
     _sectionCache.clear()
     for (const course of coursesWithSections) {
       for (const sec of course.rawSections) {
@@ -59,7 +51,6 @@ export function useScheduleBuilder() {
     _worker.onmessage = ({ data }) => {
       isBuilding.value = false
       if (data.type === 'result') {
-        for (const key in scheduleResults) delete scheduleResults[key]
         schedules.value = data.schedules
       } else if (data.type === 'error') {
         error.value = data.message
@@ -82,76 +73,13 @@ export function useScheduleBuilder() {
     }
   }
 
-  async function registerSchedule(schedule, scheduleIndex) {
-    const authStore = useAuthStore()
-    const gen = _buildGen
-    registeringSchedules.add(scheduleIndex)
-
-    try {
-      const courseKeys = schedule.map((s) => s.id)
-      let availabilityMap = {}
-
-      try {
-        const { data } = await getAvailability(courseKeys.join(','))
-        for (const row of data.rows ?? []) {
-          availabilityMap[String(row.CourseKey)] = row.Status
-        }
-      } catch {
-        if (gen === _buildGen) {
-          scheduleResults[scheduleIndex] = { _error: 'Could not check seat availability. Please try again.' }
-        }
-        return
-      }
-
-      if (gen !== _buildGen) return
-
-      const missingKey = schedule.find((sec) => !(String(sec.id) in availabilityMap))
-      if (missingKey) {
-        scheduleResults[scheduleIndex] = { _error: 'Could not check seat availability. Please try again.' }
-        return
-      }
-
-      if (!authStore.user) {
-        scheduleResults[scheduleIndex] = { _error: 'Registration failed. Please try again.' }
-        return
-      }
-
-      const { register } = useRegistrationAction()
-      const sections = schedule.map((sec) => ({
-        sectionId: sec.id,
-        action: availabilityMap[String(sec.id)] === 'Open' ? 'add' : 'waitlist',
-        credits: _sectionCache.get(String(sec.id))?.CreditHours ?? 0,
-      }))
-
-      const { succeeded, errors: errorMap } = await register(sections)
-      if (gen !== _buildGen) return
-
-      const result = {}
-      for (const sec of schedule) {
-        const key = String(sec.id)
-        if (errorMap[key]) {
-          result[key] = { status: 'error', message: errorMap[key] }
-        } else {
-          const action = sections.find((s) => String(s.sectionId) === key)?.action
-          result[key] = {
-            status: action === 'waitlist' ? 'waitlisted' : 'registered',
-            message: action === 'waitlist' ? 'Waitlisted' : 'Registered',
-          }
-        }
-      }
-      scheduleResults[scheduleIndex] = result
-    } catch {
-      if (gen === _buildGen) {
-        scheduleResults[scheduleIndex] = { _error: 'Registration failed. Please try again.' }
-      }
-    } finally {
-      registeringSchedules.delete(scheduleIndex)
-    }
+  function getCredits(sectionId) {
+    return _sectionCache.get(String(sectionId))?.CreditHours ?? 0
   }
 
   onUnmounted(() => {
     if (_worker) _worker.terminate()
   })
 
-  return { schedules, isBuilding, error, count, build, selectSchedule, scheduleResults, registeringSchedules, registerSchedule }
+  return { schedules, isBuilding, error, count, build, selectSchedule, getCredits }
 }
