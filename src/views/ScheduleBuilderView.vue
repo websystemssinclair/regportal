@@ -294,6 +294,7 @@ import { searchCourses, getCourseSections } from '@/services/sectionsService'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
 import { useRoute } from 'vue-router'
 import router from '@/router'
+import { formatMinutes } from '@/utils/time'
 
 const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
 const GRID_START = 480   // 8am
@@ -312,14 +313,6 @@ const ALL_DAYS = [
   { value: 'R', label: 'Thu' },
   { value: 'F', label: 'Fri' },
 ]
-
-function formatMinutes(min) {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  const period = h >= 12 ? 'pm' : 'am'
-  const displayH = h > 12 ? h - 12 : h || 12
-  return `${displayH}:${String(m).padStart(2, '0')}${period}`
-}
 
     const referenceStore = useReferenceStore()
     const authStore = useAuthStore()

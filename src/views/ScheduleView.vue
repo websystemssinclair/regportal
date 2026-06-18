@@ -247,6 +247,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
 import BooklistModal from '@/components/BooklistModal.vue'
+import { parseTimeMinutes, formatTime } from '@/utils/time'
 
 const DAYS = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
 const DAY_LABELS = { M: 'M', T: 'T', W: 'W', R: 'R', F: 'F', S: 'S', U: 'U' }
@@ -255,31 +256,8 @@ const DAY_LONG_LABELS = { M: 'Monday', T: 'Tuesday', W: 'Wednesday', R: 'Thursda
 const GRID_START_MINUTES = 6 * 60
 const GRID_SPAN_MINUTES = 18 * 60
 
-function parseTimeMinutes(timeStr) {
-  if (!timeStr) return null
-  const trimmed = timeStr.trim()
-  const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i)
-  if (!match) return null
-  let h = parseInt(match[1])
-  const m = parseInt(match[2])
-  const period = match[3]?.toUpperCase()
-  if (period === 'PM' && h !== 12) h += 12
-  if (period === 'AM' && h === 12) h = 0
-  return h * 60 + m
-}
-
 function toGridPercent(minutes) {
   return ((minutes - GRID_START_MINUTES) / GRID_SPAN_MINUTES) * 100
-}
-
-function formatTime(timeStr) {
-  const m = parseTimeMinutes(timeStr)
-  if (m === null) return timeStr ?? ''
-  const h = Math.floor(m / 60)
-  const min = m % 60
-  const period = h >= 12 ? 'pm' : 'am'
-  const displayH = h > 12 ? h - 12 : h || 12
-  return `${displayH}:${String(min).padStart(2, '0')}${period}`
 }
 
     const authStore = useAuthStore()

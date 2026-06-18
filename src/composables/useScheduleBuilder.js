@@ -3,19 +3,7 @@ import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { getAvailability } from '@/services/sectionsService'
 import { useRegistrationAction } from '@/composables/useRegistrationAction'
-
-function parseTimeMinutes(timeStr) {
-  if (!timeStr) return null
-  const trimmed = timeStr.trim()
-  const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i)
-  if (!match) return null
-  let h = parseInt(match[1])
-  const m = parseInt(match[2])
-  const period = match[3]?.toUpperCase()
-  if (period === 'PM' && h !== 12) h += 12
-  if (period === 'AM' && h === 12) h = 0
-  return h * 60 + m
-}
+import { parseTimeMinutes } from '@/utils/time'
 
 function normalizeSection(sec) {
   return {
