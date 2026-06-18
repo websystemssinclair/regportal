@@ -75,15 +75,10 @@ function seatBadgeClass(status) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-[#ac1a2f] px-4 py-5">
-      <div class="mx-auto max-w-4xl flex items-center gap-3">
-        <router-link to="/programs" class="text-white/70 hover:text-white text-sm">← Programs</router-link>
-        <h1 class="text-xl font-bold text-white">{{ program?.programName ?? 'Program Detail' }}</h1>
-      </div>
-    </div>
-
+  <div class="min-h-screen bg-[#f6f5f4]">
     <div class="mx-auto max-w-4xl px-4 py-6">
+      <router-link to="/programs" class="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">← Programs</router-link>
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">{{ program?.programName ?? 'Program Detail' }}</h1>
       <div v-if="isLoading" class="py-12 text-center text-sm text-gray-500">Loading…</div>
       <div v-else-if="error" class="py-12 text-center text-sm text-red-600">{{ error }}</div>
 

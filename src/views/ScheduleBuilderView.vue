@@ -1,29 +1,25 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-[#f6f5f4]">
 
-    <div class="bg-[#ac1a2f] px-4 py-5">
-      <div class="mx-auto flex max-w-6xl items-center gap-4">
-        <h1 class="text-xl font-bold text-white">Schedule Builder</h1>
+    <div class="mx-auto max-w-6xl px-4 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold tracking-tight text-gray-900">Schedule Builder</h1>
         <select
           v-if="registrationTerms.length > 1"
           data-testid="term-selector"
           v-model="selectedTermId"
-          class="ml-auto rounded border-0 bg-white/20 px-3 py-1 text-sm text-white"
+          class="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700"
         >
           <option
             v-for="term in registrationTerms"
             :key="term.id"
             :value="term.id"
-            class="text-gray-900"
           >{{ term.termName }}</option>
         </select>
-        <span v-else-if="registrationTerms.length === 1" class="ml-auto text-sm text-white/80">
+        <span v-else-if="registrationTerms.length === 1" class="text-sm text-gray-500">
           {{ registrationTerms[0].termName }}
         </span>
       </div>
-    </div>
-
-    <div class="mx-auto max-w-6xl px-4 py-6">
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
 
         <!-- Left panel: course input + filters -->

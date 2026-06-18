@@ -48,10 +48,14 @@ const pageWindow = computed(() => {
   const hi = Math.min(totalPages.value, filters.page + 2)
   return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i)
 })
+const defaultTermId = computed(() => reference.terms.find(t => t.toView === 'D')?.id ?? null)
+watch(defaultTermId, (id) => {
+  if (id && !filters.term) filters.term = id
+}, { immediate: true })
+
 const activeFilterCount = computed(() => {
   let n = 0
   if (filters.keyword) n++
-  if (filters.term) n++
   if (filters.subjectCode && filters.subjectCode !== 'ANY') n++
   if (filters.termFormat !== 'all') n++
   if (filters.building !== 'any') n++
@@ -163,6 +167,16 @@ fetch()
             class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]"
             @keydown.enter="runSearch()"
           />
+          <select
+            v-model="filters.term"
+            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]"
+          >
+            <option
+              v-for="term in reference.terms.filter(t => ['D','Y','F'].includes(t.toView))"
+              :key="term.id"
+              :value="term.id"
+            >{{ term.termName }}{{ term.toView === 'F' ? ' (Future)' : '' }}</option>
+          </select>
           <button
             @click="drawerOpen = true"
             class="relative flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -233,13 +247,6 @@ fetch()
       </div>
 
       <div class="space-y-5 text-sm">
-        <div>
-          <label class="mb-1.5 block font-medium text-gray-700">Term</label>
-          <input v-model="filters.term" type="text" placeholder="e.g. 26FA"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]" />
-          <p class="mt-1 text-xs text-gray-400">Format: YYTT — e.g. 26FA, 27SP, 27SU</p>
-        </div>
-
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Subject Code</label>
           <input v-model="filters.subjectCode" type="text" placeholder="e.g. ACC, ENG, ART"

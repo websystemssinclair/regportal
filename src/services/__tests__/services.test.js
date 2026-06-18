@@ -5,6 +5,7 @@ import * as programsService from '@/services/programsService.js'
 import * as registrationService from '@/services/registrationService.js'
 import * as adminService from '@/services/adminService.js'
 import * as authService from '@/services/authService.js'
+import * as booklistService from '@/services/booklistService.js'
 
 const services = [
   ['sectionsService', sectionsService],
@@ -13,6 +14,7 @@ const services = [
   ['registrationService', registrationService],
   ['adminService', adminService],
   ['authService', authService],
+  ['booklistService', booklistService],
 ]
 
 describe('service modules export named functions', () => {

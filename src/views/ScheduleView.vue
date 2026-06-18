@@ -1,27 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-
-    <div class="bg-[#ac1a2f] px-4 py-5">
-      <div class="mx-auto flex max-w-5xl items-center gap-4">
-        <h1 class="text-xl font-bold text-white">My Schedule</h1>
-        <select
-          v-if="registrationTerms.length > 1"
-          data-testid="term-selector"
-          v-model="selectedTermId"
-          class="ml-auto rounded border-0 bg-white/20 px-3 py-1 text-sm text-white"
-        >
-          <option
-            v-for="term in registrationTerms"
-            :key="term.id"
-            :value="term.id"
-            class="text-gray-900"
-          >{{ term.termName }}</option>
-        </select>
-        <span v-else-if="registrationTerms.length === 1" class="ml-auto text-sm text-white/80">
-          {{ registrationTerms[0].termName }}
-        </span>
-      </div>
-    </div>
+  <div class="min-h-screen bg-[#f6f5f4]">
 
     <div
       v-if="pendingAction"
@@ -46,6 +24,30 @@
     </div>
 
     <div class="mx-auto max-w-5xl px-4 py-4">
+
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold tracking-tight text-gray-900">My Schedule</h1>
+        <select
+          v-if="registrationTerms.length > 1"
+          data-testid="term-selector"
+          v-model="selectedTermId"
+          class="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700"
+        >
+          <option
+            v-for="term in registrationTerms"
+            :key="term.id"
+            :value="term.id"
+          >{{ term.termName }}</option>
+        </select>
+        <span v-else-if="registrationTerms.length === 1" class="text-sm text-gray-500">
+          {{ registrationTerms[0].termName }}
+        </span>
+      </div>
+
+      <div v-if="!summaryList.length"
+        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400 mb-6">
+        <p class="text-lg font-medium">Nothing here yet — head to Courses to find something to register for.</p>
+      </div>
 
       <!-- Mobile: day-picker strip → selected-day cards → collapsible full list -->
       <div class="md:hidden">
@@ -103,7 +105,11 @@
                 <div class="mt-0.5 text-xs text-gray-500">{{ entry.faculty }}</div>
                 <div class="text-xs text-gray-400">{{ entry.days || 'Online' }}</div>
               </div>
-              <div class="flex-shrink-0">
+              <div class="flex shrink-0 flex-col items-end gap-1">
+                <button
+                  class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
+                  @click="activeBooksSection = entry.section"
+                >Books</button>
                 <template v-if="authStore.sectionErrors[entry.courseKey]">
                   <span class="text-xs text-red-600">{{ authStore.sectionErrors[entry.courseKey] }}</span>
                   <button
@@ -194,7 +200,11 @@
                   <div class="mt-0.5 text-xs text-gray-500">{{ entry.faculty }}</div>
                   <div class="text-xs text-gray-400">{{ entry.days || 'Online' }}</div>
                 </div>
-                <div class="mt-0.5 flex-shrink-0">
+                <div class="mt-0.5 flex shrink-0 flex-col items-end gap-1">
+                  <button
+                    class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600"
+                    @click="activeBooksSection = entry.section"
+                  >Books</button>
                   <template v-if="authStore.sectionErrors[entry.courseKey]">
                     <span class="text-xs text-red-600">{{ authStore.sectionErrors[entry.courseKey] }}</span>
                     <button
@@ -222,6 +232,12 @@
       </div>
 
     </div>
+
+    <BooklistModal
+      v-if="activeBooksSection"
+      :section="activeBooksSection"
+      @close="activeBooksSection = null"
+    />
   </div>
 </template>
 
@@ -230,6 +246,7 @@ import { ref, computed, watch, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
+import BooklistModal from '@/components/BooklistModal.vue'
 
 const DAYS = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
 const DAY_LABELS = { M: 'M', T: 'T', W: 'W', R: 'R', F: 'F', S: 'S', U: 'U' }
@@ -267,6 +284,7 @@ function formatTime(timeStr) {
 
 export default {
   name: 'ScheduleView',
+  components: { BooklistModal },
   setup() {
     const authStore = useAuthStore()
     const referenceStore = useReferenceStore()
@@ -358,6 +376,7 @@ export default {
         startTime: sec.StartTime,
         endTime: sec.EndTime,
         isWaitlisted: false,
+        section: sec,
       }))
       const waitlisted = termWaitlisted.value.map((sec) => ({
         courseKey: sec.CourseKey,
@@ -367,6 +386,7 @@ export default {
         startTime: sec.StartTime,
         endTime: sec.EndTime,
         isWaitlisted: true,
+        section: sec,
       }))
       return [...registered, ...waitlisted]
     })
@@ -374,6 +394,8 @@ export default {
     const selectedDayCourses = computed(() =>
       gridBlocks.value.filter((b) => b.days.includes(selectedDay.value)),
     )
+
+    const activeBooksSection = ref(null)
 
     const pendingAction = ref(null)
     const droppingSections = reactive(new Set())
@@ -416,6 +438,7 @@ export default {
       omittedCount,
       summaryList,
       selectedDayCourses,
+      activeBooksSection,
       pendingAction,
       droppingSections,
       startDrop,

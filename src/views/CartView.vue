@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useReferenceStore } from '@/stores/reference'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCartRegistration } from '@/composables/useCartRegistration'
 import { useToast } from 'primevue/usetoast'
+import BooklistModal from '@/components/BooklistModal.vue'
 
 const cartStore = useCartStore()
 const refStore = useReferenceStore()
@@ -48,6 +49,8 @@ async function registerSection(termId, sec) {
   if (succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${succeeded} section(s)`, life: 4000 })
 }
 
+const activeBooksSection = ref(null)
+
 async function registerAll(group) {
   const registrations = actionableInTerm(group).map((sec) => ({
     sectionId: sec.CourseKey,
@@ -60,14 +63,15 @@ async function registerAll(group) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <div class="bg-[#ac1a2f] px-4 py-8">
-      <div class="mx-auto max-w-3xl">
-        <h1 class="text-2xl font-bold text-white text-center">My Cart</h1>
-      </div>
-    </div>
-
+  <div class="min-h-screen bg-[#f6f5f4]">
     <main class="mx-auto max-w-3xl px-4 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold tracking-tight text-gray-900">My Cart</h1>
+        <router-link
+          to="/booklist"
+          class="text-sm text-[#ac1a2f] underline hover:text-[#8e1526]"
+        >View Booklist</router-link>
+      </div>
       <!-- Maintenance banner -->
       <div
         v-if="maintenanceStore.isBackendDown"
@@ -78,8 +82,7 @@ async function registerAll(group) {
 
       <div v-if="!cartStore.sections.length"
         class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400">
-        <p class="text-lg font-medium">Your cart is empty</p>
-        <p class="mt-1 text-sm">Search for courses and add sections to get started.</p>
+        <p class="text-lg font-medium">Your cart is empty — let's find your next class.</p>
       </div>
 
       <template v-else>
@@ -137,6 +140,10 @@ async function registerAll(group) {
                       class="rounded bg-[#ac1a2f] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
                     <button
+                      @click="activeBooksSection = sec"
+                      class="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                    >Books</button>
+                    <button
                       @click="cartStore.remove(sec.CourseKey)"
                       class="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
                     >
@@ -150,5 +157,11 @@ async function registerAll(group) {
         </template>
       </template>
     </main>
+
+    <BooklistModal
+      v-if="activeBooksSection"
+      :section="activeBooksSection"
+      @close="activeBooksSection = null"
+    />
   </div>
 </template>

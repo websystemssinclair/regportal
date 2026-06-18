@@ -37,14 +37,9 @@ function toggleCareer(id) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-[#ac1a2f] px-4 py-5">
-      <div class="mx-auto max-w-4xl">
-        <h1 class="text-xl font-bold text-white">Programs</h1>
-      </div>
-    </div>
-
+  <div class="min-h-screen bg-[#f6f5f4]">
     <div class="mx-auto max-w-4xl px-4 py-6 space-y-4">
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">Programs</h1>
       <!-- Name search -->
       <input
         data-testid="program-search-input"
@@ -94,7 +89,7 @@ function toggleCareer(id) {
         </div>
 
         <p v-if="!filteredPrograms.length" class="py-8 text-center text-sm text-gray-500">
-          No programs match your search.
+          No programs match that search. Try clearing the filter.
         </p>
       </div>
     </div>
