@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useReferenceStore } from '@/stores/reference'
 import { useMaintenanceStore } from '@/stores/maintenance'
@@ -7,6 +7,7 @@ import { useCartRegistration } from '@/composables/useCartRegistration'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 import { useToast } from 'primevue/usetoast'
 import BooklistModal from '@/components/BooklistModal.vue'
+import { groupSectionsByTerm } from '@/utils/cart'
 
 const cartStore = useCartStore()
 const refStore = useReferenceStore()
@@ -52,6 +53,7 @@ async function registerSection(termId, sec) {
 }
 
 const activeBooksSection = ref(null)
+const groupedSections = computed(() => groupSectionsByTerm(cartStore.sections, refStore.terms))
 
 async function registerAll(group) {
   const registrations = actionableInTerm(group).map((sec) => ({
@@ -89,8 +91,8 @@ async function registerAll(group) {
 
       <template v-else>
         <template v-for="meta in [
-          { label: 'Current', groups: cartStore.groupedSections.current },
-          { label: 'Future', groups: cartStore.groupedSections.future },
+          { label: 'Current', groups: groupedSections.current },
+          { label: 'Future', groups: groupedSections.future },
         ]" :key="meta.label">
           <section v-if="meta.groups.length" class="mb-6">
             <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{{ meta.label }}</h2>

@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { getAvailability } from '@/services/sectionsService'
 import { saveCart } from '@/services/cartService'
 import { useAuthStore } from '@/stores/auth'
-import { useReferenceStore } from '@/stores/reference'
 
 const STORAGE_KEY = 'regportal:cart'
 
@@ -24,35 +23,7 @@ export const useCartStore = defineStore('cart', {
     mergeCarryOver: null,
     registeringTerms: [],
   }),
-  getters: {
-    groupedSections(state) {
-      const refStore = useReferenceStore()
-      const termMap = Object.fromEntries(refStore.terms.map((t) => [t.id, t]))
-
-      const current = {}
-      const future = {}
-
-      for (const sec of state.sections) {
-        const term = termMap[sec.Term]
-        const toView = term?.toView ?? 'Y'
-        const bucket = toView === 'F' ? future : current
-        if (!bucket[sec.Term]) bucket[sec.Term] = []
-        bucket[sec.Term].push(sec)
-      }
-
-      const sortSections = (arr) =>
-        [...arr].sort((a, b) => {
-          const keyA = (a.SubjectCode ?? '').trim() + (a.CourseNo ?? '').trim()
-          const keyB = (b.SubjectCode ?? '').trim() + (b.CourseNo ?? '').trim()
-          return keyA < keyB ? -1 : keyA > keyB ? 1 : 0
-        })
-
-      return {
-        current: Object.entries(current).map(([termId, sections]) => ({ termId, sections: sortSections(sections) })),
-        future: Object.entries(future).map(([termId, sections]) => ({ termId, sections: sortSections(sections) })),
-      }
-    },
-  },
+  getters: {},
   actions: {
     _buildSavePayload() {
       const auth = useAuthStore()

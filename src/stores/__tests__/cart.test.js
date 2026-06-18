@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCartStore } from '@/stores/cart'
-import { useReferenceStore } from '@/stores/reference'
 
 vi.mock('@/services/sectionsService', () => ({
   getAvailability: vi.fn(),
@@ -48,50 +47,7 @@ describe('useCartStore', () => {
     localStorage.clear()
   })
 
-  describe('groupedSections', () => {
-    function seedTerms(refStore) {
-      refStore.terms = [
-        { id: '26SU', termName: 'Summer Semester', toView: 'D' },
-        { id: '26FA', termName: 'Fall Semester', toView: 'Y' },
-        { id: '27SP', termName: 'Spring Semester', toView: 'F' },
-        { id: '25FA', termName: 'Old Fall', toView: 'N' },
-      ]
-    }
-
-    it('sorts sections within a term by SubjectCode.trim() + CourseNo.trim() ascending', () => {
-      const refStore = useReferenceStore()
-      seedTerms(refStore)
-      const store = useCartStore()
-
-      store.add(makeSection({ CourseKey: 'Z', Term: '26SU', SubjectCode: 'MAT  ', CourseNo: '1470  ' }))
-      store.add(makeSection({ CourseKey: 'A', Term: '26SU', SubjectCode: 'ACC  ', CourseNo: '1210  ' }))
-      store.add(makeSection({ CourseKey: 'M', Term: '26SU', SubjectCode: 'ENG  ', CourseNo: '1101  ' }))
-
-      const { current } = store.groupedSections
-      const termGroup = current.find((g) => g.termId === '26SU')
-
-      expect(termGroup.sections.map((s) => s.CourseKey)).toEqual(['A', 'M', 'Z'])
-    })
-
-    it('places sections from D/Y/N terms into current and F terms into future', () => {
-      const refStore = useReferenceStore()
-      seedTerms(refStore)
-      const store = useCartStore()
-
-      store.add(makeSection({ CourseKey: 'A', Term: '26SU' }))
-      store.add(makeSection({ CourseKey: 'B', Term: '26FA' }))
-      store.add(makeSection({ CourseKey: 'C', Term: '27SP' }))
-      store.add(makeSection({ CourseKey: 'D', Term: '25FA' }))
-
-      const { current, future } = store.groupedSections
-
-      const currentKeys = current.flatMap((g) => g.sections.map((s) => s.CourseKey))
-      const futureKeys = future.flatMap((g) => g.sections.map((s) => s.CourseKey))
-
-      expect(currentKeys.sort()).toEqual(['A', 'B', 'D'])
-      expect(futureKeys).toEqual(['C'])
-    })
-  })
+  // groupedSections moved to groupSectionsByTerm() in src/utils/cart.js — see cart.test.js in utils/__tests__
 
   describe('loadAvailability()', () => {
     it('calls getAvailability with all CourseKeys and overlays status onto each section', async () => {
