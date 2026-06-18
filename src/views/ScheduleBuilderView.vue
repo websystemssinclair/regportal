@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
 
     <div class="mx-auto max-w-6xl px-4 py-6">
       <div class="flex items-center justify-between mb-6">
@@ -37,7 +37,7 @@
                 @blur="onSearchBlur"
                 type="text"
                 placeholder="Search by subject or keyword…"
-                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#ac1a2f] focus:outline-none"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-crimson focus:outline-none"
               />
               <ul
                 v-if="showDropdown && searchResults.length"
@@ -61,7 +61,7 @@
               v-for="(course, idx) in selectedCourses"
               :key="idx"
               data-testid="course-chip"
-              class="flex items-center gap-1.5 rounded-full bg-[#ac1a2f] px-3 py-1 text-xs font-medium text-white"
+              class="flex items-center gap-1.5 rounded-full bg-crimson px-3 py-1 text-xs font-medium text-white"
             >
               {{ course.subjectCode }}-{{ course.courseNo }}
               <button
@@ -95,7 +95,7 @@
                   :key="preset.label"
                   @click="applyPreset(preset)"
                   class="rounded-md border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
-                  :class="isActivePreset(preset) ? 'border-[#ac1a2f] bg-[#ac1a2f]/5 text-[#ac1a2f] font-semibold' : 'text-gray-600'"
+                  :class="isActivePreset(preset) ? 'border-crimson bg-crimson/5 text-crimson font-semibold' : 'text-gray-600'"
                 >{{ preset.label }}</button>
               </div>
             </div>
@@ -113,7 +113,7 @@
                   :min="360"
                   :max="1380"
                   :step="30"
-                  class="w-full accent-[#ac1a2f]"
+                  class="w-full accent-crimson"
                 />
                 <input
                   type="range"
@@ -121,7 +121,7 @@
                   :min="360"
                   :max="1380"
                   :step="30"
-                  class="w-full accent-[#ac1a2f]"
+                  class="w-full accent-crimson"
                 />
               </div>
             </div>
@@ -139,7 +139,7 @@
                     type="checkbox"
                     :value="day.value"
                     v-model="filters.days"
-                    class="accent-[#ac1a2f]"
+                    class="accent-crimson"
                   />
                   {{ day.label }}
                 </label>
@@ -180,7 +180,7 @@
             data-testid="build-button"
             @click="triggerBuild"
             :disabled="!selectedCourses.length || !resolvedTermId"
-            class="w-full rounded-xl bg-[#ac1a2f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8e1627] disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-full rounded-xl bg-crimson px-4 py-3 text-sm font-semibold text-white transition hover:bg-crimson-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
             {{ isBuilding ? 'Building…' : 'Build Schedules' }}
           </button>
@@ -224,7 +224,7 @@
                       <div
                         v-for="sec in blocksForDay(schedule, day)"
                         :key="sec.id"
-                        class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-[#ac1a2f] px-0.5 text-[8px] text-white"
+                        class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-crimson px-0.5 text-[8px] text-white"
                         :style="blockStyle(sec)"
                       >{{ sec.subjectCode }}-{{ sec.courseNo }}</div>
                     </div>
@@ -239,7 +239,7 @@
                 <button
                   data-testid="select-schedule-btn"
                   @click="onSelectSchedule(schedule)"
-                  class="w-full rounded-lg bg-[#ac1a2f] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#8e1627]"
+                  class="w-full rounded-lg bg-crimson px-3 py-1.5 text-xs font-semibold text-white hover:bg-crimson-dark"
                 >
                   Select Schedule
                 </button>

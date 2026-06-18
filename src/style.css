@@ -1,9 +1,14 @@
 @import "tailwindcss";
 
-:root {
+/* Tailwind v4 theme tokens — generates bg-crimson, text-crimson, border-crimson,
+   ring-crimson, accent-crimson, hover:bg-crimson-dark, bg-canvas, etc. */
+@theme {
   --color-crimson: #ac1a2f;
   --color-crimson-dark: #871523;
-  --color-crimson-focus: #ac1a2f;
+  --color-canvas: #f6f5f4;
+}
+
+:root {
   --color-warm-white: #faf8f5;
   --color-warm-dark: #1a1614;
   --color-warm-gray-500: #6b6460;

@@ -37,7 +37,7 @@ function toggleCareer(id) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
     <div class="mx-auto max-w-4xl px-4 py-6 space-y-4">
       <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">Programs</h1>
       <!-- Name search -->
@@ -46,7 +46,7 @@ function toggleCareer(id) {
         v-model="searchQuery"
         type="text"
         placeholder="Search programs…"
-        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#ac1a2f] focus:outline-none"
+        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-crimson focus:outline-none"
       />
 
       <!-- Career filter chips -->
@@ -58,8 +58,8 @@ function toggleCareer(id) {
           @click="toggleCareer(career.id)"
           class="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
           :class="selectedCareerId === career.id
-            ? 'border-[#ac1a2f] bg-[#ac1a2f] text-white'
-            : 'border-gray-300 bg-white text-gray-700 hover:border-[#ac1a2f] hover:text-[#ac1a2f]'"
+            ? 'border-crimson bg-crimson text-white'
+            : 'border-gray-300 bg-white text-gray-700 hover:border-crimson hover:text-crimson'"
         >
           {{ career.careerName }}
         </button>
@@ -71,7 +71,7 @@ function toggleCareer(id) {
           v-for="program in filteredPrograms"
           :key="program.programCode"
           data-testid="program-card"
-          class="rounded-xl border border-gray-200 bg-white hover:border-[#ac1a2f] hover:shadow-sm transition-all"
+          class="rounded-xl border border-gray-200 bg-white hover:border-crimson hover:shadow-sm transition-all"
         >
           <router-link
             data-testid="program-link"

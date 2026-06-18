@@ -27,7 +27,7 @@ function closeDrawer() {
       <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
 
         <!-- Wordmark -->
-        <RouterLink to="/" class="text-[#ac1a2f] font-semibold text-lg tracking-tight">
+        <RouterLink to="/" class="text-crimson font-semibold text-lg tracking-tight">
           Sinclair
         </RouterLink>
 
@@ -35,19 +35,19 @@ function closeDrawer() {
         <div class="hidden md:flex items-center gap-6 text-sm font-medium">
           <RouterLink
             to="/"
-            :class="route.path === '/' ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
+            :class="route.path === '/' ? 'text-crimson' : 'text-gray-600 hover:text-gray-900 transition-colors'"
           >Courses</RouterLink>
           <RouterLink
             to="/programs"
-            :class="isActive('/programs') ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
+            :class="isActive('/programs') ? 'text-crimson' : 'text-gray-600 hover:text-gray-900 transition-colors'"
           >Programs</RouterLink>
           <RouterLink
             to="/schedule-builder"
-            :class="isActive('/schedule-builder') ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
+            :class="isActive('/schedule-builder') ? 'text-crimson' : 'text-gray-600 hover:text-gray-900 transition-colors'"
           >Schedule Builder</RouterLink>
           <RouterLink
             to="/my-schedule"
-            :class="isActive('/my-schedule') ? 'text-[#ac1a2f]' : 'text-gray-600 hover:text-gray-900 transition-colors'"
+            :class="isActive('/my-schedule') ? 'text-crimson' : 'text-gray-600 hover:text-gray-900 transition-colors'"
           >My Schedule</RouterLink>
         </div>
 
@@ -59,7 +59,7 @@ function closeDrawer() {
             </svg>
             <span
               v-if="cartStore.sections.length"
-              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ac1a2f] text-white text-[10px] font-medium flex items-center justify-center leading-none"
+              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-crimson text-white text-[10px] font-medium flex items-center justify-center leading-none"
             >{{ cartStore.sections.length }}</span>
           </RouterLink>
 
@@ -69,7 +69,7 @@ function closeDrawer() {
           <button
             v-else
             @click="authStore.login()"
-            class="bg-[#ac1a2f] text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-[#871523] transition-colors"
+            class="bg-crimson text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-crimson-dark transition-colors"
           >Sign In</button>
         </div>
 
@@ -91,33 +91,33 @@ function closeDrawer() {
         <div v-if="drawerOpen" class="md:hidden border-t border-black/10 bg-white px-4 py-4 flex flex-col gap-4">
           <RouterLink
             to="/"
-            :class="['text-sm font-medium', route.path === '/' ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            :class="['text-sm font-medium', route.path === '/' ? 'text-crimson' : 'text-gray-700']"
             @click="closeDrawer"
           >Courses</RouterLink>
           <RouterLink
             to="/programs"
-            :class="['text-sm font-medium', isActive('/programs') ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            :class="['text-sm font-medium', isActive('/programs') ? 'text-crimson' : 'text-gray-700']"
             @click="closeDrawer"
           >Programs</RouterLink>
           <RouterLink
             to="/schedule-builder"
-            :class="['text-sm font-medium', isActive('/schedule-builder') ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            :class="['text-sm font-medium', isActive('/schedule-builder') ? 'text-crimson' : 'text-gray-700']"
             @click="closeDrawer"
           >Schedule Builder</RouterLink>
           <RouterLink
             to="/my-schedule"
-            :class="['text-sm font-medium', isActive('/my-schedule') ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            :class="['text-sm font-medium', isActive('/my-schedule') ? 'text-crimson' : 'text-gray-700']"
             @click="closeDrawer"
           >My Schedule</RouterLink>
           <RouterLink
             to="/cart"
-            :class="['text-sm font-medium flex items-center gap-2', isActive('/cart') ? 'text-[#ac1a2f]' : 'text-gray-700']"
+            :class="['text-sm font-medium flex items-center gap-2', isActive('/cart') ? 'text-crimson' : 'text-gray-700']"
             @click="closeDrawer"
           >
             Cart
             <span
               v-if="cartStore.sections.length"
-              class="min-w-[18px] h-[18px] px-1 rounded-full bg-[#ac1a2f] text-white text-[10px] font-medium flex items-center justify-center leading-none"
+              class="min-w-[18px] h-[18px] px-1 rounded-full bg-crimson text-white text-[10px] font-medium flex items-center justify-center leading-none"
             >{{ cartStore.sections.length }}</span>
           </RouterLink>
           <div class="pt-2 border-t border-gray-100">
@@ -127,7 +127,7 @@ function closeDrawer() {
             <button
               v-else
               @click="authStore.login(); closeDrawer()"
-              class="bg-[#ac1a2f] text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-[#871523] transition-colors"
+              class="bg-crimson text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-crimson-dark transition-colors"
             >Sign In</button>
           </div>
         </div>

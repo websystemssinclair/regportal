@@ -115,7 +115,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
     <main class="mx-auto max-w-3xl px-4 py-6">
       <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">My Booklist</h1>
       <div
@@ -146,7 +146,7 @@ onMounted(async () => {
             :key="item.section.CourseKey"
             class="rounded-lg border border-gray-200 bg-white px-4 py-3"
           >
-            <p class="text-sm font-semibold text-[#ac1a2f]">
+            <p class="text-sm font-semibold text-crimson">
               {{ sectionLabel(item.section) }}
               <span class="font-normal text-gray-600">· {{ item.section.LongName }}</span>
             </p>
@@ -170,7 +170,7 @@ onMounted(async () => {
                 <span>ISBN {{ book.ISBN }}</span>
                 <span
                   class="ml-1"
-                  :class="book.Required === 'Required' ? 'text-[#ac1a2f] font-medium' : 'text-gray-400'"
+                  :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-400'"
                 >{{ book.Required }}</span>
               </div>
             </div>
@@ -182,7 +182,7 @@ onMounted(async () => {
             :href="buildEcampusUrl(group.sections)"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-block rounded bg-[#ac1a2f] px-4 py-2 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
+            class="inline-block rounded bg-crimson px-4 py-2 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
             data-testid="buy-books-btn"
           >Buy Books at Campus Store</a>
         </div>

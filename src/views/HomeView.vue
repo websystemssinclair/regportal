@@ -164,12 +164,12 @@ fetch()
             v-model="filters.keyword"
             type="text"
             placeholder="What would you like to learn?"
-            class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]"
+            class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson"
             @keydown.enter="runSearch()"
           />
           <select
             v-model="filters.term"
-            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]"
+            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson"
           >
             <option
               v-for="term in reference.terms.filter(t => ['D','Y','F'].includes(t.toView))"
@@ -188,13 +188,13 @@ fetch()
             Filters
             <span
               v-if="activeFilterCount"
-              class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#ac1a2f] text-[10px] font-bold text-white"
+              class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-crimson text-[10px] font-bold text-white"
             >{{ activeFilterCount }}</span>
           </button>
           <button
             @click="runSearch()"
             :disabled="isLoading"
-            class="rounded-lg bg-[#ac1a2f] px-5 py-3 text-sm font-bold text-white hover:bg-[#8e1526] transition-colors shadow-sm disabled:opacity-60"
+            class="rounded-lg bg-crimson px-5 py-3 text-sm font-bold text-white hover:bg-crimson-dark transition-colors shadow-sm disabled:opacity-60"
           >
             Search
           </button>
@@ -203,7 +203,7 @@ fetch()
         <!-- Key dates ticker -->
         <div
           v-if="upcomingKeyDates.length"
-          class="mt-4 overflow-hidden rounded bg-[#f6f5f4]"
+          class="mt-4 overflow-hidden rounded bg-canvas"
           aria-label="Important Dates"
           role="marquee"
           @mouseenter="tickerPaused = true"
@@ -216,7 +216,7 @@ fetch()
             <span
               v-for="(date, i) in tickerItems"
               :key="`${date.id}-${i}`"
-              class="shrink-0 whitespace-nowrap px-6 py-2 text-xs font-medium text-[#ac1a2f]"
+              class="shrink-0 whitespace-nowrap px-6 py-2 text-xs font-medium text-crimson"
             >
               {{ date.description }} &bull; {{ formatDate(date.keyDate) }}
             </span>
@@ -250,13 +250,13 @@ fetch()
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Subject Code</label>
           <input v-model="filters.subjectCode" type="text" placeholder="e.g. ACC, ENG, ART"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]" />
+            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson" />
         </div>
 
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Term Part</label>
           <select v-model="filters.termFormat"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]">
+            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson">
             <option v-for="o in TERM_FORMAT_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </div>
@@ -264,7 +264,7 @@ fetch()
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Location</label>
           <select v-model="filters.building"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]">
+            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson">
             <option v-for="o in BUILDING_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </div>
@@ -272,7 +272,7 @@ fetch()
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Time of Day</label>
           <select v-model="filters.segOptions"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]"
+            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson"
             @change="filters.timeChoice = 'segments'">
             <option v-for="o in SEG_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
@@ -285,8 +285,8 @@ fetch()
               v-for="d in DAYS" :key="d"
               @click="toggleDay(d)"
               :class="selectedDays.includes(d)
-                ? 'bg-[#ac1a2f] text-white border-[#ac1a2f]'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-[#ac1a2f]'"
+                ? 'bg-crimson text-white border-crimson'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-crimson'"
               class="rounded border px-2.5 py-1 text-xs font-medium transition-colors"
             >{{ DAY_LABELS[d] }}</button>
           </div>
@@ -296,16 +296,16 @@ fetch()
           <label class="mb-1.5 block font-medium text-gray-700">Credit Hours</label>
           <div class="flex items-center gap-2">
             <input v-model.number="filters.creditHoursMin" type="number" min="0" max="15"
-              class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]" />
+              class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-crimson" />
             <span class="text-gray-400">to</span>
             <input v-model.number="filters.creditHoursMax" type="number" min="0" max="15"
-              class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-[#ac1a2f]" />
+              class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-crimson" />
           </div>
         </div>
 
         <button
           @click="drawerOpen = false; runSearch()"
-          class="w-full rounded bg-[#ac1a2f] py-2.5 font-medium text-white hover:bg-[#8e1526] transition-colors"
+          class="w-full rounded bg-crimson py-2.5 font-medium text-white hover:bg-crimson-dark transition-colors"
         >
           Apply Filters
         </button>
@@ -313,7 +313,7 @@ fetch()
     </aside>
 
     <!-- Results -->
-    <main class="flex-1 bg-[#f6f5f4] px-4 py-6">
+    <main class="flex-1 bg-canvas px-4 py-6">
       <div class="mx-auto max-w-4xl">
 
         <!-- Error -->
@@ -347,7 +347,7 @@ fetch()
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-mono text-sm font-bold text-[#ac1a2f]">
+                    <span class="font-mono text-sm font-bold text-crimson">
                       {{ (course.SubjectCode ?? '').trim() }}-{{ (course.CourseNumber ?? '').trim() }}
                     </span>
                     <span class="font-semibold text-gray-900 text-sm">{{ course.LongName }}</span>
@@ -393,9 +393,9 @@ fetch()
                     <strong>Coreq:</strong> {{ detailsByCard[course.id].coReqs }}
                   </span>
                   <a v-if="detailsByCard[course.id]?.topicLink" :href="detailsByCard[course.id].topicLink" target="_blank" rel="noopener"
-                    class="text-[#ac1a2f] hover:underline">Topic link ↗</a>
+                    class="text-crimson hover:underline">Topic link ↗</a>
                   <a v-if="detailsByCard[course.id]?.previewLink" :href="detailsByCard[course.id].previewLink" target="_blank" rel="noopener"
-                    class="text-[#ac1a2f] hover:underline">Course preview ↗</a>
+                    class="text-crimson hover:underline">Course preview ↗</a>
                 </div>
               </div>
 
@@ -443,7 +443,7 @@ fetch()
                       <button
                         v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
                         @click="cartStore.add(sec)"
-                        class="rounded bg-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
+                        class="rounded bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
                       >
                         Add to Cart
                       </button>
@@ -465,7 +465,7 @@ fetch()
                           v-else
                           @click="registerNow(sec)"
                           :disabled="registeringSections.has(sec.CourseKey) || maintenanceStore.isBackendDown"
-                          class="rounded border border-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-[#ac1a2f] hover:bg-[#ac1a2f] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="rounded border border-crimson px-3 py-1.5 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {{ sec.status === 'Open' ? 'Register Now' : 'Waitlist Now' }}
                         </button>
@@ -473,7 +473,7 @@ fetch()
                       <button
                         v-else-if="!authStore.isAuthenticated && isActionable(sec)"
                         @click="authStore.login()"
-                        class="text-xs text-[#ac1a2f] hover:underline"
+                        class="text-xs text-crimson hover:underline"
                       >Sign in to register</button>
                     </template>
                   </div>
@@ -487,7 +487,7 @@ fetch()
               >
                 <button
                   @click="showAllSections(course.id)"
-                  class="text-sm text-[#ac1a2f] hover:underline"
+                  class="text-sm text-crimson hover:underline"
                 >
                   Show all {{ sectionsByCard[course.id].length }} sections
                 </button>
@@ -510,7 +510,7 @@ fetch()
               @click="goPage(p)"
               :disabled="isLoading"
               :class="p === filters.page
-                ? 'border-[#ac1a2f] bg-[#ac1a2f] text-white'
+                ? 'border-crimson bg-crimson text-white'
                 : 'border-gray-300 hover:bg-gray-50'"
               class="rounded border px-3 py-1.5"
             >{{ p }}</button>
@@ -525,7 +525,7 @@ fetch()
     </main>
 
     <!-- Footer -->
-    <footer class="bg-[#f6f5f4] border-t border-gray-200 px-4 py-4 text-center text-xs text-gray-400">
+    <footer class="bg-canvas border-t border-gray-200 px-4 py-4 text-center text-xs text-gray-400">
       &copy; {{ new Date().getFullYear() }} Sinclair College
     </footer>
   </div>

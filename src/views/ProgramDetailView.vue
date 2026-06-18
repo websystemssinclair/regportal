@@ -75,7 +75,7 @@ function seatBadgeClass(status) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
     <div class="mx-auto max-w-4xl px-4 py-6">
       <router-link to="/programs" class="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">← Programs</router-link>
       <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">{{ program?.programName ?? 'Program Detail' }}</h1>
@@ -138,7 +138,7 @@ function seatBadgeClass(status) {
                 <button
                   data-testid="add-to-schedule-btn"
                   @click.stop="addToScheduleBuilder(course.CourseCode)"
-                  class="shrink-0 rounded-md bg-[#ac1a2f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
+                  class="shrink-0 rounded-md bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
                 >
                   Add to Schedule Builder
                 </button>

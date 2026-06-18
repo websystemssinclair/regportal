@@ -67,13 +67,13 @@ async function registerAll(group) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
     <main class="mx-auto max-w-3xl px-4 py-6">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold tracking-tight text-gray-900">My Cart</h1>
         <router-link
           to="/booklist"
-          class="text-sm text-[#ac1a2f] underline hover:text-[#8e1526]"
+          class="text-sm text-crimson underline hover:text-crimson-dark"
         >View Booklist</router-link>
       </div>
       <!-- Maintenance banner -->
@@ -104,7 +104,7 @@ async function registerAll(group) {
                   v-if="meta.label === 'Current' && actionableInTerm(group).length > 0"
                   @click="registerAll(group)"
                   :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
-                  class="rounded bg-[#ac1a2f] px-2.5 py-0.5 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="rounded bg-crimson px-2.5 py-0.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >Register All</button>
               </h3>
 
@@ -113,7 +113,7 @@ async function registerAll(group) {
                   class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
                   <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2 text-sm">
-                      <span class="font-mono font-semibold text-[#ac1a2f]">
+                      <span class="font-mono font-semibold text-crimson">
                         {{ (sec.SubjectCode ?? '').trim() }}-{{ (sec.CourseNo ?? '').trim() }}-{{ sec.SectionNo }}
                       </span>
                       <span class="text-gray-700">{{ sec.LongName }}</span>
@@ -141,7 +141,7 @@ async function registerAll(group) {
                       v-else-if="meta.label === 'Current' && isActionable(sec)"
                       @click="registerSection(group.termId, sec)"
                       :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
-                      class="rounded bg-[#ac1a2f] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="rounded bg-crimson px-2.5 py-1 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
                     <button
                       @click="activeBooksSection = sec"

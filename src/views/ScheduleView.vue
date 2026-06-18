@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#f6f5f4]">
+  <div class="min-h-screen bg-canvas">
 
     <div
       v-if="pendingAction"
@@ -57,7 +57,7 @@
             :key="day"
             class="h-10 w-10 flex-shrink-0 rounded-full text-sm font-bold transition-all"
             :class="selectedDay === day
-              ? 'scale-110 bg-[#ac1a2f] text-white shadow-md'
+              ? 'scale-110 bg-crimson text-white shadow-md'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
             @click="selectedDay = day"
           >{{ DAY_LABELS[day] }}</button>
@@ -77,7 +77,7 @@
           v-for="block in selectedDayCourses"
           :key="block.courseKey"
           class="mb-2 flex items-center gap-3 rounded-xl px-4 py-3 text-white"
-          :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-[#ac1a2f]'"
+          :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-crimson'"
         >
           <div class="flex-1">
             <div class="text-sm font-semibold">{{ block.label }}</div>
@@ -156,7 +156,7 @@
                   :key="block.courseKey"
                   data-testid="grid-block"
                   class="absolute left-1 right-1 overflow-hidden rounded-lg px-2 py-1 text-xs text-white shadow-sm"
-                  :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-[#ac1a2f]'"
+                  :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-crimson'"
                   :style="{ top: block.top + '%', height: Math.max(block.height, 4) + '%' }"
                 >
                   <div class="font-semibold">{{ block.label }}</div>

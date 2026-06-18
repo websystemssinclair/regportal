@@ -81,7 +81,7 @@ onMounted(async () => {
               <span>{{ book.Author }}</span>
               <span>ISBN {{ book.ISBN }}</span>
               <span
-                :class="book.Required === 'Required' ? 'text-[#ac1a2f] font-medium' : 'text-gray-400'"
+                :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-400'"
               >{{ book.Required }}</span>
             </div>
           </div>
@@ -93,7 +93,7 @@ onMounted(async () => {
           :href="buildEcampusUrl()"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block rounded bg-[#ac1a2f] px-4 py-2 text-xs font-medium text-white hover:bg-[#8e1526] transition-colors"
+          class="inline-block rounded bg-crimson px-4 py-2 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
         >Buy Books at Campus Store</a>
       </div>
     </div>
