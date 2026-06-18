@@ -55,7 +55,7 @@
           <button
             v-for="day in DAYS"
             :key="day"
-            class="h-10 w-10 flex-shrink-0 rounded-full text-sm font-bold transition-all"
+            class="h-10 w-10 flex-shrink-0 rounded-full text-sm font-bold transition-[color,background-color,box-shadow,transform]"
             :class="selectedDay === day
               ? 'scale-110 bg-crimson text-white shadow-md'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
@@ -137,7 +137,7 @@
 
       <!-- Desktop: full-bleed grid + toggleable right panel -->
       <div class="relative hidden md:block">
-        <div class="overflow-x-auto transition-all" :class="showListPanel ? 'mr-72' : ''">
+        <div class="overflow-x-auto transition-[margin] duration-200" :class="showListPanel ? 'mr-72' : ''">
           <div
             class="flex gap-px overflow-hidden rounded border border-gray-200 bg-gray-200"
             style="height: 600px"

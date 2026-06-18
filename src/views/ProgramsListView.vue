@@ -71,7 +71,7 @@ function toggleCareer(id) {
           v-for="program in filteredPrograms"
           :key="program.programCode"
           data-testid="program-card"
-          class="rounded-xl border border-gray-200 bg-white hover:border-crimson hover:shadow-sm transition-all"
+          class="rounded-xl border border-gray-200 bg-white hover:border-crimson hover:shadow-sm transition-[border-color,box-shadow]"
         >
           <router-link
             data-testid="program-link"
