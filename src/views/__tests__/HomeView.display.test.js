@@ -340,3 +340,83 @@ describe('HomeView — location display', () => {
     expect(wrapper.text()).not.toContain('ICON_SENTINEL')
   })
 })
+
+describe('HomeView — additional schedule rows', () => {
+  it('renders a second meeting row for one additionalSched entry', () => {
+    const wrapper = mountWithSection({
+      additionalSched: [{ Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'LAB1', satLocation: '' }],
+    })
+    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('LAB1')
+  })
+
+  it('renders two additional rows for two additionalSched entries', () => {
+    const wrapper = mountWithSection({
+      additionalSched: [
+        { Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'LAB1', satLocation: '' },
+        { Days: 'F', startTime: '09:00 AM', endTime: '10:00 AM', building: 'BLDG2', satLocation: '' },
+      ],
+    })
+    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('LAB1')
+    expect(wrapper.text()).toContain('F')
+    expect(wrapper.text()).toContain('BLDG2')
+  })
+
+  it('renders no additional rows for empty additionalSched', () => {
+    const wrapper = mountWithSection({ additionalSched: [] })
+    expect(wrapper.text()).not.toContain('LAB1')
+  })
+
+  it('additional row shows entry Days, formatted time, and stripped room', () => {
+    const wrapper = mountWithSection({
+      additionalSched: [{ Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'LAB1zzz', satLocation: '' }],
+    })
+    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('1:00–4:30 PM')
+    expect(wrapper.text()).toContain('LAB1')
+    expect(wrapper.text()).not.toContain('zzz')
+  })
+
+  it('additional row uses satLocation instead of building when non-empty', () => {
+    const wrapper = mountWithSection({
+      additionalSched: [{ Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'BLDG', satLocation: 'Room 42' }],
+    })
+    expect(wrapper.text()).toContain('Room 42')
+    expect(wrapper.text()).not.toContain('BLDG')
+  })
+
+  it('does not use startTimeDisplay or endTimeDisplay from additionalSched entries', () => {
+    const wrapper = mountWithSection({
+      additionalSched: [{
+        Days: 'TR',
+        startTime: '01:00 PM', endTime: '04:30 PM',
+        startTimeDisplay: 'a01:00 PM', endTimeDisplay: 'a04:30 PM',
+        building: 'LAB1', satLocation: '',
+      }],
+    })
+    expect(wrapper.text()).not.toContain('a01:00')
+    expect(wrapper.text()).not.toContain('a04:30')
+    expect(wrapper.text()).toContain('1:00–4:30 PM')
+  })
+})
+
+describe('HomeView — time formatting', () => {
+  it('same-meridiem times render as "1:00–4:30 PM"', () => {
+    const wrapper = mountWithSection({ StartTime: '01:00 PM', EndTime: '04:30 PM' })
+    expect(wrapper.text()).toContain('1:00–4:30 PM')
+    expect(wrapper.text()).not.toContain('01:00 PM')
+  })
+
+  it('different-meridiem times render as "11:00 AM–1:00 PM"', () => {
+    const wrapper = mountWithSection({ StartTime: '11:00 AM', EndTime: '01:00 PM' })
+    expect(wrapper.text()).toContain('11:00 AM–1:00 PM')
+  })
+})
+
+describe('HomeView — date formatting', () => {
+  it('formatDate("08/24/2026") renders as "Aug 24, 2026"', () => {
+    const wrapper = mountWithSection({ startDate: '08/24/2026' })
+    expect(wrapper.text()).toContain('Aug 24, 2026')
+  })
+})

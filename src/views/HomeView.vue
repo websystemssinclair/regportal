@@ -17,10 +17,32 @@ const sanitizedIntro = computed(() => DOMPurify.sanitize(reference.intro))
 const upcomingKeyDates = computed(() => reference.upcomingKeyDates)
 const tickerItems = computed(() => [...upcomingKeyDates.value, ...upcomingKeyDates.value])
 
-function formatDate(iso) {
+function formatKeyDate(iso) {
   const [year, month, day] = iso.split('-').map(Number)
   return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
     .format(new Date(year, month - 1, day))
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = parseRegDate(dateStr)
+  if (isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(d)
+}
+
+function formatTime(start, end) {
+  if (!start) return ''
+  const stripZero = (t) => t.replace(/^0(\d)/, '$1')
+  const s = stripZero(start)
+  if (!end) return s
+  const e = stripZero(end)
+  const startAMPM = /AM$/i.test(start.trim()) ? 'AM' : /PM$/i.test(start.trim()) ? 'PM' : null
+  const endAMPM = /AM$/i.test(end.trim()) ? 'AM' : /PM$/i.test(end.trim()) ? 'PM' : null
+  if (startAMPM && endAMPM && startAMPM === endAMPM) {
+    const sNoSuffix = s.replace(/\s*(AM|PM)$/i, '').trim()
+    return `${sNoSuffix}–${e}`
+  }
+  return `${s}–${e}`
 }
 
 const { filters, results, total, isLoading, error, fetch } = useSearch()
@@ -279,7 +301,7 @@ fetch()
               :key="`${date.id}-${i}`"
               class="shrink-0 whitespace-nowrap px-6 py-2 text-xs font-medium text-crimson"
             >
-              {{ date.description }} &bull; {{ formatDate(date.keyDate) }}
+              {{ date.description }} &bull; {{ formatKeyDate(date.keyDate) }}
             </span>
           </div>
         </div>
@@ -499,10 +521,21 @@ fetch()
                       <span class="text-gray-600">{{ sec.Faculty }}</span>
                       <span class="text-gray-500">
                         {{ sec.Days || 'Online' }}
-                        <template v-if="sec.StartTime">{{ sec.StartTime }}–{{ sec.EndTime }}</template>
+                        <template v-if="sec.StartTime">{{ formatTime(sec.StartTime, sec.EndTime) }}</template>
                       </span>
                     </div>
                     <p v-if="sectionLocation(sec)" class="mt-0.5 text-xs text-gray-500">{{ sectionLocation(sec) }}</p>
+                    <div
+                      v-for="(entry, i) in sec.additionalSched"
+                      :key="i"
+                      class="mt-0.5 text-xs text-gray-500"
+                    >
+                      {{ entry.Days }} {{ formatTime(entry.startTime, entry.endTime) }}
+                      <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
+                    </div>
+                    <p v-if="sec.startDate" class="mt-0.5 text-xs text-gray-500">
+                      {{ formatDate(sec.startDate) }}{{ sec.endDate ? ` – ${formatDate(sec.endDate)}` : '' }}
+                    </p>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
                     <span v-for="b in [seatBadge(sec)]" :key="'b'" :class="b.cls" class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ b.label }}</span>
