@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, reactive, nextTick } from 'vue'
-import SearchView from '@/views/SearchView.vue'
+import SearchView from '@/views/HomeView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useRegisterNow } from '@/composables/useRegisterNow'
@@ -55,9 +55,20 @@ const makeSection = (overrides = {}) => ({
   Days: 'MWF',
   StartTime: '09:00',
   EndTime: '09:50',
-  iconTitle: 'Face to Face',
-  location: 'Main Campus',
   building: 'Building A',
+  SectionLoc: '',
+  regEndDate: '12/31/2099 23:59',
+  regStartDate: '01/01/2026 00:00',
+  isFuture: false,
+  additionalSched: [],
+  otherFee: 0,
+  labFee: 0,
+  printedComments: '',
+  startDate: '',
+  endDate: '',
+  restrictions: '',
+  satLocation: '',
+  isFlexpace: 0,
   ...overrides,
 })
 
@@ -202,7 +213,7 @@ describe('SearchView — section row actions', () => {
       const auth = useAuthStore()
       const loginSpy = vi.spyOn(auth, 'login').mockResolvedValue()
       const wrapper = mountView()
-      await wrapper.find('button.text-xs.text-\\[\\#ac1a2f\\]').trigger('click')
+      await wrapper.find('button.text-xs.text-crimson').trigger('click')
       expect(loginSpy).toHaveBeenCalled()
     })
   })
@@ -246,7 +257,7 @@ describe('SearchView — section row actions', () => {
       const wrapper = mountView()
       registerNowMock.sectionResults['111'] = { status: 'error', message: 'Time conflict' }
       await nextTick()
-      await wrapper.find('button.text-xs.text-gray-400').trigger('click')
+      await wrapper.find('button.text-xs.text-gray-500').trigger('click')
       expect(registerNowMock.dismissResult).toHaveBeenCalledWith('111')
     })
   })
