@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { useRouter } from 'vue-router'
+import router from '@/router'
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
 import { useCartStore } from '@/stores/cart'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
@@ -44,13 +44,12 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login() {
-      sessionStorage.setItem(RETURN_TO_KEY, window.location.pathname + window.location.search + window.location.hash)
+      sessionStorage.setItem(RETURN_TO_KEY, window.location.href)
       const { data: id } = await sendSamlRequest()
       window.location.href = `${SSO_BASE}?ID=${id}`
     },
 
     async handleCallback(samlId) {
-      const router = useRouter()
       const { data } = await retrieveUserFromSaml(samlId)
       this.user = {
         firstName: data.firstName,
@@ -88,7 +87,7 @@ export const useAuthStore = defineStore('auth', {
       this.waitlist = []
       useSectionErrorStore().clear()
       sessionStorage.removeItem(RETURN_TO_KEY)
-      useRouter().replace({ name: 'home' })
+      router.replace({ name: 'home' })
     },
   },
 })

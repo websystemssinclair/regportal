@@ -11,6 +11,10 @@ import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 vi.mock('@/composables/useScheduleBuilder')
 vi.mock('@/composables/useRegisterSchedule')
 vi.mock('@/router', () => ({ default: { push: vi.fn(), replace: vi.fn() } }))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return { ...actual, useRoute: vi.fn(() => ({ query: {} })) }
+})
 vi.mock('@/services/authService', () => ({
   sendSamlRequest: vi.fn(),
   retrieveUserFromSaml: vi.fn(),
@@ -29,6 +33,7 @@ vi.mock('@/services/referenceService', () => ({
 }))
 
 import router from '@/router'
+import { useRoute } from 'vue-router'
 import { getCourseSections } from '@/services/sectionsService'
 
 const TERM_ID = '26SU'
@@ -248,6 +253,7 @@ describe('ScheduleBuilderView — course query param handoff', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
+    vi.mocked(useRoute).mockReturnValue({ query: {} })
     seedComposable()
 
     const refStore = useReferenceStore()
@@ -255,12 +261,8 @@ describe('ScheduleBuilderView — course query param handoff', () => {
   })
 
   function mountViewWithCourse(courseParam) {
-    return mount(ScheduleBuilderView, {
-      global: {
-        plugins: [pinia],
-        mocks: { $route: { query: { course: courseParam } } },
-      },
-    })
+    vi.mocked(useRoute).mockReturnValue({ query: { course: courseParam } })
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
   }
 
   it('on mount with ?course=ACC-1210, fetches sections and clears the query param', async () => {
@@ -279,7 +281,7 @@ describe('ScheduleBuilderView — course query param handoff', () => {
   })
 
   it('does not call getCourseSections when no course query param', async () => {
-    mount(ScheduleBuilderView, { global: { plugins: [pinia], mocks: { $route: { query: {} } } } })
+    mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
     await nextTick()
     expect(getCourseSections).not.toHaveBeenCalled()
   })
