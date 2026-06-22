@@ -162,6 +162,34 @@ function seatBadge(s) {
   return { cls: '', label: '' }
 }
 
+const SECTION_LOC_LABELS = {
+  '110': 'Centerville Campus', '329': 'Centerville Campus',
+  '310': 'Huber Heights Learning Center', '328': 'Huber Heights Learning Center',
+  '300': 'Englewood Learning Center', '327': 'Englewood Learning Center',
+  '210': 'Preble County Learning Center',
+  '200': 'Courseview Campus Center (Mason)', '326': 'Courseview Campus Center (Mason)',
+  '330': 'Other Off Campus Location', 'OFF': 'Other Off Campus Location',
+}
+
+function stripZzz(val) {
+  return (val || '').replace(/zzz$/i, '').trim()
+}
+
+function sectionRoom(sec) {
+  return sec.satLocation ? stripZzz(sec.satLocation) : stripZzz(sec.building)
+}
+
+function sectionLocation(sec) {
+  if (sec.isFlexpace) return 'FlexPace'
+  if (sec.SectionLoc === '320') return 'Online Learning'
+  if (sec.SectionLoc === '321' || sec.SectionLoc === '345') return 'Online Learning with Meeting Times'
+  const room = sectionRoom(sec)
+  if (room === 'RMT' || room === 'VIR') return 'Blended Learning'
+  const campus = SECTION_LOC_LABELS[sec.SectionLoc]
+  if (campus) return room ? `${campus} · ${room}` : campus
+  return room
+}
+
 function closeDrawer() {
   drawerOpen.value = false
 }
@@ -474,7 +502,7 @@ fetch()
                         <template v-if="sec.StartTime">{{ sec.StartTime }}–{{ sec.EndTime }}</template>
                       </span>
                     </div>
-                    <p class="mt-0.5 text-xs text-gray-500">{{ sec.iconTitle }} · {{ sec.location || sec.building }}</p>
+                    <p v-if="sectionLocation(sec)" class="mt-0.5 text-xs text-gray-500">{{ sectionLocation(sec) }}</p>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
                     <span v-for="b in [seatBadge(sec)]" :key="'b'" :class="b.cls" class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ b.label }}</span>

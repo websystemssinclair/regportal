@@ -70,64 +70,63 @@ const makeSection = (overrides = {}) => ({
   ...overrides,
 })
 
-describe('HomeView — status badges', () => {
-  let pinia
-  let sectionsList
+let pinia
 
-  function setupMocks(section) {
-    sectionsList = [section]
+beforeEach(() => {
+  pinia = createPinia()
+  setActivePinia(pinia)
+  vi.stubGlobal('scrollTo', vi.fn())
+})
 
-    vi.mocked(useRegisterNow).mockReturnValue({
-      sectionResults: reactive({}),
-      registeringSections: reactive(new Set()),
-      registerNow: vi.fn(),
-      dismissResult: vi.fn(),
-      reset: vi.fn(),
-    })
+function setupMocks(section) {
+  const sectionsList = [section]
 
-    vi.mocked(useSearch).mockReturnValue({
-      filters: reactive({
-        keyword: '', term: '', subjectCode: 'ANY', termFormat: 'all', building: 'any',
-        timeChoice: 'segments', segOptions: 'any', rangeStart: '06:00', rangeEnd: '23:00',
-        daysOfWeek: 'M,T,W,R,F,S,U', creditHoursMin: 0, creditHoursMax: 15,
-        courseList: 'any', page: 1, start: 0, limit: 50,
-      }),
-      results: ref([makeCourse()]),
-      total: ref(1),
-      isLoading: ref(false),
-      error: ref(null),
-      fetch: vi.fn(),
-    })
-
-    vi.mocked(useCardExpansion).mockReturnValue({
-      expanded: ref(COURSE_ID),
-      sectionsByCard: ref({ [COURSE_ID]: sectionsList }),
-      detailsByCard: ref({}),
-      loadingCard: ref(null),
-      sectionErrors: ref({}),
-      visibleSections: ref({}),
-      toggleCard: vi.fn(),
-      showAllSections: vi.fn(),
-      sectionsToShow: vi.fn((id) => id === COURSE_ID ? sectionsList : []),
-      reset: vi.fn(),
-    })
-  }
-
-  beforeEach(() => {
-    pinia = createPinia()
-    setActivePinia(pinia)
-    vi.stubGlobal('scrollTo', vi.fn())
+  vi.mocked(useRegisterNow).mockReturnValue({
+    sectionResults: reactive({}),
+    registeringSections: reactive(new Set()),
+    registerNow: vi.fn(),
+    dismissResult: vi.fn(),
+    reset: vi.fn(),
   })
 
+  vi.mocked(useSearch).mockReturnValue({
+    filters: reactive({
+      keyword: '', term: '', subjectCode: 'ANY', termFormat: 'all', building: 'any',
+      timeChoice: 'segments', segOptions: 'any', rangeStart: '06:00', rangeEnd: '23:00',
+      daysOfWeek: 'M,T,W,R,F,S,U', creditHoursMin: 0, creditHoursMax: 15,
+      courseList: 'any', page: 1, start: 0, limit: 50,
+    }),
+    results: ref([makeCourse()]),
+    total: ref(1),
+    isLoading: ref(false),
+    error: ref(null),
+    fetch: vi.fn(),
+  })
+
+  vi.mocked(useCardExpansion).mockReturnValue({
+    expanded: ref(COURSE_ID),
+    sectionsByCard: ref({ [COURSE_ID]: sectionsList }),
+    detailsByCard: ref({}),
+    loadingCard: ref(null),
+    sectionErrors: ref({}),
+    visibleSections: ref({}),
+    toggleCard: vi.fn(),
+    showAllSections: vi.fn(),
+    sectionsToShow: vi.fn((id) => id === COURSE_ID ? sectionsList : []),
+    reset: vi.fn(),
+  })
+}
+
+function mountWithSection(overrides = {}) {
+  const section = makeSection(overrides)
+  setupMocks(section)
+  return mount(HomeView, { global: { plugins: [pinia] } })
+}
+
+describe('HomeView — status badges', () => {
   afterEach(() => {
     vi.useRealTimers()
   })
-
-  function mountWithSection(overrides = {}) {
-    const section = makeSection(overrides)
-    setupMocks(section)
-    return mount(HomeView, { global: { plugins: [pinia] } })
-  }
 
   it('renders "Cancelled" for a Cancelled section', () => {
     const wrapper = mountWithSection({ status: 'Cancelled' })
@@ -223,5 +222,121 @@ describe('HomeView — status badges', () => {
       })
       expect(wrapper.text()).toContain('Registration Closed')
     })
+  })
+})
+
+describe('HomeView — location display', () => {
+  it('SectionLoc 320 renders "Online Learning" with no room', () => {
+    const wrapper = mountWithSection({ SectionLoc: '320', building: 'WWW', satLocation: '' })
+    expect(wrapper.text()).toContain('Online Learning')
+    expect(wrapper.text()).not.toContain('WWW')
+  })
+
+  it('isFlexpace truthy (numeric 1) renders "FlexPace" regardless of SectionLoc', () => {
+    const wrapper = mountWithSection({ isFlexpace: 1, SectionLoc: '320', building: 'WWW' })
+    expect(wrapper.text()).toContain('FlexPace')
+    expect(wrapper.text()).not.toContain('Online Learning')
+  })
+
+  it('isFlexpace truthy (boolean true) renders "FlexPace"', () => {
+    const wrapper = mountWithSection({ isFlexpace: true, SectionLoc: '320', building: 'WWW' })
+    expect(wrapper.text()).toContain('FlexPace')
+    expect(wrapper.text()).not.toContain('Online Learning')
+  })
+
+  it('SectionLoc 321 renders "Online Learning with Meeting Times"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '321', building: 'WWW' })
+    expect(wrapper.text()).toContain('Online Learning with Meeting Times')
+  })
+
+  it('SectionLoc 345 renders "Online Learning with Meeting Times"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '345', building: 'WWW' })
+    expect(wrapper.text()).toContain('Online Learning with Meeting Times')
+  })
+
+  it('building RMTzzz renders "Blended Learning"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '', building: 'RMTzzz', satLocation: '' })
+    expect(wrapper.text()).toContain('Blended Learning')
+  })
+
+  it('building VIRzzz renders "Blended Learning"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '', building: 'VIRzzz', satLocation: '' })
+    expect(wrapper.text()).toContain('Blended Learning')
+  })
+
+  it('satLocation RMTzzz renders "Blended Learning" even when building differs', () => {
+    const wrapper = mountWithSection({ SectionLoc: '110', building: 'WING101', satLocation: 'RMTzzz' })
+    expect(wrapper.text()).toContain('Blended Learning')
+    expect(wrapper.text()).not.toContain('Centerville Campus · WING101')
+  })
+
+  it('SectionLoc 110 renders "Centerville Campus · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '110', building: 'BLDG101', satLocation: '' })
+    expect(wrapper.text()).toContain('Centerville Campus · BLDG101')
+  })
+
+  it('SectionLoc 329 renders "Centerville Campus · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '329', building: 'RM5', satLocation: '' })
+    expect(wrapper.text()).toContain('Centerville Campus · RM5')
+  })
+
+  it('SectionLoc 310 renders "Huber Heights Learning Center · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '310', building: 'HH101', satLocation: '' })
+    expect(wrapper.text()).toContain('Huber Heights Learning Center · HH101')
+  })
+
+  it('SectionLoc 300 renders "Englewood Learning Center · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '300', building: 'ENG1', satLocation: '' })
+    expect(wrapper.text()).toContain('Englewood Learning Center · ENG1')
+  })
+
+  it('SectionLoc 210 renders "Preble County Learning Center · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '210', building: 'PC1', satLocation: '' })
+    expect(wrapper.text()).toContain('Preble County Learning Center · PC1')
+  })
+
+  it('SectionLoc 200 renders "Courseview Campus Center (Mason) · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '200', building: 'CV1', satLocation: '' })
+    expect(wrapper.text()).toContain('Courseview Campus Center (Mason) · CV1')
+  })
+
+  it('SectionLoc 330 renders "Other Off Campus Location · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: '330', building: 'EXT1', satLocation: '' })
+    expect(wrapper.text()).toContain('Other Off Campus Location · EXT1')
+  })
+
+  it('SectionLoc OFF renders "Other Off Campus Location · <room>"', () => {
+    const wrapper = mountWithSection({ SectionLoc: 'OFF', building: 'EXT2', satLocation: '' })
+    expect(wrapper.text()).toContain('Other Off Campus Location · EXT2')
+  })
+
+  it('empty SectionLoc renders room only (no campus label)', () => {
+    const wrapper = mountWithSection({ SectionLoc: '', building: 'SC101', satLocation: '' })
+    expect(wrapper.text()).toContain('SC101')
+    expect(wrapper.text()).not.toContain('Campus · SC101')
+    expect(wrapper.text()).not.toContain('Learning Center · SC101')
+  })
+
+  it('satLocation non-empty renders instead of building', () => {
+    const wrapper = mountWithSection({ SectionLoc: '110', building: 'BLDG', satLocation: 'Room 42' })
+    expect(wrapper.text()).toContain('Centerville Campus · Room 42')
+    expect(wrapper.text()).not.toContain('BLDG')
+  })
+
+  it('zzz suffix stripped from building', () => {
+    const wrapper = mountWithSection({ SectionLoc: '', building: 'SC101zzz', satLocation: '' })
+    expect(wrapper.text()).toContain('SC101')
+    expect(wrapper.text()).not.toContain('zzz')
+  })
+
+  it('zzz suffix stripped from satLocation', () => {
+    const wrapper = mountWithSection({ SectionLoc: '110', building: 'BLDG', satLocation: 'Room5zzz' })
+    expect(wrapper.text()).toContain('Room5')
+    expect(wrapper.text()).not.toContain('zzz')
+  })
+
+  it('iconTitle no longer appears on the section row', () => {
+    const wrapper = mountWithSection({ SectionLoc: '', building: 'SC101', satLocation: '', iconTitle: 'ICON_SENTINEL' })
+    expect(wrapper.text()).not.toContain('ICON_SENTINEL')
   })
 })
