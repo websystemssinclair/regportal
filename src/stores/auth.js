@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
+import { useRouter } from 'vue-router'
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
 import { useCartStore } from '@/stores/cart'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
-import router from '@/router'
 
 const SSO_BASE = 'https://sso.sinclair.edu/EasyConnect/REST/default.aspx'
 const RETURN_TO_KEY = 'regportal:returnTo'
@@ -75,7 +75,7 @@ export const useAuthStore = defineStore('auth', {
 
       const returnTo = sessionStorage.getItem(RETURN_TO_KEY)
       sessionStorage.removeItem(RETURN_TO_KEY)
-      router.replace(returnTo ?? { name: data.targetUrl })
+      useRouter().replace(returnTo ?? { name: data.targetUrl })
     },
 
     logout() {
@@ -87,7 +87,7 @@ export const useAuthStore = defineStore('auth', {
       this.waitlist = []
       useSectionErrorStore().clear()
       sessionStorage.removeItem(RETURN_TO_KEY)
-      router.replace({ name: 'home' })
+      useRouter().replace({ name: 'home' })
     },
   },
 })

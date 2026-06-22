@@ -24,6 +24,9 @@ function formatDate(iso) {
 }
 
 const { filters, results, total, isLoading, error, fetch } = useSearch()
+const sortedResults = computed(() =>
+  [...results.value].sort((a, b) => (b.isOpen === 'true') - (a.isOpen === 'true'))
+)
 const {
   expanded,
   sectionsByCard,
@@ -55,6 +58,7 @@ watch(defaultTermId, (id) => {
   if (id && !filters.term) filters.term = id
 }, { immediate: true })
 
+// fallow-ignore-next-line complexity
 const activeFilterCount = computed(() => {
   let n = 0
   if (filters.keyword) n++
@@ -358,7 +362,7 @@ fetch()
 
         <!-- Course card list -->
         <ul v-else class="space-y-3">
-          <li v-for="course in results" :key="course.id"
+          <li v-for="course in sortedResults" :key="course.id"
             class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
 
             <!-- Card header (click to expand) -->
@@ -389,9 +393,9 @@ fetch()
                 </div>
                 <div class="flex shrink-0 items-center gap-2">
                   <span
-                    :class="course.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
+                    :class="course.isOpen == 'true' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
                     class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                  >{{ course.isOpen ? 'Open' : 'Closed' }}</span>
+                  >{{ course.isOpen == 'true' ? 'Open' : 'Closed' }}</span>
                   <svg
                     :class="expanded === course.id ? 'rotate-180' : ''"
                     class="h-4 w-4 text-gray-500 transition-transform"
