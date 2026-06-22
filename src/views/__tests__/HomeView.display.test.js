@@ -163,6 +163,26 @@ describe('HomeView — status badges', () => {
     expect(wrapper.text()).not.toContain('Waitlist Available')
   })
 
+  describe('regExpired defensive guards', () => {
+    it('treats missing regEndDate as not expired', () => {
+      const wrapper = mountWithSection({ status: 'Open', openSeats: 5, regEndDate: undefined })
+      expect(wrapper.text()).not.toContain('Registration Closed')
+      expect(wrapper.text()).toContain('Open · 5 seats')
+    })
+
+    it('treats empty string regEndDate as not expired', () => {
+      const wrapper = mountWithSection({ status: 'Open', openSeats: 5, regEndDate: '' })
+      expect(wrapper.text()).not.toContain('Registration Closed')
+      expect(wrapper.text()).toContain('Open · 5 seats')
+    })
+
+    it('treats malformed regEndDate as not expired', () => {
+      const wrapper = mountWithSection({ status: 'Open', openSeats: 5, regEndDate: 'not-a-date' })
+      expect(wrapper.text()).not.toContain('Registration Closed')
+      expect(wrapper.text()).toContain('Open · 5 seats')
+    })
+  })
+
   describe('regExpired grace window', () => {
     const NOW = new Date('2026-06-22T12:00:00')
 

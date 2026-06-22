@@ -139,33 +139,27 @@ function parseRegDate(dateStr) {
   return new Date(year, month - 1, day, hours, minutes)
 }
 
-function regExpired(sec) {
+function regExpired(sec, now) {
+  if (!sec.regEndDate) return false
   const deadline = parseRegDate(sec.regEndDate)
-  const now = new Date()
+  if (isNaN(deadline.getTime())) return false
   if (sec.SectionLoc === '320') {
     return deadline < new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
   }
   return deadline < now
 }
 
-function seatBadgeClass(s) {
-  if (s.status === 'Cancelled') return 'bg-gray-100 text-gray-500'
+function seatBadge(s) {
+  const now = new Date()
+  if (s.status === 'Cancelled') return { cls: 'bg-gray-100 text-gray-500', label: 'Cancelled' }
   if (s.status === 'Closed') {
-    return s.waitListAllowed === 'Y' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+    return s.waitListAllowed === 'Y'
+      ? { cls: 'bg-amber-100 text-amber-800', label: 'Waitlist Available' }
+      : { cls: 'bg-red-100 text-red-700', label: 'Closed' }
   }
-  if (regExpired(s)) return 'bg-gray-100 text-gray-500'
-  if (s.openSeats > 0) return 'bg-green-100 text-green-800'
-  return ''
-}
-
-function seatBadgeLabel(s) {
-  if (s.status === 'Cancelled') return 'Cancelled'
-  if (s.status === 'Closed') {
-    return s.waitListAllowed === 'Y' ? 'Waitlist Available' : 'Closed'
-  }
-  if (regExpired(s)) return 'Registration Closed'
-  if (s.openSeats > 0) return `Open · ${Math.floor(s.openSeats)} seats`
-  return ''
+  if (regExpired(s, now)) return { cls: 'bg-gray-100 text-gray-500', label: 'Registration Closed' }
+  if (s.openSeats > 0) return { cls: 'bg-green-100 text-green-800', label: `Open · ${Math.floor(s.openSeats)} seats` }
+  return { cls: '', label: '' }
 }
 
 function closeDrawer() {
@@ -483,9 +477,7 @@ fetch()
                     <p class="mt-0.5 text-xs text-gray-500">{{ sec.iconTitle }} · {{ sec.location || sec.building }}</p>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
-                    <span :class="seatBadgeClass(sec)" class="rounded-full px-2.5 py-0.5 text-xs font-medium">
-                      {{ seatBadgeLabel(sec) }}
-                    </span>
+                    <span v-for="b in [seatBadge(sec)]" :key="'b'" :class="b.cls" class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ b.label }}</span>
                     <template v-if="sectionResults[sec.CourseKey]?.status === 'success'">
                       <span class="rounded bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
                         {{ sectionResults[sec.CourseKey].message }}
