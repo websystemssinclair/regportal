@@ -123,7 +123,7 @@ function seatBadgeClass(status) {
                 @click="toggleCourse(course)"
                 class="flex w-full items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <span class="text-xs text-gray-400 transition-transform" :class="expandedCourses.has(course.CourseCode) ? 'rotate-90' : ''">▶</span>
+                <span class="text-xs text-gray-500 transition-transform" :class="expandedCourses.has(course.CourseCode) ? 'rotate-90' : ''">▶</span>
                 <span class="flex-1 text-sm text-gray-800">
                   <span class="font-medium">{{ course.CourseCode }}</span>
                   — {{ course.LongName }}
@@ -146,8 +146,8 @@ function seatBadgeClass(status) {
 
               <!-- Sections accordion -->
               <div v-if="expandedCourses.has(course.CourseCode)" class="bg-gray-50 px-6 pb-3">
-                <div v-if="loadingSections.has(course.CourseCode)" class="py-3 text-xs text-gray-400">Loading sections…</div>
-                <div v-else-if="!sectionsByCode[course.CourseCode]?.length" class="py-3 text-xs text-gray-400">No D-term sections available.</div>
+                <div v-if="loadingSections.has(course.CourseCode)" class="py-3 text-xs text-gray-500">Loading sections…</div>
+                <div v-else-if="!sectionsByCode[course.CourseCode]?.length" class="py-3 text-xs text-gray-500">No D-term sections available.</div>
                 <div
                   v-else
                   v-for="sec in sectionsByCode[course.CourseCode]"
@@ -174,7 +174,7 @@ function seatBadgeClass(status) {
               class="px-4 py-3 text-sm text-gray-600 italic"
             >
               {{ course.LongName }}
-              <span class="ml-1 text-xs text-gray-400">({{ course.creditHours }} cr)</span>
+              <span class="ml-1 text-xs text-gray-500">({{ course.creditHours }} cr)</span>
             </div>
 
             <!-- Elective row (plain text) -->
@@ -184,7 +184,7 @@ function seatBadgeClass(status) {
               class="px-4 py-3 text-sm text-gray-600 italic"
             >
               {{ course.LongName }}
-              <span class="ml-1 text-xs text-gray-400">({{ course.creditHours }} cr)</span>
+              <span class="ml-1 text-xs text-gray-500">({{ course.creditHours }} cr)</span>
             </div>
           </div>
         </div>

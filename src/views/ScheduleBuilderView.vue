@@ -8,6 +8,7 @@
           v-if="registrationTerms.length > 1"
           data-testid="term-selector"
           v-model="selectedTermId"
+          aria-label="Select term"
           class="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700"
         >
           <option
@@ -67,7 +68,7 @@
               <button
                 @click="removeCourse(idx)"
                 class="ml-0.5 rounded-full hover:text-white/70"
-                aria-label="Remove course"
+                :aria-label="`Remove ${course.subjectCode}-${course.courseNo}`"
               >&times;</button>
             </span>
           </div>
@@ -94,6 +95,7 @@
                   v-for="preset in TIME_PRESETS"
                   :key="preset.label"
                   @click="applyPreset(preset)"
+                  :aria-pressed="isActivePreset(preset)"
                   class="rounded-md border border-gray-200 px-2 py-1 touch:py-3.5 touch:px-4 text-xs hover:bg-gray-50"
                   :class="isActivePreset(preset) ? 'border-crimson bg-crimson/5 text-crimson font-semibold' : 'text-gray-600'"
                 >{{ preset.label }}</button>
@@ -113,6 +115,7 @@
                   :min="360"
                   :max="1380"
                   :step="30"
+                  aria-label="Earliest start time"
                   class="w-full accent-crimson"
                 />
                 <input
@@ -121,6 +124,7 @@
                   :min="360"
                   :max="1380"
                   :step="30"
+                  aria-label="Latest end time"
                   class="w-full accent-crimson"
                 />
               </div>
@@ -191,15 +195,15 @@
 
         <!-- Right panel: results -->
         <div>
-          <p v-if="!hasBuilt" class="py-12 text-center text-sm text-gray-400">
+          <p v-if="!hasBuilt" class="py-12 text-center text-sm text-gray-500">
             Add courses and click Build Schedules to see options.
           </p>
 
-          <p v-else-if="isBuilding" class="py-12 text-center text-sm text-gray-400">
+          <p v-else-if="isBuilding" class="py-12 text-center text-sm text-gray-500">
             Building schedules…
           </p>
 
-          <p v-else-if="!schedules.length" class="py-12 text-center text-sm text-gray-400">
+          <p v-else-if="!schedules.length" class="py-12 text-center text-sm text-gray-500">
             No conflict-free schedules found. Try adjusting your filters or courses.
           </p>
 
@@ -219,7 +223,7 @@
                     :key="day"
                     class="relative flex flex-1 flex-col bg-white"
                   >
-                    <div class="flex-shrink-0 py-0.5 text-center text-[9px] font-medium text-gray-400">{{ day }}</div>
+                    <div class="flex-shrink-0 py-0.5 text-center text-[9px] font-medium text-gray-500">{{ day }}</div>
                     <div class="relative flex-1">
                       <div
                         v-for="sec in blocksForDay(schedule, day)"
@@ -271,7 +275,7 @@
                     data-testid="register-now-btn"
                     @click="onRegisterSchedule(schedule, idx)"
                     :disabled="registeringSchedules.has(idx)"
-                    class="w-full rounded-lg bg-green-700 px-3 py-1.5 touch:py-3.5 text-xs font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                    class="w-full rounded-lg border border-crimson bg-white px-3 py-1.5 touch:py-3.5 text-xs font-semibold text-crimson hover:bg-crimson hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   >
                     {{ registeringSchedules.has(idx) ? 'Registering…' : 'Register Now' }}
                   </button>

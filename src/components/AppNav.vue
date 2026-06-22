@@ -1,14 +1,16 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 
 const drawerOpen = ref(false)
+const drawerRef = ref(null)
 
 const HIDDEN_ROUTES = new Set(['login', '403', 'maintenance'])
 
@@ -19,6 +21,13 @@ function isActive(path) {
 function closeDrawer() {
   drawerOpen.value = false
 }
+
+const { handleKeydown: drawerKeydown } = useFocusTrap(drawerRef, drawerOpen, closeDrawer)
+
+const cartAriaLabel = computed(() => {
+  const n = cartStore.sections.length
+  return n ? `Cart, ${n} item${n === 1 ? '' : 's'}` : 'Cart'
+})
 </script>
 
 <template>
@@ -53,12 +62,17 @@ function closeDrawer() {
 
         <!-- Desktop right -->
         <div class="hidden md:flex items-center gap-3">
-          <RouterLink to="/cart" class="relative p-1 text-gray-600 hover:text-gray-900 transition-colors">
+          <RouterLink
+            to="/cart"
+            class="relative p-1 text-gray-600 hover:text-gray-900 transition-colors"
+            :aria-label="cartAriaLabel"
+          >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11M10 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z" />
             </svg>
             <span
               v-if="cartStore.sections.length"
+              aria-hidden="true"
               class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-crimson text-white text-[10px] font-medium flex items-center justify-center leading-none"
             >{{ cartStore.sections.length }}</span>
           </RouterLink>
@@ -77,6 +91,8 @@ function closeDrawer() {
         <button
           class="md:hidden p-1 text-gray-600 hover:text-gray-900"
           :aria-label="drawerOpen ? 'Close menu' : 'Open menu'"
+          :aria-expanded="drawerOpen"
+          aria-controls="mobile-nav-drawer"
           @click="drawerOpen = !drawerOpen"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -88,7 +104,16 @@ function closeDrawer() {
 
       <!-- Mobile drawer -->
       <Transition name="fade">
-        <div v-if="drawerOpen" class="md:hidden border-t border-black/10 bg-white px-4 py-4 flex flex-col gap-4">
+        <div
+          v-if="drawerOpen"
+          id="mobile-nav-drawer"
+          ref="drawerRef"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+          class="md:hidden border-t border-black/10 bg-white px-4 py-4 flex flex-col gap-4"
+          @keydown="drawerKeydown"
+        >
           <RouterLink
             to="/"
             :class="['text-sm font-medium', route.path === '/' ? 'text-crimson' : 'text-gray-700']"
@@ -117,6 +142,7 @@ function closeDrawer() {
             Cart
             <span
               v-if="cartStore.sections.length"
+              aria-hidden="true"
               class="min-w-[18px] h-[18px] px-1 rounded-full bg-crimson text-white text-[10px] font-medium flex items-center justify-center leading-none"
             >{{ cartStore.sections.length }}</span>
           </RouterLink>
@@ -139,6 +165,7 @@ function closeDrawer() {
       <div
         v-if="drawerOpen"
         class="fixed inset-0 z-40 md:hidden"
+        aria-hidden="true"
         @click="closeDrawer"
       />
     </Teleport>

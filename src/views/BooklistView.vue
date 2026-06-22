@@ -120,13 +120,13 @@ onMounted(async () => {
       <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">My Booklist</h1>
       <div
         v-if="!termGroups.length"
-        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400"
+        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-500"
       >
         <p class="text-lg font-medium">No sections to show</p>
         <p class="mt-1 text-sm">Add sections to your cart or register to see your booklist.</p>
       </div>
 
-      <div v-if="loading" class="mb-4 text-center text-sm text-gray-400">
+      <div v-if="loading" class="mb-4 text-center text-sm text-gray-500">
         Loading books for cart sections…
       </div>
 
@@ -151,10 +151,10 @@ onMounted(async () => {
               <span class="font-normal text-gray-600">· {{ item.section.LongName }}</span>
             </p>
 
-            <div v-if="item.books === null" class="mt-2 text-xs text-gray-400">
+            <div v-if="item.books === null" class="mt-2 text-xs text-gray-500">
               Loading books…
             </div>
-            <p v-else-if="!item.books.length" class="mt-2 text-xs text-gray-400">
+            <p v-else-if="!item.books.length" class="mt-2 text-xs text-gray-500">
               No books required
             </p>
             <div v-else class="mt-2 space-y-2">
@@ -164,13 +164,13 @@ onMounted(async () => {
                 class="text-xs text-gray-700"
               >
                 <span class="font-medium">{{ book.Title }}</span>
-                <span class="mx-1 text-gray-400">·</span>
+                <span class="mx-1 text-gray-500">·</span>
                 <span>{{ book.Author }}</span>
-                <span class="mx-1 text-gray-400">·</span>
+                <span class="mx-1 text-gray-500">·</span>
                 <span>ISBN {{ book.ISBN }}</span>
                 <span
                   class="ml-1"
-                  :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-400'"
+                  :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-500'"
                 >{{ book.Required }}</span>
               </div>
             </div>

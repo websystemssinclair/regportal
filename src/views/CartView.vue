@@ -85,7 +85,7 @@ async function registerAll(group) {
       </div>
 
       <div v-if="!cartStore.sections.length"
-        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400">
+        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-500">
         <p class="text-lg font-medium">Your cart is empty — let's find your next class.</p>
       </div>
 
@@ -118,7 +118,7 @@ async function registerAll(group) {
                       </span>
                       <span class="text-gray-700">{{ sec.LongName }}</span>
                     </div>
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-500">
                       {{ sec.Faculty || '' }}
                       <template v-if="sec.Days">· {{ sec.Days }}</template>
                       <template v-if="sec.StartTime">{{ sec.StartTime }}–{{ sec.EndTime }}</template>
@@ -133,7 +133,7 @@ async function registerAll(group) {
                       <span class="text-xs text-red-600">{{ sectionErrorStore.errors[sec.CourseKey] }}</span>
                       <button
                         @click="sectionErrorStore.dismiss(sec.CourseKey)"
-                        class="text-xs text-gray-400 underline hover:text-gray-600"
+                        class="text-xs text-gray-500 underline hover:text-gray-600"
                       >Dismiss</button>
                     </template>
                     <!-- Action buttons (Current term, actionable, no error) -->

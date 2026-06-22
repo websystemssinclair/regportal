@@ -8,6 +8,7 @@ import { useRegisterNow } from '@/composables/useRegisterNow'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useMaintenanceStore } from '@/stores/maintenance'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 
 const reference = useReferenceStore()
 const tickerPaused = ref(false)
@@ -41,6 +42,7 @@ const cartStore = useCartStore()
 const authStore = useAuthStore()
 const maintenanceStore = useMaintenanceStore()
 const drawerOpen = ref(false)
+const filterDrawerRef = ref(null)
 
 const totalPages = computed(() => Math.ceil(total.value / filters.limit) || 1)
 const pageWindow = computed(() => {
@@ -138,6 +140,12 @@ function seatBadgeLabel(s) {
   return s.waitListAllowed === 'Y' ? `Waitlist · ${s.openSeats}/${s.seatCapacity}` : `Closed · ${s.openSeats}/${s.seatCapacity}`
 }
 
+function closeDrawer() {
+  drawerOpen.value = false
+}
+
+const { handleKeydown: drawerKeydown } = useFocusTrap(filterDrawerRef, drawerOpen, closeDrawer)
+
 fetch()
 </script>
 
@@ -159,17 +167,18 @@ fetch()
         </h1>
 
         <!-- Search bar -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <input
             v-model="filters.keyword"
             type="text"
             placeholder="What would you like to learn?"
-            class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson sm:flex-1"
             @keydown.enter="runSearch()"
           />
           <select
             v-model="filters.term"
-            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson"
+            aria-label="Select term"
+            class="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson sm:flex-none sm:shrink-0"
           >
             <option
               v-for="term in reference.terms.filter(t => ['D','Y','F'].includes(t.toView))"
@@ -179,22 +188,24 @@ fetch()
           </select>
           <button
             @click="drawerOpen = true"
-            class="relative flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            class="relative flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
             </svg>
-            Filters
+            <span class="hidden sm:inline">Filters</span>
             <span
               v-if="activeFilterCount"
+              aria-hidden="true"
               class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-crimson text-[10px] font-bold text-white"
             >{{ activeFilterCount }}</span>
+            <span v-if="activeFilterCount" class="sr-only">, {{ activeFilterCount }} active {{ activeFilterCount === 1 ? 'filter' : 'filters' }}</span>
           </button>
           <button
             @click="runSearch()"
             :disabled="isLoading"
-            class="rounded-lg bg-crimson px-5 py-3 text-sm font-bold text-white hover:bg-crimson-dark transition-colors shadow-sm disabled:opacity-60"
+            class="shrink-0 rounded-lg bg-crimson px-5 py-3 text-sm font-bold text-white hover:bg-crimson-dark transition-colors shadow-sm disabled:opacity-60"
           >
             Search
           </button>
@@ -205,7 +216,7 @@ fetch()
           v-if="upcomingKeyDates.length"
           class="mt-4 rounded bg-canvas motion-safe:overflow-hidden motion-reduce:overflow-x-auto"
           aria-label="Important Dates"
-          role="marquee"
+          role="region"
           @mouseenter="tickerPaused = true"
           @mouseleave="tickerPaused = false"
         >
@@ -224,7 +235,7 @@ fetch()
         </div>
 
         <!-- Results count -->
-        <p v-if="!isLoading && total" class="mt-3 text-center text-xs text-gray-400">
+        <p v-if="!isLoading && total" class="mt-3 text-center text-xs text-gray-500">
           {{ total.toLocaleString() }} courses available
         </p>
       </div>
@@ -232,18 +243,27 @@ fetch()
 
     <!-- Filter drawer backdrop -->
     <transition name="fade">
-      <div v-if="drawerOpen" class="fixed inset-0 z-40 bg-black/30" @click="drawerOpen = false" />
+      <div v-if="drawerOpen" class="fixed inset-0 z-40 bg-black/30" aria-hidden="true" @click="closeDrawer" />
     </transition>
 
     <!-- Filter drawer -->
     <aside
+      ref="filterDrawerRef"
       :class="drawerOpen ? 'translate-x-0' : 'translate-x-full'"
-      class="fixed right-0 top-0 z-50 h-full w-80 overflow-y-auto bg-white shadow-2xl transition-transform duration-200 p-6"
-      aria-label="Search filters"
+      :aria-hidden="!drawerOpen"
+      class="fixed right-0 top-0 z-50 h-full w-full max-w-80 overflow-y-auto bg-white shadow-2xl transition-transform duration-200 p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="filter-drawer-title"
+      @keydown="drawerKeydown"
     >
       <div class="flex items-center justify-between mb-5">
-        <h2 class="font-semibold text-gray-900">Filters</h2>
-        <button @click="drawerOpen = false" class="text-2xl leading-none text-gray-400 hover:text-gray-700">&times;</button>
+        <h2 id="filter-drawer-title" class="font-semibold text-gray-900">Filters</h2>
+        <button
+          @click="closeDrawer"
+          class="text-2xl leading-none text-gray-500 hover:text-gray-700"
+          aria-label="Close filters"
+        >&times;</button>
       </div>
 
       <div class="space-y-5 text-sm">
@@ -284,6 +304,7 @@ fetch()
             <button
               v-for="d in DAYS" :key="d"
               @click="toggleDay(d)"
+              :aria-pressed="selectedDays.includes(d)"
               :class="selectedDays.includes(d)
                 ? 'bg-crimson text-white border-crimson'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-crimson'"
@@ -296,15 +317,17 @@ fetch()
           <label class="mb-1.5 block font-medium text-gray-700">Credit Hours</label>
           <div class="flex items-center gap-2">
             <input v-model.number="filters.creditHoursMin" type="number" min="0" max="15"
+              aria-label="Minimum credit hours"
               class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-crimson" />
-            <span class="text-gray-400">to</span>
+            <span class="text-gray-500">to</span>
             <input v-model.number="filters.creditHoursMax" type="number" min="0" max="15"
+              aria-label="Maximum credit hours"
               class="w-16 rounded border border-gray-300 px-2 py-1.5 text-center focus:outline-none focus:ring-2 focus:ring-crimson" />
           </div>
         </div>
 
         <button
-          @click="drawerOpen = false; runSearch()"
+          @click="closeDrawer(); runSearch()"
           class="w-full rounded bg-crimson py-2.5 font-medium text-white hover:bg-crimson-dark transition-colors"
         >
           Apply Filters
@@ -328,7 +351,7 @@ fetch()
 
         <!-- Empty state -->
         <div v-else-if="!results.length && !error"
-          class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400">
+          class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-500">
           <p class="text-lg font-medium">No courses found</p>
           <p class="mt-1 text-sm">Try a broader search — there are thousands of courses waiting.</p>
         </div>
@@ -359,7 +382,7 @@ fetch()
                   </div>
                   <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                     <span>{{ modalityText(course) }}</span>
-                    <span v-if="course.preReqs && course.preReqs !== 'None'" class="text-amber-600">
+                    <span v-if="course.preReqs && course.preReqs !== 'None'" class="text-gray-600">
                       Prereq: {{ course.preReqs }}
                     </span>
                   </div>
@@ -371,8 +394,9 @@ fetch()
                   >{{ course.isOpen ? 'Open' : 'Closed' }}</span>
                   <svg
                     :class="expanded === course.id ? 'rotate-180' : ''"
-                    class="h-4 w-4 text-gray-400 transition-transform"
+                    class="h-4 w-4 text-gray-500 transition-transform"
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -386,10 +410,10 @@ fetch()
               <div class="px-5 py-3 border-b border-gray-100">
                 <p class="text-xs text-gray-600 leading-relaxed">{{ course.Description }}</p>
                 <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  <span v-if="course.preReqs && course.preReqs !== 'None'" class="text-amber-700">
+                  <span v-if="course.preReqs && course.preReqs !== 'None'" class="text-gray-600">
                     <strong>Prereq:</strong> {{ course.preReqs }}
                   </span>
-                  <span v-if="detailsByCard[course.id]?.coReqs && detailsByCard[course.id].coReqs !== 'None'" class="text-amber-700">
+                  <span v-if="detailsByCard[course.id]?.coReqs && detailsByCard[course.id].coReqs !== 'None'" class="text-gray-600">
                     <strong>Coreq:</strong> {{ detailsByCard[course.id].coReqs }}
                   </span>
                   <a v-if="detailsByCard[course.id]?.topicLink" :href="detailsByCard[course.id].topicLink" target="_blank" rel="noopener"
@@ -400,7 +424,7 @@ fetch()
               </div>
 
               <!-- Sections loading -->
-              <div v-if="loadingCard === course.id" class="px-5 py-4 text-sm text-gray-400">
+              <div v-if="loadingCard === course.id" class="px-5 py-4 text-sm text-gray-500">
                 Loading sections…
               </div>
 
@@ -411,7 +435,7 @@ fetch()
 
               <!-- Sections empty -->
               <div v-else-if="sectionsByCard[course.id]?.length === 0"
-                class="px-5 py-4 text-sm text-gray-400">
+                class="px-5 py-4 text-sm text-gray-500">
                 No sections available for this term.
               </div>
 
@@ -428,7 +452,7 @@ fetch()
                         <template v-if="sec.StartTime">{{ sec.StartTime }}–{{ sec.EndTime }}</template>
                       </span>
                     </div>
-                    <p class="mt-0.5 text-xs text-gray-400">{{ sec.iconTitle }} · {{ sec.location || sec.building }}</p>
+                    <p class="mt-0.5 text-xs text-gray-500">{{ sec.iconTitle }} · {{ sec.location || sec.building }}</p>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
                     <span :class="seatBadgeClass(sec)" class="rounded-full px-2.5 py-0.5 text-xs font-medium">
@@ -458,7 +482,7 @@ fetch()
                           <span class="text-xs text-red-600">{{ sectionResults[sec.CourseKey].message }}</span>
                           <button
                             @click="dismissResult(sec.CourseKey)"
-                            class="text-xs text-gray-400 underline hover:text-gray-600"
+                            class="text-xs text-gray-500 underline hover:text-gray-600"
                           >Dismiss</button>
                         </template>
                         <button
@@ -498,17 +522,20 @@ fetch()
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="mt-6 flex items-center justify-between text-sm text-gray-500">
-          <span>Page {{ filters.page }} of {{ totalPages }}</span>
-          <div class="flex gap-1">
+          <span aria-live="polite" aria-atomic="true">Page {{ filters.page }} of {{ totalPages }}</span>
+          <nav aria-label="Search results pages" class="flex gap-1">
             <button
               :disabled="filters.page <= 1 || isLoading"
               @click="goPage(filters.page - 1)"
+              aria-label="Previous page"
               class="rounded border border-gray-300 px-3 py-1.5 touch:py-3 hover:bg-gray-50 disabled:opacity-40"
             >← Prev</button>
             <button
               v-for="p in pageWindow" :key="p"
               @click="goPage(p)"
               :disabled="isLoading"
+              :aria-label="'Page ' + p"
+              :aria-current="p === filters.page ? 'page' : undefined"
               :class="p === filters.page
                 ? 'border-crimson bg-crimson text-white'
                 : 'border-gray-300 hover:bg-gray-50'"
@@ -517,15 +544,16 @@ fetch()
             <button
               :disabled="filters.page >= totalPages || isLoading"
               @click="goPage(filters.page + 1)"
+              aria-label="Next page"
               class="rounded border border-gray-300 px-3 py-1.5 touch:py-3 hover:bg-gray-50 disabled:opacity-40"
             >Next →</button>
-          </div>
+          </nav>
         </div>
       </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-canvas border-t border-gray-200 px-4 py-4 text-center text-xs text-gray-400">
+    <footer class="bg-canvas border-t border-gray-200 px-4 py-4 text-center text-xs text-gray-500">
       &copy; {{ new Date().getFullYear() }} Sinclair College
     </footer>
   </div>
@@ -540,6 +568,7 @@ fetch()
 }
 
 .ticker-track {
+  will-change: transform;
   animation: scroll-ticker 30s linear infinite;
 }
 

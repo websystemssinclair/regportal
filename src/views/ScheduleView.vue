@@ -6,17 +6,24 @@
       data-testid="confirm-dialog"
       class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
     >
-      <div class="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-        <p class="mb-4 text-sm">
+      <div
+        ref="confirmDialogRef"
+        class="w-full max-w-sm rounded-lg bg-white p-6 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        @keydown="handleConfirmKeydown"
+      >
+        <p id="confirm-dialog-title" class="mb-4 text-sm">
           Are you sure you want to drop <strong>{{ pendingAction.label }}</strong>?
         </p>
         <div class="flex gap-3">
           <button
-            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
             @click="confirmAction"
           >Yes, Drop</button>
           <button
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+            class="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
             @click="pendingAction = null"
           >Cancel</button>
         </div>
@@ -31,6 +38,7 @@
           v-if="registrationTerms.length > 1"
           data-testid="term-selector"
           v-model="selectedTermId"
+          aria-label="Select term"
           class="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700"
         >
           <option
@@ -45,13 +53,13 @@
       </div>
 
       <div v-if="!summaryList.length"
-        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-400 mb-6">
+        class="rounded-lg border border-gray-200 bg-white py-16 text-center text-gray-500 mb-6">
         <p class="text-lg font-medium">Nothing here yet — head to Courses to find something to register for.</p>
       </div>
 
       <!-- Mobile: day-picker strip → selected-day cards → collapsible full list -->
       <div class="md:hidden">
-        <div class="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div class="mb-4 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Select day">
           <button
             v-for="day in DAYS"
             :key="day"
@@ -59,39 +67,40 @@
             :class="selectedDay === day
               ? 'scale-110 bg-crimson text-white shadow-md'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            :aria-pressed="selectedDay === day"
             @click="selectedDay = day"
           >{{ DAY_LABELS[day] }}</button>
         </div>
 
-        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
           {{ DAY_LONG_LABELS[selectedDay] }}
         </p>
 
         <div
           v-if="!selectedDayCourses.length"
-          class="mb-4 rounded-xl bg-gray-100 px-4 py-6 text-center text-sm text-gray-400"
+          class="mb-4 rounded-lg bg-gray-100 px-4 py-6 text-center text-sm text-gray-500"
         >
           Nothing scheduled this day
         </div>
         <div
           v-for="block in selectedDayCourses"
           :key="block.courseKey"
-          class="mb-2 flex items-center gap-3 rounded-xl px-4 py-3 text-white"
-          :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-crimson'"
+          class="mb-2 flex items-center gap-3 rounded-lg px-4 py-3"
+          :class="block.isWaitlisted ? 'bg-crimson/10 text-crimson' : 'bg-crimson text-white'"
         >
           <div class="flex-1">
             <div class="text-sm font-semibold">{{ block.label }}</div>
-            <div v-if="block.timeLabel" class="mt-0.5 text-xs opacity-80">{{ block.timeLabel }}</div>
+            <div v-if="block.timeLabel" class="mt-0.5 text-xs opacity-70">{{ block.timeLabel }}</div>
           </div>
-          <span v-if="block.isWaitlisted" class="flex-shrink-0 rounded bg-black/20 px-2 py-0.5 text-xs">Waitlisted</span>
+          <span v-if="block.isWaitlisted" class="flex-shrink-0 rounded bg-crimson/15 px-2 py-0.5 text-xs font-medium">Waitlisted</span>
         </div>
 
-        <details class="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <details class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
           <summary class="flex cursor-pointer select-none items-center justify-between px-4 py-3 text-sm font-medium">
             All Registered Courses
           </summary>
           <div class="border-t border-gray-100">
-            <div v-if="!summaryList.length" class="px-4 py-6 text-center text-sm text-gray-400">No registrations</div>
+            <div v-if="!summaryList.length" class="px-4 py-6 text-center text-sm text-gray-500">No registrations</div>
             <div
               v-for="entry in summaryList"
               :key="entry.courseKey"
@@ -103,7 +112,7 @@
                   <span v-if="entry.isWaitlisted" class="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">Waitlisted</span>
                 </div>
                 <div class="mt-0.5 text-xs text-gray-500">{{ entry.faculty }}</div>
-                <div class="text-xs text-gray-400">{{ entry.days || 'Online' }}</div>
+                <div class="text-xs text-gray-500">{{ entry.days || 'Online' }}</div>
               </div>
               <div class="flex shrink-0 flex-col items-end gap-1">
                 <button
@@ -147,7 +156,7 @@
               :key="day"
               class="flex min-w-[80px] flex-1 flex-col bg-white"
             >
-              <div class="flex-shrink-0 border-b border-gray-100 py-1.5 text-center text-xs font-medium text-gray-400">
+              <div class="flex-shrink-0 border-b border-gray-100 py-1.5 text-center text-xs font-medium text-gray-500">
                 {{ DAY_SHORT_LABELS[day] }}
               </div>
               <div class="relative flex-1">
@@ -155,8 +164,8 @@
                   v-for="block in gridBlocks.filter(b => b.days.includes(day))"
                   :key="block.courseKey"
                   data-testid="grid-block"
-                  class="absolute left-1 right-1 overflow-hidden rounded-lg px-2 py-1 text-xs text-white shadow-sm"
-                  :class="block.isWaitlisted ? 'bg-amber-500' : 'bg-crimson'"
+                  class="absolute left-1 right-1 overflow-hidden rounded-lg px-2 py-1 text-xs shadow-sm"
+                  :class="block.isWaitlisted ? 'bg-crimson/15 text-crimson' : 'bg-crimson text-white'"
                   :style="{ top: block.top + '%', height: Math.max(block.height, 4) + '%' }"
                 >
                   <div class="font-semibold">{{ block.label }}</div>
@@ -172,9 +181,16 @@
 
         <button
           class="fixed right-4 top-24 z-30 flex items-center gap-1.5 rounded-full bg-gray-800 px-3 py-1.5 text-xs text-white shadow-lg transition-colors hover:bg-gray-700"
+          :aria-expanded="showListPanel"
           @click="showListPanel = !showListPanel"
         >
-          {{ showListPanel ? '✕ Close' : '≡ Courses' }}
+          <svg v-if="showListPanel" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <svg v-else class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          {{ showListPanel ? 'Close' : 'Courses' }}
         </button>
 
         <Transition name="panel-slide">
@@ -185,7 +201,7 @@
             <div class="border-b border-gray-100 px-4 py-3">
               <h2 class="text-sm font-semibold">Registered Courses</h2>
             </div>
-            <div v-if="!summaryList.length" class="px-4 py-10 text-center text-sm text-gray-400">No registrations</div>
+            <div v-if="!summaryList.length" class="px-4 py-10 text-center text-sm text-gray-500">No registrations</div>
             <div
               v-for="entry in summaryList"
               :key="entry.courseKey"
@@ -198,7 +214,7 @@
                     <span v-if="entry.isWaitlisted" class="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">Waitlisted</span>
                   </div>
                   <div class="mt-0.5 text-xs text-gray-500">{{ entry.faculty }}</div>
-                  <div class="text-xs text-gray-400">{{ entry.days || 'Online' }}</div>
+                  <div class="text-xs text-gray-500">{{ entry.days || 'Online' }}</div>
                 </div>
                 <div class="mt-0.5 flex shrink-0 flex-col items-end gap-1">
                   <button
@@ -242,7 +258,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, reactive } from 'vue'
+import { ref, computed, watch, reactive, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useReferenceStore } from '@/stores/reference'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
@@ -375,12 +391,45 @@ function toGridPercent(minutes) {
 
     const pendingAction = ref(null)
     const droppingSections = reactive(new Set())
+    const confirmDialogRef = ref(null)
+    const triggerElement = ref(null)
+
+    watch(pendingAction, async (action) => {
+      if (action) {
+        await nextTick()
+        confirmDialogRef.value?.querySelector('button')?.focus()
+      } else {
+        triggerElement.value?.focus()
+        triggerElement.value = null
+      }
+    })
+
+    function handleConfirmKeydown(e) {
+      if (e.key === 'Escape') {
+        pendingAction.value = null
+        return
+      }
+      if (e.key !== 'Tab' || !confirmDialogRef.value) return
+      const focusable = Array.from(confirmDialogRef.value.querySelectorAll('button:not([disabled])'))
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
 
     function startDrop(entry) {
+      triggerElement.value = document.activeElement
       pendingAction.value = { courseKey: entry.courseKey, action: 'drop', label: entry.label }
     }
 
     function startWaitlistDrop(entry) {
+      triggerElement.value = document.activeElement
       pendingAction.value = { courseKey: entry.courseKey, action: 'waitlistDrop', label: entry.label }
     }
 
