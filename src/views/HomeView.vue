@@ -146,7 +146,9 @@ function goPage(n) {
 }
 
 function isActionable(sec) {
-  return sec.status === 'Open' || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
+  const now = new Date()
+  const canRegister = (sec.status === 'Open') || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
+  return canRegister && !regExpired(sec, now) && !sec.isFuture
 }
 
 function modalityText(c) {
@@ -545,19 +547,21 @@ fetch()
                       </span>
                     </template>
                     <template v-else>
-                      <button
-                        v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
-                        @click="cartStore.add(sec)"
-                        class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
-                      >
-                        Add to Cart
-                      </button>
-                      <span
-                        v-else
-                        class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500"
-                      >
-                        In Cart
-                      </span>
+                      <template v-if="sec.status !== 'Cancelled'">
+                        <button
+                          v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
+                          @click="cartStore.add(sec)"
+                          class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+                        >
+                          Add to Cart
+                        </button>
+                        <span
+                          v-else
+                          class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500"
+                        >
+                          In Cart
+                        </span>
+                      </template>
                       <template v-if="authStore.isStudent && isActionable(sec)">
                         <template v-if="sectionResults[sec.CourseKey]?.status === 'error'">
                           <span class="text-xs text-red-600">{{ sectionResults[sec.CourseKey].message }}</span>
@@ -580,6 +584,10 @@ fetch()
                         @click="authStore.login()"
                         class="text-xs text-crimson hover:underline"
                       >Sign in to register</button>
+                      <span
+                        v-else-if="sec.isFuture"
+                        class="text-xs text-gray-500"
+                      >Registration opens {{ formatDate(sec.regStartDate) }}</span>
                     </template>
                   </div>
                 </li>

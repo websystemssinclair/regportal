@@ -6,6 +6,7 @@ import HomeView from '@/views/HomeView.vue'
 import { useRegisterNow } from '@/composables/useRegisterNow'
 import { useCardExpansion } from '@/composables/useCardExpansion'
 import { useSearch } from '@/composables/useSearch'
+import { useAuthStore } from '@/stores/auth'
 
 vi.mock('@/composables/useRegisterNow')
 vi.mock('@/composables/useSearch')
@@ -418,5 +419,83 @@ describe('HomeView — date formatting', () => {
   it('formatDate("08/24/2026") renders as "Aug 24, 2026"', () => {
     const wrapper = mountWithSection({ startDate: '08/24/2026' })
     expect(wrapper.text()).toContain('Aug 24, 2026')
+  })
+})
+
+describe('HomeView — action button gating', () => {
+  it('isFuture section shows "Add to Cart"', () => {
+    const wrapper = mountWithSection({ isFuture: true, status: 'Open', openSeats: 5 })
+    expect(wrapper.text()).toContain('Add to Cart')
+  })
+
+  it('isFuture section does not show "Register Now" for authenticated student', async () => {
+    const wrapper = mountWithSection({ isFuture: true, status: 'Open', openSeats: 5 })
+    const authStore = useAuthStore()
+    authStore.isAuthenticated = true
+    authStore.currentRole = 'Student'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain('Register Now')
+  })
+
+  it('isFuture section shows "Registration opens" hint', () => {
+    const wrapper = mountWithSection({ isFuture: true, status: 'Open', regStartDate: '01/01/2026 00:00' })
+    expect(wrapper.text()).toContain('Registration opens')
+  })
+
+  it('"Registration opens" date formatted as "Aug 24, 2026"', () => {
+    const wrapper = mountWithSection({ isFuture: true, status: 'Open', regStartDate: '08/24/2026 00:00' })
+    expect(wrapper.text()).toContain('Registration opens Aug 24, 2026')
+  })
+
+  it('isFuture section does not show "Sign in to register" for unauthenticated user', () => {
+    const wrapper = mountWithSection({ isFuture: true, status: 'Open', openSeats: 5 })
+    expect(wrapper.text()).not.toContain('Sign in to register')
+  })
+
+  it('regExpired section shows "Add to Cart"', () => {
+    const wrapper = mountWithSection({ status: 'Open', regEndDate: '01/01/2020 00:00', openSeats: 5 })
+    expect(wrapper.text()).toContain('Add to Cart')
+  })
+
+  it('regExpired section does not show "Register Now" for authenticated student', async () => {
+    const wrapper = mountWithSection({ status: 'Open', regEndDate: '01/01/2020 00:00', openSeats: 5 })
+    const authStore = useAuthStore()
+    authStore.isAuthenticated = true
+    authStore.currentRole = 'Student'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain('Register Now')
+  })
+
+  it('regExpired section does not show "Registration opens" hint', () => {
+    const wrapper = mountWithSection({ status: 'Open', regEndDate: '01/01/2020 00:00', openSeats: 5 })
+    expect(wrapper.text()).not.toContain('Registration opens')
+  })
+
+  it('regExpired section does not show "Sign in to register" for unauthenticated user', () => {
+    const wrapper = mountWithSection({ status: 'Open', regEndDate: '01/01/2020 00:00', openSeats: 5 })
+    expect(wrapper.text()).not.toContain('Sign in to register')
+  })
+
+  it('Cancelled section does not show "Add to Cart"', () => {
+    const wrapper = mountWithSection({ status: 'Cancelled' })
+    expect(wrapper.text()).not.toContain('Add to Cart')
+  })
+
+  it('normal Open section shows "Register Now" for authenticated student', async () => {
+    const wrapper = mountWithSection({ status: 'Open', openSeats: 5, regEndDate: '12/31/2099 23:59', isFuture: false })
+    const authStore = useAuthStore()
+    authStore.isAuthenticated = true
+    authStore.currentRole = 'Student'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Register Now')
+  })
+
+  it('Closed+waitlist section with regExpired does not show "Waitlist Now" for authenticated student', async () => {
+    const wrapper = mountWithSection({ status: 'Closed', waitListAllowed: 'Y', regEndDate: '01/01/2020 00:00' })
+    const authStore = useAuthStore()
+    authStore.isAuthenticated = true
+    authStore.currentRole = 'Student'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain('Waitlist Now')
   })
 })
