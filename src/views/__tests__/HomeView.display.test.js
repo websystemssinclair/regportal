@@ -422,6 +422,65 @@ describe('HomeView — date formatting', () => {
   })
 })
 
+describe('HomeView — extra info lines', () => {
+  it('printedComments non-empty renders text below location', () => {
+    const wrapper = mountWithSection({ printedComments: 'Bring a lab coat' })
+    expect(wrapper.text()).toContain('Bring a lab coat')
+  })
+
+  it('printedComments empty renders nothing', () => {
+    const wrapper = mountWithSection({ printedComments: '' })
+    expect(wrapper.text()).not.toContain('Bring a lab coat')
+  })
+
+  it('comments field is never rendered even when non-empty', () => {
+    const wrapper = mountWithSection({ comments: 'COMMENTS_SENTINEL' })
+    expect(wrapper.text()).not.toContain('COMMENTS_SENTINEL')
+  })
+
+  it('startDate set with no CBE in restrictions renders date range', () => {
+    const wrapper = mountWithSection({ startDate: '08/24/2026', endDate: '12/13/2026', restrictions: '' })
+    expect(wrapper.text()).toContain('Aug 24, 2026')
+    expect(wrapper.text()).toContain('Dec 13, 2026')
+  })
+
+  it('startDate set with restrictions containing "CBE" suppresses dates', () => {
+    const wrapper = mountWithSection({ startDate: '08/24/2026', endDate: '12/13/2026', restrictions: 'CBE' })
+    expect(wrapper.text()).not.toContain('Aug 24, 2026')
+  })
+
+  it('startDate set with restrictions containing "cbe" (lowercase) suppresses dates', () => {
+    const wrapper = mountWithSection({ startDate: '08/24/2026', endDate: '12/13/2026', restrictions: 'cbe' })
+    expect(wrapper.text()).not.toContain('Aug 24, 2026')
+  })
+
+  it('startDate empty suppresses dates regardless of restrictions', () => {
+    const wrapper = mountWithSection({ startDate: '', restrictions: '' })
+    expect(wrapper.text()).not.toContain('2026 –')
+  })
+
+  it('otherFee 125 renders a "+ $125 fee" badge', () => {
+    const wrapper = mountWithSection({ otherFee: 125 })
+    expect(wrapper.text()).toContain('+ $125 fee')
+  })
+
+  it('labFee 50 renders a "+ $50 fee" badge', () => {
+    const wrapper = mountWithSection({ labFee: 50 })
+    expect(wrapper.text()).toContain('+ $50 fee')
+  })
+
+  it('both fees non-zero renders two fee badges', () => {
+    const wrapper = mountWithSection({ otherFee: 125, labFee: 50 })
+    expect(wrapper.text()).toContain('+ $125 fee')
+    expect(wrapper.text()).toContain('+ $50 fee')
+  })
+
+  it('otherFee 0 renders no fee badge', () => {
+    const wrapper = mountWithSection({ otherFee: 0 })
+    expect(wrapper.text()).not.toContain('fee')
+  })
+})
+
 describe('HomeView — action button gating', () => {
   it('isFuture section shows "Add to Cart"', () => {
     const wrapper = mountWithSection({ isFuture: true, status: 'Open', openSeats: 5 })

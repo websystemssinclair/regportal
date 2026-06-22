@@ -535,9 +535,14 @@ fetch()
                       {{ entry.Days }} {{ formatTime(entry.startTime, entry.endTime) }}
                       <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
                     </div>
-                    <p v-if="sec.startDate" class="mt-0.5 text-xs text-gray-500">
+                    <p v-if="sec.printedComments" class="mt-0.5 text-xs text-gray-500">{{ sec.printedComments }}</p>
+                    <p v-if="sec.startDate && !/CBE/i.test(sec.restrictions || '')" class="mt-0.5 text-xs text-gray-500">
                       {{ formatDate(sec.startDate) }}{{ sec.endDate ? ` – ${formatDate(sec.endDate)}` : '' }}
                     </p>
+                    <div v-if="sec.otherFee || sec.labFee" class="mt-0.5 flex flex-wrap gap-1">
+                      <span v-if="sec.otherFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">+ ${{ sec.otherFee }} fee</span>
+                      <span v-if="sec.labFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">+ ${{ sec.labFee }} fee</span>
+                    </div>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
                     <span v-for="b in [seatBadge(sec)]" :key="'b'" :class="b.cls" class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ b.label }}</span>
