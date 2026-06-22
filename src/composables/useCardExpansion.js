@@ -51,7 +51,23 @@ export function useCardExpansion(filters) {
   function showAllSections(id) { visibleSections.value[id] = true }
 
   function sectionsToShow(id) {
-    const all = sectionsByCard.value[id] ?? []
+    const now = new Date()
+    function isExpired(sec) {
+      if (!sec.regEndDate) return false
+      const [datePart, timePart = '00:00'] = sec.regEndDate.split(' ')
+      const [m, d, y] = datePart.split('/').map(Number)
+      const [h, min] = timePart.split(':').map(Number)
+      const deadline = new Date(y, m - 1, d, h, min)
+      if (isNaN(deadline.getTime())) return false
+      return sec.SectionLoc === '320'
+        ? deadline < new Date(now - 2 * 86400000)
+        : deadline < now
+    }
+    const all = [...(sectionsByCard.value[id] ?? [])].sort((a, b) => {
+      const expA = isExpired(a), expB = isExpired(b)
+      if (expA !== expB) return expA - expB
+      return (b.status === 'Open') - (a.status === 'Open')
+    })
     return visibleSections.value[id] ? all : all.slice(0, 20)
   }
 

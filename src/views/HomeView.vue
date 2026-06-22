@@ -516,7 +516,7 @@ fetch()
               <!-- Section rows -->
               <ul v-else class="divide-y divide-gray-100">
                 <li v-for="sec in sectionsToShow(course.id)" :key="sec.SectionNo"
-                  class="flex items-center justify-between gap-3 px-5 py-3 hover:bg-white transition-colors">
+                  class="flex items-end justify-between gap-3 px-5 py-3 hover:bg-white transition-colors">
                   <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2 text-sm">
                       <span class="font-mono font-semibold text-gray-800">{{ sec.SectionNo }}</span>
@@ -544,7 +544,7 @@ fetch()
                       <span v-if="sec.labFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">+ ${{ sec.labFee }} fee</span>
                     </div>
                   </div>
-                  <div class="flex shrink-0 items-center gap-2">
+                  <div class="flex shrink-0 flex-col items-end gap-1.5">
                     <span v-for="b in [seatBadge(sec)]" :key="'b'" :class="b.cls" class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ b.label }}</span>
                     <template v-if="sectionResults[sec.CourseKey]?.status === 'success'">
                       <span class="rounded bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
