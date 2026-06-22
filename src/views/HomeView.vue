@@ -132,16 +132,40 @@ function modalityText(c) {
     .filter(Boolean).join(' · ') || 'Online'
 }
 
+function parseRegDate(dateStr) {
+  const [datePart, timePart = '00:00'] = dateStr.split(' ')
+  const [month, day, year] = datePart.split('/').map(Number)
+  const [hours, minutes] = timePart.split(':').map(Number)
+  return new Date(year, month - 1, day, hours, minutes)
+}
+
+function regExpired(sec) {
+  const deadline = parseRegDate(sec.regEndDate)
+  const now = new Date()
+  if (sec.SectionLoc === '320') {
+    return deadline < new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+  }
+  return deadline < now
+}
+
 function seatBadgeClass(s) {
   if (s.status === 'Cancelled') return 'bg-gray-100 text-gray-500'
-  if (s.status === 'Open') return 'bg-green-100 text-green-800'
-  return s.waitListAllowed === 'Y' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+  if (s.status === 'Closed') {
+    return s.waitListAllowed === 'Y' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+  }
+  if (regExpired(s)) return 'bg-gray-100 text-gray-500'
+  if (s.openSeats > 0) return 'bg-green-100 text-green-800'
+  return ''
 }
 
 function seatBadgeLabel(s) {
   if (s.status === 'Cancelled') return 'Cancelled'
-  if (s.status === 'Open') return `Open · ${s.openSeats}/${s.seatCapacity}`
-  return s.waitListAllowed === 'Y' ? `Waitlist · ${s.openSeats}/${s.seatCapacity}` : `Closed · ${s.openSeats}/${s.seatCapacity}`
+  if (s.status === 'Closed') {
+    return s.waitListAllowed === 'Y' ? 'Waitlist Available' : 'Closed'
+  }
+  if (regExpired(s)) return 'Registration Closed'
+  if (s.openSeats > 0) return `Open · ${Math.floor(s.openSeats)} seats`
+  return ''
 }
 
 function closeDrawer() {
