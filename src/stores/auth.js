@@ -44,12 +44,13 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login() {
-      sessionStorage.setItem(RETURN_TO_KEY, window.location.href)
+      sessionStorage.setItem(RETURN_TO_KEY, window.location.pathname + window.location.search + window.location.hash)
       const { data: id } = await sendSamlRequest()
       window.location.href = `${SSO_BASE}?ID=${id}`
     },
 
     async handleCallback(samlId) {
+      const router = useRouter()
       const { data } = await retrieveUserFromSaml(samlId)
       this.user = {
         firstName: data.firstName,
@@ -75,7 +76,7 @@ export const useAuthStore = defineStore('auth', {
 
       const returnTo = sessionStorage.getItem(RETURN_TO_KEY)
       sessionStorage.removeItem(RETURN_TO_KEY)
-      useRouter().replace(returnTo ?? { name: data.targetUrl })
+      router.replace(returnTo ?? { name: data.targetUrl })
     },
 
     logout() {
