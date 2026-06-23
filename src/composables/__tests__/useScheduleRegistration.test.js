@@ -1,28 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { reactive } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useScheduleRegistration } from '@/composables/useScheduleRegistration'
 import { useAuthStore } from '@/stores/auth'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 
-vi.mock('@/services/registrationService', () => ({
-  registerSections: vi.fn(),
-}))
+vi.mock('@/composables/useRegistration')
 
-vi.mock('@/router', () => ({
-  default: { replace: vi.fn() },
-}))
-
+vi.mock('@/router', () => ({ default: { replace: vi.fn() } }))
 vi.mock('@/services/authService', () => ({
   sendSamlRequest: vi.fn(),
   retrieveUserFromSaml: vi.fn(),
   getUserData: vi.fn(),
 }))
 
-vi.mock('@/stores/cart', () => ({
-  useCartStore: vi.fn(() => ({ mergeOnLogin: vi.fn(), sections: [] })),
-}))
-
-import { registerSections } from '@/services/registrationService'
+import { useRegistration } from '@/composables/useRegistration'
 
 const makeSection = (overrides = {}) => ({
   CourseKey: '111',
@@ -39,62 +31,71 @@ const makeSection = (overrides = {}) => ({
   ...overrides,
 })
 
-const successResponse = (errors = []) => ({
-  data: {
-    results: 1,
-    success: true,
-    rows: [{ message: 'Registration completed successfully', errors }],
-  },
-})
-
-const errorResponse = (courseKey, message) => ({
-  data: {
-    results: 1,
-    success: false,
-    rows: [{
-      message: 'Registration failed',
-      errors: [{ CourseKey: courseKey, SectionNo: '100', CourseNumber: 'ACC-1100', SubjectCode: 'ACC', Message: message }],
-    }],
-  },
-})
-
-function seedAuth(authStore) {
-  authStore.isAuthenticated = true
-  authStore.currentRole = 'Student'
-  authStore.user = { firstName: 'Jane', lastName: 'Doe', tartanId: 521272, username: 'jane.doe', email: 'jane@sinclair.edu', imageLink: '' }
-  authStore.colleagueToken = 'TOKEN-123'
-}
-
 describe('useScheduleRegistration', () => {
+  let mockExecute, mockResults
+
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+
+    mockResults = reactive({})
+    mockExecute = vi.fn()
+    vi.mocked(useRegistration).mockReturnValue({
+      execute: mockExecute,
+      results: mockResults,
+    })
   })
 
-  describe('drop()', () => {
-    it('calls registerSections with action:drop and correct payload', async () => {
+  describe('drop() — credits resolution', () => {
+    it('resolves credits from authStore.currentCourses and passes them to execute', async () => {
       const authStore = useAuthStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '352085', CreditHours: 3 })]
-      registerSections.mockResolvedValue(successResponse())
+      authStore.currentCourses = [makeSection({ CourseKey: '352085', CreditHours: 4 })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['352085'] = { status: 'success', message: 'Dropped' }
+      })
 
       const { drop } = useScheduleRegistration()
       await drop('352085')
 
-      expect(registerSections).toHaveBeenCalledWith({
-        token: 'TOKEN-123',
-        studentId: 521272,
-        username: 'jane.doe',
-        password: '',
-        sections: [{ SectionId: '352085', Action: 'drop', Credits: 3 }],
-      })
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '352085', action: 'drop', credits: 4 }])
     })
 
-    it('removes section from currentCourses on success', async () => {
+    it('resolves credits from authStore.waitlist when section is there', async () => {
       const authStore = useAuthStore()
-      seedAuth(authStore)
+      authStore.currentCourses = []
+      authStore.waitlist = [makeSection({ CourseKey: '111', CreditHours: 2 })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Dropped' }
+      })
+
+      const { drop } = useScheduleRegistration()
+      await drop('111')
+
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '111', action: 'drop', credits: 2 }])
+    })
+
+    it('uses 0 credits when section not found in either list', async () => {
+      const authStore = useAuthStore()
+      authStore.currentCourses = []
+      authStore.waitlist = []
+      mockExecute.mockImplementation(async () => {
+        mockResults['999'] = { status: 'success', message: 'Dropped' }
+      })
+
+      const { drop } = useScheduleRegistration()
+      await drop('999')
+
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '999', action: 'drop', credits: 0 }])
+    })
+  })
+
+  describe('drop() — success', () => {
+    it('splices section from authStore.currentCourses on success', async () => {
+      const authStore = useAuthStore()
       authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockResolvedValue(successResponse())
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Dropped' }
+      })
 
       const { drop } = useScheduleRegistration()
       await drop('111')
@@ -102,26 +103,13 @@ describe('useScheduleRegistration', () => {
       expect(authStore.currentCourses).toHaveLength(0)
     })
 
-    it('records error on sectionErrorStore when drop fails', async () => {
+    it('does not affect authStore.waitlist on drop success', async () => {
       const authStore = useAuthStore()
-      const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockResolvedValue(errorResponse('111', 'Cannot drop after deadline'))
-
-      const { drop } = useScheduleRegistration()
-      await drop('111')
-
-      expect(authStore.currentCourses).toHaveLength(1)
-      expect(sectionErrorStore.errors['111']).toBe('Cannot drop after deadline')
-    })
-
-    it('does not affect waitlist', async () => {
-      const authStore = useAuthStore()
-      seedAuth(authStore)
       authStore.currentCourses = [makeSection({ CourseKey: '111' })]
       authStore.waitlist = [makeSection({ CourseKey: '222' })]
-      registerSections.mockResolvedValue(successResponse())
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Dropped' }
+      })
 
       const { drop } = useScheduleRegistration()
       await drop('111')
@@ -131,26 +119,57 @@ describe('useScheduleRegistration', () => {
     })
   })
 
-  describe('waitlistDrop()', () => {
-    it('calls registerSections with action:waitlistDrop', async () => {
+  describe('drop() — failure', () => {
+    it('writes error to sectionErrorStore on failure', async () => {
       const authStore = useAuthStore()
-      seedAuth(authStore)
-      authStore.waitlist = [makeSection({ CourseKey: '333' })]
-      registerSections.mockResolvedValue(successResponse())
+      const sectionErrorStore = useSectionErrorStore()
+      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'error', message: 'Cannot drop after deadline' }
+      })
+
+      const { drop } = useScheduleRegistration()
+      await drop('111')
+
+      expect(sectionErrorStore.errors['111']).toBe('Cannot drop after deadline')
+    })
+
+    it('does not splice currentCourses on failure', async () => {
+      const authStore = useAuthStore()
+      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'error', message: 'Cannot drop after deadline' }
+      })
+
+      const { drop } = useScheduleRegistration()
+      await drop('111')
+
+      expect(authStore.currentCourses).toHaveLength(1)
+    })
+  })
+
+  describe('waitlistDrop() — credits resolution', () => {
+    it('resolves credits from authStore.waitlist and passes them to execute', async () => {
+      const authStore = useAuthStore()
+      authStore.waitlist = [makeSection({ CourseKey: '333', CreditHours: 3 })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['333'] = { status: 'success', message: 'Removed from waitlist' }
+      })
 
       const { waitlistDrop } = useScheduleRegistration()
       await waitlistDrop('333')
 
-      expect(registerSections).toHaveBeenCalledWith(expect.objectContaining({
-        sections: [expect.objectContaining({ SectionId: '333', Action: 'waitlistDrop' })],
-      }))
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '333', action: 'waitlistDrop', credits: 3 }])
     })
+  })
 
-    it('removes section from waitlist on success', async () => {
+  describe('waitlistDrop() — success', () => {
+    it('splices section from authStore.waitlist on success', async () => {
       const authStore = useAuthStore()
-      seedAuth(authStore)
       authStore.waitlist = [makeSection({ CourseKey: '333' })]
-      registerSections.mockResolvedValue(successResponse())
+      mockExecute.mockImplementation(async () => {
+        mockResults['333'] = { status: 'success', message: 'Removed from waitlist' }
+      })
 
       const { waitlistDrop } = useScheduleRegistration()
       await waitlistDrop('333')
@@ -158,26 +177,13 @@ describe('useScheduleRegistration', () => {
       expect(authStore.waitlist).toHaveLength(0)
     })
 
-    it('records error on sectionErrorStore when waitlistDrop fails', async () => {
+    it('does not affect authStore.currentCourses on waitlistDrop success', async () => {
       const authStore = useAuthStore()
-      const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
-      authStore.waitlist = [makeSection({ CourseKey: '333' })]
-      registerSections.mockResolvedValue(errorResponse('333', 'Waitlist drop failed'))
-
-      const { waitlistDrop } = useScheduleRegistration()
-      await waitlistDrop('333')
-
-      expect(authStore.waitlist).toHaveLength(1)
-      expect(sectionErrorStore.errors['333']).toBe('Waitlist drop failed')
-    })
-
-    it('does not affect currentCourses', async () => {
-      const authStore = useAuthStore()
-      seedAuth(authStore)
       authStore.currentCourses = [makeSection({ CourseKey: '111' })]
       authStore.waitlist = [makeSection({ CourseKey: '333' })]
-      registerSections.mockResolvedValue(successResponse())
+      mockExecute.mockImplementation(async () => {
+        mockResults['333'] = { status: 'success', message: 'Removed from waitlist' }
+      })
 
       const { waitlistDrop } = useScheduleRegistration()
       await waitlistDrop('333')
@@ -187,68 +193,32 @@ describe('useScheduleRegistration', () => {
     })
   })
 
-  describe('network error handling (issue 20)', () => {
-    it('sets sectionErrors when drop() network call rejects', async () => {
+  describe('waitlistDrop() — failure', () => {
+    it('writes error to sectionErrorStore on failure', async () => {
       const authStore = useAuthStore()
       const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockRejectedValue(new Error('Network Error'))
-
-      const { drop } = useScheduleRegistration()
-      await drop('111')
-
-      expect(sectionErrorStore.errors['111']).toMatch(/network error/i)
-      expect(authStore.currentCourses).toHaveLength(1)
-    })
-
-    it('sets sectionErrors when waitlistDrop() network call rejects', async () => {
-      const authStore = useAuthStore()
-      const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
       authStore.waitlist = [makeSection({ CourseKey: '333' })]
-      registerSections.mockRejectedValue(new Error('Network Error'))
+      mockExecute.mockImplementation(async () => {
+        mockResults['333'] = { status: 'error', message: 'Waitlist drop failed' }
+      })
 
       const { waitlistDrop } = useScheduleRegistration()
       await waitlistDrop('333')
 
-      expect(sectionErrorStore.errors['333']).toMatch(/network error/i)
+      expect(sectionErrorStore.errors['333']).toBe('Waitlist drop failed')
+    })
+
+    it('does not splice waitlist on failure', async () => {
+      const authStore = useAuthStore()
+      authStore.waitlist = [makeSection({ CourseKey: '333' })]
+      mockExecute.mockImplementation(async () => {
+        mockResults['333'] = { status: 'error', message: 'Waitlist drop failed' }
+      })
+
+      const { waitlistDrop } = useScheduleRegistration()
+      await waitlistDrop('333')
+
       expect(authStore.waitlist).toHaveLength(1)
-    })
-  })
-
-  describe('missing rows in API response (issue 21)', () => {
-    it('does not throw when response has no rows key', async () => {
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockResolvedValue({ data: { results: 1, success: true } })
-
-      const { drop } = useScheduleRegistration()
-      await expect(drop('111')).resolves.toBeUndefined()
-      expect(authStore.currentCourses).toHaveLength(0)
-    })
-
-    it('does not throw when rows is undefined', async () => {
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockResolvedValue({ data: { rows: undefined } })
-
-      const { drop } = useScheduleRegistration()
-      await expect(drop('111')).resolves.toBeUndefined()
-      expect(authStore.currentCourses).toHaveLength(0)
-    })
-
-    it('does not throw when rows is empty array', async () => {
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-      authStore.currentCourses = [makeSection({ CourseKey: '111' })]
-      registerSections.mockResolvedValue({ data: { rows: [] } })
-
-      const { drop } = useScheduleRegistration()
-      await expect(drop('111')).resolves.toBeUndefined()
-      expect(authStore.currentCourses).toHaveLength(0)
     })
   })
 })
