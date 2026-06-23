@@ -9,6 +9,8 @@ import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useFocusTrap } from '@/composables/useFocusTrap'
+import { isActionable, seatBadge } from '@/utils/section'
+import { formatTimeRange } from '@/utils/time'
 
 const reference = useReferenceStore()
 const tickerPaused = ref(false)
@@ -30,20 +32,6 @@ function formatDate(dateStr) {
   return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(d)
 }
 
-function formatTime(start, end) {
-  if (!start) return ''
-  const stripZero = (t) => t.replace(/^0(\d)/, '$1')
-  const s = stripZero(start)
-  if (!end) return s
-  const e = stripZero(end)
-  const startAMPM = /AM$/i.test(start.trim()) ? 'AM' : /PM$/i.test(start.trim()) ? 'PM' : null
-  const endAMPM = /AM$/i.test(end.trim()) ? 'AM' : /PM$/i.test(end.trim()) ? 'PM' : null
-  if (startAMPM && endAMPM && startAMPM === endAMPM) {
-    const sNoSuffix = s.replace(/\s*(AM|PM)$/i, '').trim()
-    return `${sNoSuffix}–${e}`
-  }
-  return `${s}–${e}`
-}
 
 const { filters, results, total, isLoading, error, fetch } = useSearch()
 const sortedResults = computed(() =>
@@ -145,12 +133,6 @@ function goPage(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function isActionable(sec) {
-  const now = new Date()
-  const canRegister = (sec.status === 'Open') || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
-  return canRegister && !regExpired(sec, now) && !sec.isFuture
-}
-
 function modalityText(c) {
   return [c.isF2F && 'F2F', c.isVirtual && 'Virtual', c.isHybrid && 'Hybrid', c.isFlexpace && 'Flexpace']
     .filter(Boolean).join(' · ') || 'Online'
@@ -163,28 +145,6 @@ function parseRegDate(dateStr) {
   return new Date(year, month - 1, day, hours, minutes)
 }
 
-function regExpired(sec, now) {
-  if (!sec.regEndDate) return false
-  const deadline = parseRegDate(sec.regEndDate)
-  if (isNaN(deadline.getTime())) return false
-  if (sec.SectionLoc === '320') {
-    return deadline < new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-  }
-  return deadline < now
-}
-
-function seatBadge(s) {
-  const now = new Date()
-  if (s.status === 'Cancelled') return { cls: 'bg-gray-100 text-gray-500', label: 'Cancelled' }
-  if (s.status === 'Closed') {
-    return s.waitListAllowed === 'Y'
-      ? { cls: 'bg-amber-100 text-amber-800', label: 'Waitlist Available' }
-      : { cls: 'bg-red-100 text-red-700', label: 'Closed' }
-  }
-  if (regExpired(s, now)) return { cls: 'bg-gray-100 text-gray-500', label: 'Registration Closed' }
-  if (s.openSeats > 0) return { cls: 'bg-green-100 text-green-800', label: `Open · ${Math.floor(s.openSeats)} seats` }
-  return { cls: '', label: '' }
-}
 
 const SECTION_LOC_LABELS = {
   '110': 'Centerville Campus', '329': 'Centerville Campus',
@@ -523,7 +483,7 @@ fetch()
                       <span class="text-gray-600">{{ sec.Faculty }}</span>
                       <span class="text-gray-500">
                         {{ sec.Days || 'Online' }}
-                        <template v-if="sec.StartTime">{{ formatTime(sec.StartTime, sec.EndTime) }}</template>
+                        <template v-if="sec.StartTime">{{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
                       </span>
                     </div>
                     <p v-if="sectionLocation(sec)" class="mt-0.5 text-xs text-gray-500">{{ sectionLocation(sec) }}</p>
@@ -532,7 +492,7 @@ fetch()
                       :key="i"
                       class="mt-0.5 text-xs text-gray-500"
                     >
-                      {{ entry.Days }} {{ formatTime(entry.startTime, entry.endTime) }}
+                      {{ entry.Days }} {{ formatTimeRange(entry.startTime, entry.endTime) }}
                       <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
                     </div>
                     <p v-if="sec.printedComments" class="mt-0.5 text-xs text-gray-500">{{ sec.printedComments }}</p>
