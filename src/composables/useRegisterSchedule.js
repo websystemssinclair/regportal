@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import { getAvailability } from '@/services/sectionsService'
-import { useRegistrationAction } from '@/composables/useRegistrationAction'
+import { useRegistration } from '@/composables/useRegistration'
 import { useAuthStore } from '@/stores/auth'
 
 export function useRegisterSchedule() {
@@ -35,20 +35,21 @@ export function useRegisterSchedule() {
         return
       }
 
-      const { register } = useRegistrationAction()
+      const { execute, results } = useRegistration()
       const sections = schedule.map((sec) => ({
         sectionId: sec.id,
         action: availabilityMap[String(sec.id)] === 'Open' ? 'add' : 'waitlist',
         credits: getCredits(sec.id),
       }))
 
-      const { succeeded, errors: errorMap } = await register(sections)
+      await execute(sections)
 
       const result = {}
       for (const sec of schedule) {
         const key = String(sec.id)
-        if (errorMap[key]) {
-          result[key] = { status: 'error', message: errorMap[key] }
+        const r = results[key]
+        if (r?.status === 'error') {
+          result[key] = { status: 'error', message: r.message }
         } else {
           const action = sections.find((s) => String(s.sectionId) === key)?.action
           result[key] = {
@@ -58,8 +59,6 @@ export function useRegisterSchedule() {
         }
       }
       scheduleResults[scheduleIndex] = result
-    } catch {
-      scheduleResults[scheduleIndex] = { _error: 'Registration failed. Please try again.' }
     } finally {
       registeringSchedules.delete(scheduleIndex)
     }
