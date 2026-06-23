@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTimeMinutes, formatMinutes, formatTime } from '@/utils/time'
+import { parseTimeMinutes, formatMinutes, formatTime, formatTimeRange } from '@/utils/time'
 
 describe('parseTimeMinutes', () => {
   it('parses a 12-hour AM time', () => {
@@ -84,5 +84,35 @@ describe('formatTime', () => {
 
   it('returns empty string for undefined input', () => {
     expect(formatTime(undefined)).toBe('')
+  })
+})
+
+describe('formatTimeRange', () => {
+  it('returns empty string when start is absent', () => {
+    expect(formatTimeRange(null, '10:30 AM')).toBe('')
+  })
+
+  it('returns start only when end is absent', () => {
+    expect(formatTimeRange('9:00 AM', null)).toBe('9:00 AM')
+  })
+
+  it('collapses shared AM suffix', () => {
+    expect(formatTimeRange('9:00 AM', '10:30 AM')).toBe('9:00–10:30 AM')
+  })
+
+  it('collapses shared PM suffix', () => {
+    expect(formatTimeRange('1:00 PM', '2:30 PM')).toBe('1:00–2:30 PM')
+  })
+
+  it('keeps both suffixes when periods differ', () => {
+    expect(formatTimeRange('9:00 AM', '1:30 PM')).toBe('9:00 AM–1:30 PM')
+  })
+
+  it('strips leading zero from hour', () => {
+    expect(formatTimeRange('09:00 AM', '10:30 AM')).toBe('9:00–10:30 AM')
+  })
+
+  it('returns range without suffix when no AM/PM present', () => {
+    expect(formatTimeRange('09:00', '10:30')).toBe('9:00–10:30')
   })
 })

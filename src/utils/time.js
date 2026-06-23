@@ -34,3 +34,17 @@ export function formatTime(timeStr) {
   const m = parseTimeMinutes(timeStr)
   return m === null ? (timeStr ?? '') : formatMinutes(m)
 }
+
+export function formatTimeRange(start, end) {
+  if (!start) return ''
+  const stripZero = (t) => t.replace(/^0(\d)/, '$1')
+  const s = stripZero(start)
+  if (!end) return s
+  const e = stripZero(end)
+  const startAMPM = /AM$/i.test(start.trim()) ? 'AM' : /PM$/i.test(start.trim()) ? 'PM' : null
+  const endAMPM = /AM$/i.test(end.trim()) ? 'AM' : /PM$/i.test(end.trim()) ? 'PM' : null
+  if (startAMPM && endAMPM && startAMPM === endAMPM) {
+    return `${s.replace(/\s*(AM|PM)$/i, '').trim()}–${e}`
+  }
+  return `${s}–${e}`
+}
