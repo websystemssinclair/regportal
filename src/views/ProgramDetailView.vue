@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getProgram } from '@/services/programsService'
 import { getCourseSections } from '@/services/sectionsService'
 import router from '@/router'
+import { statusBadgeClass } from '@/utils/section'
 
 const route = useRoute()
 const referenceStore = useReferenceStore()
@@ -67,11 +68,6 @@ function addToScheduleBuilder(courseCode) {
   router.push(`/schedule-builder?course=${courseCode}`)
 }
 
-function seatBadgeClass(status) {
-  if (status === 'Open') return 'bg-green-100 text-green-800'
-  if (status === 'Waitlist') return 'bg-yellow-100 text-yellow-800'
-  return 'bg-red-100 text-red-800'
-}
 </script>
 
 <template>
@@ -161,7 +157,7 @@ function seatBadgeClass(status) {
                   <span v-if="sec.Building">{{ sec.Building }}</span>
                   <span
                     class="rounded-full px-2 py-0.5 font-medium"
-                    :class="seatBadgeClass(sec.Status)"
+                    :class="statusBadgeClass(sec.Status)"
                   >{{ sec.Status }}</span>
                 </div>
               </div>
