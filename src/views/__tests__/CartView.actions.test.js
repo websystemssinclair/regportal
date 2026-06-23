@@ -52,7 +52,7 @@ describe('CartView — registration actions', () => {
     setActivePinia(pinia)
 
     registerMock = vi.fn().mockResolvedValue({ succeeded: 1 })
-    vi.mocked(useCartRegistration).mockReturnValue({ register: registerMock })
+    vi.mocked(useCartRegistration).mockReturnValue({ register: registerMock, isTermRegistering: () => false })
 
     toastAddMock = vi.fn()
     vi.mocked(useToast).mockReturnValue({ add: toastAddMock })
@@ -208,17 +208,23 @@ describe('CartView — registration actions', () => {
   })
 
   describe('in-flight state', () => {
-    it('disables Add button while registeringTerms includes the termId', async () => {
+    it('disables Add button while isTermRegistering returns true for the termId', async () => {
       useCartStore().sections = [makeSection({ status: 'Open' })]
-      useCartStore().registeringTerms = [TERM_CURRENT]
+      vi.mocked(useCartRegistration).mockReturnValue({
+        register: registerMock,
+        isTermRegistering: (id) => id === TERM_CURRENT,
+      })
       const wrapper = mountView()
       const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Add')
       expect(addBtn?.attributes('disabled')).toBeDefined()
     })
 
-    it('disables Register All button while registeringTerms includes the termId', async () => {
+    it('disables Register All button while isTermRegistering returns true for the termId', async () => {
       useCartStore().sections = [makeSection({ status: 'Open' })]
-      useCartStore().registeringTerms = [TERM_CURRENT]
+      vi.mocked(useCartRegistration).mockReturnValue({
+        register: registerMock,
+        isTermRegistering: (id) => id === TERM_CURRENT,
+      })
       const wrapper = mountView()
       const regAllBtn = wrapper.findAll('button').find((b) => b.text() === 'Register All')
       expect(regAllBtn?.attributes('disabled')).toBeDefined()

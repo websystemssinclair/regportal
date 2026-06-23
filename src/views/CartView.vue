@@ -13,7 +13,7 @@ const cartStore = useCartStore()
 const refStore = useReferenceStore()
 const maintenanceStore = useMaintenanceStore()
 const sectionErrorStore = useSectionErrorStore()
-const { register } = useCartRegistration()
+const { register, isTermRegistering } = useCartRegistration()
 const toast = useToast()
 
 onMounted(async () => {
@@ -103,7 +103,7 @@ async function registerAll(group) {
                 <button
                   v-if="meta.label === 'Current' && actionableInTerm(group).length > 0"
                   @click="registerAll(group)"
-                  :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
+                  :disabled="isTermRegistering(group.termId) || maintenanceStore.isBackendDown"
                   class="rounded bg-crimson px-2.5 py-0.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >Register All</button>
               </h3>
@@ -140,7 +140,7 @@ async function registerAll(group) {
                     <button
                       v-else-if="meta.label === 'Current' && isActionable(sec)"
                       @click="registerSection(group.termId, sec)"
-                      :disabled="cartStore.registeringTerms.includes(group.termId) || maintenanceStore.isBackendDown"
+                      :disabled="isTermRegistering(group.termId) || maintenanceStore.isBackendDown"
                       class="rounded bg-crimson px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
                     <button

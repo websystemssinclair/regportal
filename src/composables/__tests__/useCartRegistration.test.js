@@ -1,121 +1,90 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { reactive } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCartRegistration } from '@/composables/useCartRegistration'
 import { useCartStore } from '@/stores/cart'
-import { useAuthStore } from '@/stores/auth'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 
-vi.mock('@/services/registrationService', () => ({
-  registerSections: vi.fn(),
-}))
-
-vi.mock('@/services/cartService', () => ({
-  saveCart: vi.fn(),
-}))
-
-vi.mock('@/services/sectionsService', () => ({
-  getAvailability: vi.fn(),
-}))
-
-vi.mock('@/router', () => ({
-  default: { replace: vi.fn() },
-}))
-
+vi.mock('@/composables/useRegistration')
+vi.mock('@/services/cartService', () => ({ saveCart: vi.fn() }))
+vi.mock('@/services/sectionsService', () => ({ getAvailability: vi.fn() }))
+vi.mock('@/router', () => ({ default: { replace: vi.fn() } }))
 vi.mock('@/services/authService', () => ({
   sendSamlRequest: vi.fn(),
   retrieveUserFromSaml: vi.fn(),
   getUserData: vi.fn(),
 }))
 
-import { registerSections } from '@/services/registrationService'
+import { useRegistration } from '@/composables/useRegistration'
 import { saveCart } from '@/services/cartService'
 
 const makeSection = (overrides = {}) => ({
   CourseKey: '111',
   Term: '26SU',
-  SubjectCode: 'ACC',
-  CourseNo: '1210',
-  LongName: 'Intro Accounting',
-  SectionNo: '100',
   CreditHours: 3,
   status: 'Open',
   ...overrides,
 })
 
-const successResponse = (errors = []) => ({
-  data: {
-    results: 1,
-    success: true,
-    rows: [{ message: 'Registration completed successfully', errors }],
-  },
-})
-
-function seedAuth(authStore) {
-  authStore.isAuthenticated = true
-  authStore.currentRole = 'Student'
-  authStore.user = { firstName: 'Jane', lastName: 'Doe', tartanId: 521272, username: 'jane.doe', email: 'jane@sinclair.edu', imageLink: '' }
-  authStore.colleagueToken = 'TOKEN-123'
-}
-
 describe('useCartRegistration', () => {
+  let mockExecute, mockResults, mockPending
+
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
     vi.clearAllMocks()
     saveCart.mockResolvedValue({})
+
+    mockResults = reactive({})
+    mockPending = reactive(new Set())
+    mockExecute = vi.fn()
+    vi.mocked(useRegistration).mockReturnValue({
+      execute: mockExecute,
+      results: mockResults,
+      pending: mockPending,
+    })
   })
 
-  describe('register() — all fail', () => {
-    it('leaves failed sections in the cart and populates sectionErrors on the store', async () => {
+  describe('register() — credits resolution', () => {
+    it('resolves credits from cartStore.sections and passes them to execute', async () => {
       const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
+      cartStore.sections = [makeSection({ CourseKey: '111', CreditHours: 4 })]
 
-      cartStore.sections = [
-        makeSection({ CourseKey: '111', status: 'Open' }),
-      ]
-
-      registerSections.mockResolvedValue({
-        data: {
-          results: 1,
-          success: false,
-          rows: [{
-            message: 'Registration failed',
-            errors: [{ CourseKey: '111', SectionNo: '100', CourseNumber: 'ACC-1210', SubjectCode: 'ACC', Message: 'Section is full' }],
-          }],
-        },
+      mockExecute.mockImplementation(async (sections) => {
+        for (const { sectionId } of sections) mockResults[String(sectionId)] = { status: 'success', message: 'Registered' }
       })
 
       const { register } = useCartRegistration()
       await register('26SU', [{ sectionId: '111', action: 'add' }])
 
-      expect(cartStore.sections).toHaveLength(1)
-      expect(sectionErrorStore.errors['111']).toBe('Section is full')
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '111', action: 'add', credits: 4 }])
+    })
+
+    it('uses 0 credits for sections not found in cartStore', async () => {
+      const cartStore = useCartStore()
+      cartStore.sections = []
+
+      mockExecute.mockImplementation(async (sections) => {
+        for (const { sectionId } of sections) mockResults[String(sectionId)] = { status: 'success', message: 'Registered' }
+      })
+
+      const { register } = useCartRegistration()
+      await register('26SU', [{ sectionId: '999', action: 'add' }])
+
+      expect(mockExecute).toHaveBeenCalledWith([{ sectionId: '999', action: 'add', credits: 0 }])
     })
   })
 
-  describe('register() — partial success', () => {
-    it('removes succeeded sections and leaves failed ones with errors', async () => {
+  describe('register() — cart removal on success', () => {
+    it('removes succeeded sections from cartStore, leaves failed ones', async () => {
       const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      const sectionErrorStore = useSectionErrorStore()
-      seedAuth(authStore)
-
       cartStore.sections = [
-        makeSection({ CourseKey: '111', status: 'Open' }),
-        makeSection({ CourseKey: '222', status: 'Open' }),
+        makeSection({ CourseKey: '111' }),
+        makeSection({ CourseKey: '222' }),
       ]
 
-      registerSections.mockResolvedValue({
-        data: {
-          results: 1,
-          success: false,
-          rows: [{
-            message: 'Partial registration',
-            errors: [{ CourseKey: '222', SectionNo: '200', CourseNumber: 'MAT-1470', SubjectCode: 'MAT', Message: 'Time conflict' }],
-          }],
-        },
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Registered' }
+        mockResults['222'] = { status: 'error', message: 'Section is full' }
       })
 
       const { register } = useCartRegistration()
@@ -125,58 +94,16 @@ describe('useCartRegistration', () => {
       ])
 
       expect(cartStore.sections.map((s) => s.CourseKey)).toEqual(['222'])
-      expect(sectionErrorStore.errors['222']).toBe('Time conflict')
-      expect(sectionErrorStore.errors['111']).toBeUndefined()
     })
-  })
 
-  describe('register() — loading state', () => {
-    it('adds termId to registeringTerms on the store during flight, removes it after', async () => {
+    it('removes all sections when all succeed', async () => {
       const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-      cartStore.sections = [makeSection({ CourseKey: '111' })]
+      cartStore.sections = [makeSection({ CourseKey: '111' }), makeSection({ CourseKey: '222' })]
 
-      let capturedDuringFlight
-      registerSections.mockImplementation(async () => {
-        capturedDuringFlight = [...cartStore.registeringTerms]
-        return successResponse()
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Registered' }
+        mockResults['222'] = { status: 'success', message: 'Registered' }
       })
-
-      const { register } = useCartRegistration()
-      await register('26SU', [{ sectionId: '111', action: 'add' }])
-
-      expect(capturedDuringFlight).toContain('26SU')
-      expect(cartStore.registeringTerms).not.toContain('26SU')
-    })
-
-    it('clears registeringTerms even when the request throws', async () => {
-      const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-      cartStore.sections = [makeSection({ CourseKey: '111' })]
-
-      registerSections.mockRejectedValue(new Error('Network error'))
-
-      const { register } = useCartRegistration()
-      await expect(register('26SU', [{ sectionId: '111', action: 'add' }])).rejects.toThrow()
-
-      expect(cartStore.registeringTerms).not.toContain('26SU')
-    })
-  })
-
-  describe('register() — all succeed', () => {
-    it('removes all submitted sections from the cart when all succeed', async () => {
-      const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      seedAuth(authStore)
-
-      cartStore.sections = [
-        makeSection({ CourseKey: '111', status: 'Open' }),
-        makeSection({ CourseKey: '222', status: 'Open', Term: '26SU' }),
-      ]
-
-      registerSections.mockResolvedValue(successResponse())
 
       const { register } = useCartRegistration()
       await register('26SU', [
@@ -186,28 +113,105 @@ describe('useCartRegistration', () => {
 
       expect(cartStore.sections).toHaveLength(0)
     })
+  })
 
-    it('calls registerSections with the correct API payload', async () => {
+  describe('register() — sectionErrorStore on failure', () => {
+    it('writes failed section errors to sectionErrorStore', async () => {
       const cartStore = useCartStore()
-      const authStore = useAuthStore()
-      seedAuth(authStore)
+      const sectionErrorStore = useSectionErrorStore()
+      cartStore.sections = [makeSection({ CourseKey: '222' })]
 
-      cartStore.sections = [
-        makeSection({ CourseKey: '352071', CreditHours: 4, status: 'Open' }),
-      ]
-
-      registerSections.mockResolvedValue(successResponse())
+      mockExecute.mockImplementation(async () => {
+        mockResults['222'] = { status: 'error', message: 'Time conflict' }
+      })
 
       const { register } = useCartRegistration()
-      await register('26SU', [{ sectionId: '352071', action: 'add' }])
+      await register('26SU', [{ sectionId: '222', action: 'add' }])
 
-      expect(registerSections).toHaveBeenCalledWith({
-        token: 'TOKEN-123',
-        studentId: 521272,
-        username: 'jane.doe',
-        password: '',
-        sections: [{ SectionId: '352071', Action: 'add', Credits: 4 }],
+      expect(sectionErrorStore.errors['222']).toBe('Time conflict')
+    })
+
+    it('does not write errors for succeeded sections', async () => {
+      const cartStore = useCartStore()
+      const sectionErrorStore = useSectionErrorStore()
+      cartStore.sections = [makeSection({ CourseKey: '111' })]
+
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Registered' }
       })
+
+      const { register } = useCartRegistration()
+      await register('26SU', [{ sectionId: '111', action: 'add' }])
+
+      expect(sectionErrorStore.errors['111']).toBeUndefined()
+    })
+  })
+
+  describe('register() — return value', () => {
+    it('returns { succeeded: count } with count of sections that succeeded', async () => {
+      const cartStore = useCartStore()
+      cartStore.sections = [
+        makeSection({ CourseKey: '111' }),
+        makeSection({ CourseKey: '222' }),
+        makeSection({ CourseKey: '333' }),
+      ]
+
+      mockExecute.mockImplementation(async () => {
+        mockResults['111'] = { status: 'success', message: 'Registered' }
+        mockResults['222'] = { status: 'success', message: 'Registered' }
+        mockResults['333'] = { status: 'error', message: 'Section is full' }
+      })
+
+      const { register } = useCartRegistration()
+      const result = await register('26SU', [
+        { sectionId: '111', action: 'add' },
+        { sectionId: '222', action: 'add' },
+        { sectionId: '333', action: 'add' },
+      ])
+
+      expect(result).toEqual({ succeeded: 2 })
+    })
+  })
+
+  describe('pending exposure', () => {
+    it('exposes the pending Set from useRegistration', () => {
+      const { pending } = useCartRegistration()
+      expect(pending).toBe(mockPending)
+    })
+  })
+
+  describe('isTermRegistering()', () => {
+    it('returns true during execute for the registered termId and false afterward', async () => {
+      const cartStore = useCartStore()
+      cartStore.sections = [makeSection({ CourseKey: '111' })]
+
+      let capturedDuringFlight
+      mockExecute.mockImplementation(async () => {
+        capturedDuringFlight = isTermRegistering('26SU')
+        mockResults['111'] = { status: 'success', message: 'Registered' }
+      })
+
+      const { register, isTermRegistering } = useCartRegistration()
+      await register('26SU', [{ sectionId: '111', action: 'add' }])
+
+      expect(capturedDuringFlight).toBe(true)
+      expect(isTermRegistering('26SU')).toBe(false)
+    })
+
+    it('returns false for a different termId than the one registering', async () => {
+      const cartStore = useCartStore()
+      cartStore.sections = [makeSection({ CourseKey: '111' })]
+
+      let capturedDuringFlight
+      mockExecute.mockImplementation(async () => {
+        capturedDuringFlight = isTermRegistering('27FA')
+        mockResults['111'] = { status: 'success', message: 'Registered' }
+      })
+
+      const { register, isTermRegistering } = useCartRegistration()
+      await register('26SU', [{ sectionId: '111', action: 'add' }])
+
+      expect(capturedDuringFlight).toBe(false)
     })
   })
 })

@@ -21,7 +21,6 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     sections: readStorage(),
     mergeCarryOver: null,
-    registeringTerms: [],
   }),
   getters: {},
   actions: {

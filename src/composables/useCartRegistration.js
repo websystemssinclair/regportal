@@ -1,29 +1,45 @@
+import { reactive } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import { useRegistrationAction } from '@/composables/useRegistrationAction'
+import { useRegistration } from '@/composables/useRegistration'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 export function useCartRegistration() {
   const cartStore = useCartStore()
   const sectionErrorStore = useSectionErrorStore()
-  const { register: doRegister } = useRegistrationAction()
+  const { execute, pending, results } = useRegistration()
+  const registeringTermIds = reactive(new Set())
+
+  function isTermRegistering(termId) {
+    return registeringTermIds.has(termId)
+  }
 
   async function register(termId, registrations) {
-    cartStore.registeringTerms.push(termId)
+    registeringTermIds.add(termId)
     try {
       const sections = registrations.map(({ sectionId, action }) => {
         const sec = cartStore.sections.find((s) => s.CourseKey === sectionId)
         return { sectionId, action, credits: sec?.CreditHours ?? 0 }
       })
-      const { succeeded, errors } = await doRegister(sections)
-      cartStore.removeRegistered([...succeeded])
-      for (const [key, msg] of Object.entries(errors)) {
-        sectionErrorStore.set(key, msg)
+      await execute(sections)
+
+      const succeededIds = registrations
+        .map(({ sectionId }) => String(sectionId))
+        .filter((id) => results[id]?.status === 'success')
+
+      cartStore.removeRegistered(succeededIds)
+
+      for (const { sectionId } of registrations) {
+        const id = String(sectionId)
+        if (results[id]?.status === 'error') {
+          sectionErrorStore.set(id, results[id].message)
+        }
       }
-      return { succeeded: succeeded.size }
+
+      return { succeeded: succeededIds.length }
     } finally {
-      cartStore.registeringTerms = cartStore.registeringTerms.filter((t) => t !== termId)
+      registeringTermIds.delete(termId)
     }
   }
 
-  return { register }
+  return { register, pending, isTermRegistering }
 }
