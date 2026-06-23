@@ -8,6 +8,7 @@ import { useSectionErrorStore } from '@/stores/sectionErrors'
 import { useToast } from 'primevue/usetoast'
 import BooklistModal from '@/components/BooklistModal.vue'
 import { groupSectionsByTerm } from '@/utils/cart'
+import { isActionable } from '@/utils/section'
 
 const cartStore = useCartStore()
 const refStore = useReferenceStore()
@@ -36,10 +37,6 @@ function availBadgeLabel(sec) {
   if (sec.status === 'Cancelled') return 'Cancelled'
   if (sec.status === 'Open') return 'Open'
   return sec.waitListAllowed === 'Y' ? 'Closed / Waitlist' : 'Closed'
-}
-
-function isActionable(sec) {
-  return sec.status === 'Open' || (sec.waitListAllowed === 'Y' && sec.status !== 'Cancelled')
 }
 
 function actionableInTerm(group) {
