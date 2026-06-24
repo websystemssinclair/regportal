@@ -6,6 +6,7 @@ import { useSearch } from '@/composables/useSearch'
 import { useCardExpansion } from '@/composables/useCardExpansion'
 import { useRegisterNow } from '@/composables/useRegisterNow'
 import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import { useAuthStore } from '@/stores/auth'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useFocusTrap } from '@/composables/useFocusTrap'
@@ -52,6 +53,7 @@ const {
 const { sectionResults, registeringSections, registerNow, dismissResult, reset: resetRegisterNow } = useRegisterNow()
 
 const cartStore = useCartStore()
+const cart = useCart()
 const authStore = useAuthStore()
 const maintenanceStore = useMaintenanceStore()
 const drawerOpen = ref(false)
@@ -479,7 +481,7 @@ fetch()
                   class="flex items-end justify-between gap-3 px-5 py-3 hover:bg-white transition-colors">
                   <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2 text-sm">
-                      <span class="font-mono font-semibold text-gray-800">{{ sec.SectionNo }}</span>
+                      <span class="font-mono font-semibold text-crimson">{{ sec.SectionNo }}</span>
                       <span class="text-gray-600">{{ sec.Faculty }}</span>
                       <span class="text-gray-500">
                         {{ sec.Days || 'Online' }}
@@ -515,7 +517,7 @@ fetch()
                       <template v-if="sec.status !== 'Cancelled'">
                         <button
                           v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
-                          @click="cartStore.add(sec)"
+                          @click="cart.add(sec)"
                           class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
                         >
                           Add to Cart

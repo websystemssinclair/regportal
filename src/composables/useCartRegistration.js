@@ -1,10 +1,12 @@
 import { reactive } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import { useRegistration } from '@/composables/useRegistration'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 export function useCartRegistration() {
   const cartStore = useCartStore()
+  const cart = useCart()
   const sectionErrorStore = useSectionErrorStore()
   const { execute, pending, results } = useRegistration()
   const registeringTermIds = reactive(new Set())
@@ -26,7 +28,7 @@ export function useCartRegistration() {
         .map(({ sectionId }) => String(sectionId))
         .filter((id) => results[id]?.status === 'success')
 
-      cartStore.removeRegistered(succeededIds)
+      cart.removeRegistered(succeededIds)
 
       for (const { sectionId } of registrations) {
         const id = String(sectionId)

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import router from '@/router'
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
-import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import { useSectionErrorStore } from '@/stores/sectionErrors'
 
 const SSO_BASE = 'https://sso.sinclair.edu/EasyConnect/REST/default.aspx'
@@ -68,7 +68,7 @@ export const useAuthStore = defineStore('auth', {
         this.currentCourses = userData.user.currentCourses ?? []
         this.completedCourses = userData.user.completedCourses ?? []
         this.waitlist = userData.user.waitlist ?? []
-        useCartStore().mergeOnLogin(userData.user.shoppingCart)
+        useCart().mergeOnLogin(userData.user.shoppingCart)
       } catch {
         // login succeeds; cart merge deferred until re-login
       }

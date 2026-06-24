@@ -1,5 +1,5 @@
 import { ref, computed, onUnmounted } from 'vue'
-import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import { parseTimeMinutes } from '@/utils/time'
 
 function normalizeSection(sec) {
@@ -66,10 +66,10 @@ export function useScheduleBuilder() {
   }
 
   function selectSchedule(schedule) {
-    const cartStore = useCartStore()
+    const cart = useCart()
     for (const normalizedSec of schedule) {
       const raw = _sectionCache.get(String(normalizedSec.id))
-      if (raw) cartStore.add(raw)
+      if (raw) cart.add(raw)
     }
   }
 

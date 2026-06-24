@@ -6,18 +6,7 @@ vi.mock('@/services/sectionsService', () => ({
   getAvailability: vi.fn(),
 }))
 
-vi.mock('@/services/cartService', () => ({
-  saveCart: vi.fn(),
-  buildSavePayload: vi.fn(() => ({})),
-}))
-
-vi.mock('@/stores/auth', () => ({
-  useAuthStore: vi.fn(),
-}))
-
 import { getAvailability } from '@/services/sectionsService'
-import { saveCart } from '@/services/cartService'
-import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'regportal:cart'
 
@@ -33,15 +22,11 @@ const makeSection = (overrides = {}) => ({
   ...overrides,
 })
 
-const mockAuth = (overrides = {}) =>
-  useAuthStore.mockReturnValue({ isAuthenticated: false, colleagueToken: null, user: null, ...overrides })
-
 describe('useCartStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
-    mockAuth()
   })
 
   afterEach(() => {
@@ -89,20 +74,8 @@ describe('useCartStore', () => {
     })
   })
 
-  describe('remove() — auth-aware', () => {
-    it('calls saveCart and does NOT write localStorage when authenticated', () => {
-      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
-      saveCart.mockResolvedValue({})
-      const store = useCartStore()
-      store.sections = [makeSection({ CourseKey: 'AAA' })]
-      store.remove('AAA')
-      expect(saveCart).toHaveBeenCalledTimes(1)
-      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
-    })
-  })
-
   describe('remove()', () => {
-    it('removes the section matching CourseKey and updates localStorage', () => {
+    it('removes the section matching CourseKey', () => {
       const store = useCartStore()
       store.add(makeSection({ CourseKey: 'AAA' }))
       store.add(makeSection({ CourseKey: 'BBB' }))
@@ -111,9 +84,6 @@ describe('useCartStore', () => {
 
       expect(store.sections).toHaveLength(1)
       expect(store.sections[0].CourseKey).toBe('BBB')
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      expect(stored).toHaveLength(1)
-      expect(stored[0].CourseKey).toBe('BBB')
     })
   })
 
@@ -122,31 +92,25 @@ describe('useCartStore', () => {
       const store = useCartStore()
       store.mergeOnLogin([])
       expect(store.sections).toHaveLength(0)
-      expect(saveCart).not.toHaveBeenCalled()
       expect(store.mergeCarryOver).toBeNull()
     })
 
-    it('carries localStorage sections into empty shoppingCart, saves, and sets mergeCarryOver', async () => {
-      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
+    it('carries localStorage sections into empty shoppingCart and sets mergeCarryOver', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([
         makeSection({ CourseKey: 'LOCAL1' }),
         makeSection({ CourseKey: 'LOCAL2' }),
       ]))
-      saveCart.mockResolvedValue({})
       const store = useCartStore()
       store.mergeOnLogin([])
       expect(store.sections.map((s) => s.CourseKey)).toEqual(['LOCAL1', 'LOCAL2'])
-      expect(saveCart).toHaveBeenCalledTimes(1)
       expect(store.mergeCarryOver).toBe(2)
       expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
     })
 
     it('shoppingCart version wins for duplicate CourseKey and does not increment carry-over count', () => {
-      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
       const localVersion = makeSection({ CourseKey: 'DUP', LongName: 'Local Version', status: 'Closed' })
       const backendVersion = makeSection({ CourseKey: 'DUP', LongName: 'Backend Version', status: 'Open' })
       localStorage.setItem(STORAGE_KEY, JSON.stringify([localVersion, makeSection({ CourseKey: 'LOCAL_ONLY' })]))
-      saveCart.mockResolvedValue({})
       const store = useCartStore()
       store.mergeOnLogin([backendVersion])
       const dup = store.sections.find((s) => s.CourseKey === 'DUP')
@@ -156,12 +120,10 @@ describe('useCartStore', () => {
     })
 
     it('merges non-overlapping localStorage into shoppingCart and sets mergeCarryOver to localStorage count', () => {
-      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
       localStorage.setItem(STORAGE_KEY, JSON.stringify([
         makeSection({ CourseKey: 'LOCAL1' }),
         makeSection({ CourseKey: 'LOCAL2' }),
       ]))
-      saveCart.mockResolvedValue({})
       const backendSections = [makeSection({ CourseKey: 'BACKEND1' })]
       const store = useCartStore()
       store.mergeOnLogin(backendSections)
@@ -169,47 +131,27 @@ describe('useCartStore', () => {
       expect(store.mergeCarryOver).toBe(2)
     })
 
-    it('loads sections from shoppingCart when localStorage is empty — no saveCart, no toast', () => {
+    it('loads sections from shoppingCart when localStorage is empty — no mergeCarryOver', () => {
       const backendSections = [makeSection({ CourseKey: 'BACKEND1' }), makeSection({ CourseKey: 'BACKEND2' })]
       const store = useCartStore()
       store.mergeOnLogin(backendSections)
       expect(store.sections).toHaveLength(2)
       expect(store.sections.map((s) => s.CourseKey)).toEqual(['BACKEND1', 'BACKEND2'])
-      expect(saveCart).not.toHaveBeenCalled()
       expect(store.mergeCarryOver).toBeNull()
     })
   })
 
   // dismissError and sectionErrors moved to useSectionErrorStore (src/stores/sectionErrors.js)
 
-  describe('add() — auth-aware', () => {
-    it('calls saveCart and does NOT write localStorage when authenticated', () => {
-      mockAuth({ isAuthenticated: true, colleagueToken: 'TOKEN', user: { tartanId: 521272, username: 'brian.cooney' } })
-      saveCart.mockResolvedValue({})
-      const store = useCartStore()
-      store.add(makeSection({ CourseKey: 'NEW' }))
-      expect(saveCart).toHaveBeenCalledTimes(1)
-      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
-    })
-
-    it('writes localStorage and does NOT call saveCart for Visitor', () => {
-      const store = useCartStore()
-      store.add(makeSection({ CourseKey: 'NEW' }))
-      expect(saveCart).not.toHaveBeenCalled()
-      expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toHaveLength(1)
-    })
-  })
-
   describe('add()', () => {
-    it('persists the full section payload to localStorage under regportal:cart', () => {
+    it('adds the section to store.sections', () => {
       const store = useCartStore()
       const section = makeSection()
 
       store.add(section)
 
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      expect(stored).toHaveLength(1)
-      expect(stored[0]).toMatchObject({ CourseKey: '352071', LongName: 'Introduction to Financial Accounting' })
+      expect(store.sections).toHaveLength(1)
+      expect(store.sections[0]).toMatchObject({ CourseKey: '352071', LongName: 'Introduction to Financial Accounting' })
     })
 
     it('is a no-op when the section CourseKey is already in the cart', () => {
@@ -220,7 +162,6 @@ describe('useCartStore', () => {
       store.add(makeSection({ SectionNo: 'DUPLICATE' }))
 
       expect(store.sections).toHaveLength(1)
-      expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toHaveLength(1)
     })
   })
 })

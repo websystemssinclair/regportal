@@ -9,8 +9,8 @@ vi.mock('@/services/authService', () => ({
   getUserData: vi.fn(),
 }))
 
-vi.mock('@/stores/cart', () => ({
-  useCartStore: vi.fn(),
+vi.mock('@/composables/useCart', () => ({
+  useCart: vi.fn(),
 }))
 
 vi.mock('@/router', () => ({
@@ -18,11 +18,11 @@ vi.mock('@/router', () => ({
 }))
 
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
-import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import router from '@/router'
 
 const mockCart = (overrides = {}) =>
-  useCartStore.mockReturnValue({ mergeOnLogin: vi.fn(), ...overrides })
+  useCart.mockReturnValue({ mergeOnLogin: vi.fn(), ...overrides })
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -194,7 +194,7 @@ describe('authStore', () => {
       expect(store.colleagueToken).toBe('MY_TOKEN')
     })
 
-    it('calls cartStore.mergeOnLogin with shoppingCart before navigation', async () => {
+    it('calls cart.mergeOnLogin with shoppingCart before navigation', async () => {
       const shoppingCart = [{ CourseKey: 'BACKEND1' }]
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart } } })

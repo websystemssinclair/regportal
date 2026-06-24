@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia'
 import { getAvailability } from '@/services/sectionsService'
-import { saveCart, buildSavePayload } from '@/services/cartService'
-import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'regportal:cart'
 
@@ -13,10 +11,6 @@ function readStorage() {
   }
 }
 
-function writeStorage(sections) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sections))
-}
-
 export const useCartStore = defineStore('cart', {
   state: () => ({
     sections: readStorage(),
@@ -24,32 +18,16 @@ export const useCartStore = defineStore('cart', {
   }),
   getters: {},
   actions: {
-    _buildSavePayload() {
-      const auth = useAuthStore()
-      return buildSavePayload(this.sections, {
-        tartanId: auth.user.tartanId,
-        colleagueToken: auth.colleagueToken,
-        username: auth.user.username,
-      })
-    },
     add(section) {
       if (this.sections.some((s) => s.CourseKey === section.CourseKey)) return
       this.sections.push(section)
-      const auth = useAuthStore()
-      if (auth.isAuthenticated) {
-        saveCart(this._buildSavePayload())
-      } else {
-        writeStorage(this.sections)
-      }
     },
     remove(courseKey) {
       this.sections = this.sections.filter((s) => s.CourseKey !== courseKey)
-      const auth = useAuthStore()
-      if (auth.isAuthenticated) {
-        saveCart(this._buildSavePayload())
-      } else {
-        writeStorage(this.sections)
-      }
+    },
+    removeRegistered(courseKeys) {
+      const keySet = new Set(courseKeys.map(String))
+      this.sections = this.sections.filter((s) => !keySet.has(String(s.CourseKey)))
     },
     mergeOnLogin(shoppingCart) {
       const local = readStorage()
@@ -68,18 +46,7 @@ export const useCartStore = defineStore('cart', {
       this.sections = [...map.values()]
 
       if (carryOverCount > 0) {
-        saveCart(this._buildSavePayload())
         this.mergeCarryOver = carryOverCount
-      }
-    },
-    removeRegistered(courseKeys) {
-      const keySet = new Set(courseKeys.map(String))
-      this.sections = this.sections.filter((s) => !keySet.has(String(s.CourseKey)))
-      const auth = useAuthStore()
-      if (auth.isAuthenticated) {
-        saveCart(this._buildSavePayload())
-      } else {
-        writeStorage(this.sections)
       }
     },
     async loadAvailability() {

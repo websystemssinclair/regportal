@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import { useCart } from '@/composables/useCart'
 import { useReferenceStore } from '@/stores/reference'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCartRegistration } from '@/composables/useCartRegistration'
@@ -9,8 +10,10 @@ import { useToast } from 'primevue/usetoast'
 import BooklistModal from '@/components/BooklistModal.vue'
 import { groupSectionsByTerm } from '@/utils/cart'
 import { isActionable } from '@/utils/section'
+import { formatTimeRange } from '@/utils/time'
 
 const cartStore = useCartStore()
+const cart = useCart()
 const refStore = useReferenceStore()
 const maintenanceStore = useMaintenanceStore()
 const sectionErrorStore = useSectionErrorStore()
@@ -92,7 +95,7 @@ async function registerAll(group) {
           { label: 'Future', groups: groupedSections.future },
         ]" :key="meta.label">
           <section v-if="meta.groups.length" class="mb-6">
-            <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{{ meta.label }}</h2>
+            <h2 class="mb-3 text-sm font-semibold text-gray-700">{{ meta.label }} Terms</h2>
 
             <div v-for="group in meta.groups" :key="group.termId" class="mb-4">
               <h3 class="mb-2 flex items-center justify-between rounded bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
@@ -118,7 +121,7 @@ async function registerAll(group) {
                     <p class="mt-0.5 text-xs text-gray-500">
                       {{ sec.Faculty || '' }}
                       <template v-if="sec.Days">· {{ sec.Days }}</template>
-                      <template v-if="sec.StartTime">{{ sec.StartTime }}–{{ sec.EndTime }}</template>
+                      <template v-if="sec.StartTime"> · {{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
                     </p>
                   </div>
                   <div class="flex shrink-0 items-center gap-2">
@@ -145,7 +148,7 @@ async function registerAll(group) {
                       class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
                     >Books</button>
                     <button
-                      @click="cartStore.remove(sec.CourseKey)"
+                      @click="cart.remove(sec.CourseKey)"
                       class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
                     >
                       Remove
