@@ -1,6 +1,6 @@
 # Section Display Rules — HomeView Course/Section List
 
-Status: ready-for-agent
+Status: done
 
 ## Problem Statement
 

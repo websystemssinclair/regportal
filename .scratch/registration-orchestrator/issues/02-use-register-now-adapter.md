@@ -1,6 +1,6 @@
 # Rewrite `useRegisterNow` as thin adapter
 
-Status: ready-for-agent
+Status: done
 
 ## What to build
 

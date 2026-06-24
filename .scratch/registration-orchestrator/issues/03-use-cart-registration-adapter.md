@@ -1,6 +1,6 @@
 # Rewrite `useCartRegistration` as thin adapter + remove `registeringTerms` from cart store
 
-Status: ready-for-agent
+Status: done
 
 ## What to build
 

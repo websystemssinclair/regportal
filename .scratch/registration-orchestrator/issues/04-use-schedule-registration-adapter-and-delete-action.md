@@ -1,6 +1,6 @@
 # Rewrite `useScheduleRegistration` as thin adapter + delete `useRegistrationAction`
 
-Status: ready-for-agent
+Status: done
 
 ## What to build
 
