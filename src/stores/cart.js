@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getAvailability } from '@/services/sectionsService'
-import { saveCart } from '@/services/cartService'
+import { saveCart, buildSavePayload } from '@/services/cartService'
 import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'regportal:cart'
@@ -26,14 +26,11 @@ export const useCartStore = defineStore('cart', {
   actions: {
     _buildSavePayload() {
       const auth = useAuthStore()
-      const studentId = parseInt(auth.user.tartanId)
-      return {
-        token: auth.colleagueToken,
-        studentId,
+      return buildSavePayload(this.sections, {
+        tartanId: auth.user.tartanId,
+        colleagueToken: auth.colleagueToken,
         username: auth.user.username,
-        password: '',
-        sections: this.sections.map((s) => ({ Credits: s.CreditHours, SectionId: s.CourseKey, StudentId: studentId })),
-      }
+      })
     },
     add(section) {
       if (this.sections.some((s) => s.CourseKey === section.CourseKey)) return

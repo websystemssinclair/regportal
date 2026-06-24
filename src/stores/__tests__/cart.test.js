@@ -8,6 +8,7 @@ vi.mock('@/services/sectionsService', () => ({
 
 vi.mock('@/services/cartService', () => ({
   saveCart: vi.fn(),
+  buildSavePayload: vi.fn(() => ({})),
 }))
 
 vi.mock('@/stores/auth', () => ({
