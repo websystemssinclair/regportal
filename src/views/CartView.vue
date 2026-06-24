@@ -21,7 +21,6 @@ const { register, isTermRegistering } = useCartRegistration()
 const toast = useToast()
 
 onMounted(async () => {
-  if (!refStore.terms.length) await refStore.load()
   await cartStore.loadAvailability()
 })
 

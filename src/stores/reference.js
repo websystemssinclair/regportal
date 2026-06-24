@@ -3,6 +3,7 @@ import { getReferenceData } from '@/services/referenceService'
 
 export const useReferenceStore = defineStore('reference', {
   state: () => ({
+    _loaded: false,
     keyDates: [],
     intro: '',
     maintenance: [],
@@ -22,6 +23,8 @@ export const useReferenceStore = defineStore('reference', {
   },
   actions: {
     async load() {
+      if (this._loaded) return
+      this._loaded = true
       const { data } = await getReferenceData()
       this.keyDates = data.keyDates
       this.intro = data.intro

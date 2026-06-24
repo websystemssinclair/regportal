@@ -6,6 +6,7 @@ import App from './App.vue'
 import router from './router'
 import { RegPortalPreset } from './presets'
 import { getApiToken } from './services/authService'
+import { setApiKey } from './http/client'
 import { useMaintenanceStore } from './stores/maintenance'
 import { useReferenceStore } from './stores/reference'
 import './style.css'
@@ -22,12 +23,10 @@ app.use(ToastService)
 
 getApiToken()
   .then(({ data }) => {
-    if (data) localStorage.setItem('apiKey', data)
+    if (data) setApiKey(data)
   })
   .catch(() => {})
-
-useReferenceStore()
-  .load()
+  .then(() => useReferenceStore().load())
   .then(() => {
     const [active] = useReferenceStore().maintenance
     if (active) {

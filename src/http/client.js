@@ -5,8 +5,6 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-apiClient.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('apiKey')
-  if (apiKey) config.headers['Authorization'] = `Bearer ${apiKey}`
-  return config
-})
+export function setApiKey(token) {
+  apiClient.defaults.params = { ...apiClient.defaults.params, apikey: token }
+}

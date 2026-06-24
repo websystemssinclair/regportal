@@ -302,8 +302,8 @@ import router from '@/router'
 import { formatMinutes } from '@/utils/time'
 
 const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
-const GRID_START = 480   // 8am
-const GRID_SPAN = 600    // 10 hours (8am-6pm)
+const GRID_START = 360   // 6am
+const GRID_SPAN = 900    // 15 hours (6am-9pm)
 
 const TIME_PRESETS = [
   { label: 'Mornings', start: 360, end: 720 },
