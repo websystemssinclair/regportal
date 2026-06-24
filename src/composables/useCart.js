@@ -10,7 +10,7 @@ export function useCart() {
   const authStore = useAuthStore()
 
   function persist() {
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && authStore.user) {
       saveCart(buildSavePayload(cartStore.sections, {
         tartanId: authStore.user.tartanId,
         colleagueToken: authStore.colleagueToken,
@@ -40,7 +40,7 @@ export function useCart() {
 
   function mergeOnLogin(shoppingCart) {
     cartStore.mergeOnLogin(shoppingCart)
-    if (cartStore.mergeCarryOver > 0) {
+    if (cartStore.mergeCarryOver > 0 && authStore.user) {
       saveCart(buildSavePayload(cartStore.sections, {
         tartanId: authStore.user.tartanId,
         colleagueToken: authStore.colleagueToken,

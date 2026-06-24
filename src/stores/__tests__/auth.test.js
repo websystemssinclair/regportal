@@ -9,20 +9,7 @@ vi.mock('@/services/authService', () => ({
   getUserData: vi.fn(),
 }))
 
-vi.mock('@/composables/useCart', () => ({
-  useCart: vi.fn(),
-}))
-
-vi.mock('@/router', () => ({
-  default: { replace: vi.fn() },
-}))
-
 import { sendSamlRequest, retrieveUserFromSaml, getUserData } from '@/services/authService'
-import { useCart } from '@/composables/useCart'
-import router from '@/router'
-
-const mockCart = (overrides = {}) =>
-  useCart.mockReturnValue({ mergeOnLogin: vi.fn(), ...overrides })
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -31,7 +18,6 @@ describe('authStore', () => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
-    mockCart()
     getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart: [] } } })
   })
 
@@ -155,24 +141,24 @@ describe('authStore', () => {
       expect(store.currentRole).toBe('Visitor')
     })
 
-    it('restores returnTo URL from sessionStorage and clears it', async () => {
+    it('returns the sessionStorage returnTo URL as targetUrl and clears it', async () => {
       sessionStorage.setItem('regportal:returnTo', 'http://localhost/courses')
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
 
       const store = useAuthStore()
-      await store.handleCallback('SAML_ID')
+      const result = await store.handleCallback('SAML_ID')
 
-      expect(router.replace).toHaveBeenCalledWith('http://localhost/courses')
+      expect(result.targetUrl).toBe('http://localhost/courses')
       expect(sessionStorage.getItem('regportal:returnTo')).toBeNull()
     })
 
-    it('falls back to targetUrl route when sessionStorage has no returnTo', async () => {
+    it('returns targetUrl route object when sessionStorage has no returnTo', async () => {
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
 
       const store = useAuthStore()
-      await store.handleCallback('SAML_ID')
+      const result = await store.handleCallback('SAML_ID')
 
-      expect(router.replace).toHaveBeenCalledWith({ name: 'search' })
+      expect(result.targetUrl).toEqual({ name: 'search' })
     })
 
     it('calls getUserData with tartanId and username from SAML response', async () => {
@@ -194,35 +180,36 @@ describe('authStore', () => {
       expect(store.colleagueToken).toBe('MY_TOKEN')
     })
 
-    it('calls cart.mergeOnLogin with shoppingCart before navigation', async () => {
+    it('returns shoppingCart from getUserData in the result', async () => {
       const shoppingCart = [{ CourseKey: 'BACKEND1' }]
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockResolvedValue({ data: { success: true, user: { colleagueToken: 'TOKEN', shoppingCart } } })
-      const cartMock = { mergeOnLogin: vi.fn() }
-      mockCart(cartMock)
 
       const store = useAuthStore()
-      await store.handleCallback('SAML_ID')
+      const result = await store.handleCallback('SAML_ID')
 
-      expect(cartMock.mergeOnLogin).toHaveBeenCalledWith(shoppingCart)
-      const mergeCallOrder = cartMock.mergeOnLogin.mock.invocationCallOrder[0]
-      const navCallOrder = router.replace.mock.invocationCallOrder[0]
-      expect(mergeCallOrder).toBeLessThan(navCallOrder)
+      expect(result.shoppingCart).toEqual(shoppingCart)
     })
 
     it('login still succeeds and colleagueToken stays null when getUserData fails', async () => {
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockRejectedValue(new Error('network error'))
-      const cartMock = { mergeOnLogin: vi.fn() }
-      mockCart(cartMock)
 
       const store = useAuthStore()
       await store.handleCallback('SAML_ID')
 
       expect(store.isAuthenticated).toBe(true)
       expect(store.colleagueToken).toBeNull()
-      expect(cartMock.mergeOnLogin).not.toHaveBeenCalled()
-      expect(router.replace).toHaveBeenCalled()
+    })
+
+    it('returns null shoppingCart when getUserData fails', async () => {
+      retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
+      getUserData.mockRejectedValue(new Error('network error'))
+
+      const store = useAuthStore()
+      const result = await store.handleCallback('SAML_ID')
+
+      expect(result.shoppingCart).toBeNull()
     })
 
     it('stores currentCourses from getUserData response', async () => {
@@ -261,7 +248,6 @@ describe('authStore', () => {
     it('completedCourses stays [] when getUserData fails', async () => {
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockRejectedValue(new Error('network error'))
-      mockCart({ mergeOnLogin: vi.fn() })
 
       const store = useAuthStore()
       await store.handleCallback('SAML_ID')
@@ -272,7 +258,6 @@ describe('authStore', () => {
     it('currentCourses and waitlist stay [] when getUserData fails', async () => {
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
       getUserData.mockRejectedValue(new Error('network error'))
-      mockCart({ mergeOnLogin: vi.fn() })
 
       const store = useAuthStore()
       await store.handleCallback('SAML_ID')
@@ -283,7 +268,7 @@ describe('authStore', () => {
   })
 
   describe('logout()', () => {
-    it('clears user, role, and isAuthenticated; removes sessionStorage key; redirects to home', async () => {
+    it('clears user, role, isAuthenticated, and removes sessionStorage key', () => {
       const store = useAuthStore()
       store.isAuthenticated = true
       store.currentRole = 'Student'
@@ -296,7 +281,6 @@ describe('authStore', () => {
       expect(store.user).toBeNull()
       expect(store.currentRole).toBe('Visitor')
       expect(sessionStorage.getItem('regportal:returnTo')).toBeNull()
-      expect(router.replace).toHaveBeenCalledWith({ name: 'home' })
     })
 
     it('clears currentCourses, waitlist, and completedCourses on logout', () => {
