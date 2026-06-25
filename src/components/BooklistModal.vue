@@ -9,6 +9,7 @@ const emit = defineEmits(['close'])
 
 const books = ref([])
 const loading = ref(false)
+const error = ref(false)
 const modalRef = ref(null)
 const closeButtonRef = ref(null)
 const previousFocus = ref(null)
@@ -60,7 +61,7 @@ onMounted(async () => {
     const rows = Array.isArray(data) ? data : []
     books.value = rows.filter((r) => r.CourseResult === 'SUCCESS')
   } catch {
-    books.value = []
+    error.value = true
   } finally {
     loading.value = false
   }
@@ -103,6 +104,8 @@ onUnmounted(() => {
 
       <div class="px-5 py-4">
         <div v-if="loading" class="py-6 text-center text-sm text-gray-500">Loading books…</div>
+
+        <p v-else-if="error" class="py-4 text-sm text-red-600">Couldn't load books — please try again</p>
 
         <p v-else-if="!books.length" class="py-4 text-sm text-gray-500">No books required</p>
 
