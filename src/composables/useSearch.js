@@ -23,7 +23,7 @@ export function useSearch() {
     courseList: 'any',
     page: 1,
     start: 0,
-    limit: 50,
+    limit: 25,
   })
 
   let fetchGen = 0

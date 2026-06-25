@@ -135,10 +135,6 @@ function goPage(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function modalityText(c) {
-  return [c.isF2F && 'F2F', c.isVirtual && 'Virtual', c.isHybrid && 'Hybrid', c.isFlexpace && 'Flexpace']
-    .filter(Boolean).join(' · ') || 'Online'
-}
 
 function parseRegDate(dateStr) {
   const [datePart, timePart = '00:00'] = dateStr.split(' ')
@@ -173,7 +169,7 @@ function sectionLocation(sec) {
   if (room === 'RMT' || room === 'VIR') return 'Blended Learning'
   const campus = SECTION_LOC_LABELS[sec.SectionLoc]
   if (campus) return room ? `${campus} · ${room}` : campus
-  return room
+  return 'Downtown Dayton Campus'
 }
 
 function closeDrawer() {
@@ -188,11 +184,9 @@ fetch()
 <template>
   <div class="flex min-h-screen flex-col">
 
-    <!-- Hero -->
-    <div class="bg-white px-4 pb-6 pt-8">
+    <!-- Hero: intro (scrolls away) -->
+    <div class="bg-white px-4 pb-3 pt-8">
       <div class="mx-auto max-w-3xl">
-
-        <!-- Intro text -->
         <div
           v-if="reference.intro"
           class="intro-banner mb-5 text-sm leading-relaxed text-gray-700"
@@ -201,8 +195,12 @@ fetch()
         <h1 v-else class="mb-5 text-center text-2xl font-semibold text-gray-800">
           What would you like to learn?
         </h1>
+      </div>
+    </div>
 
-        <!-- Search bar -->
+    <!-- Search bar (sticky) -->
+    <div class="sticky top-14 z-30 bg-white px-4 py-3 shadow-sm">
+      <div class="mx-auto max-w-3xl">
         <div class="flex flex-wrap gap-2">
           <input
             v-model="filters.keyword"
@@ -213,11 +211,12 @@ fetch()
           />
           <select
             v-model="filters.term"
+            @change="runSearch"
             aria-label="Select term"
             class="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-crimson sm:flex-none sm:shrink-0"
           >
             <option
-              v-for="term in reference.terms.filter(t => ['D','Y','F'].includes(t.toView))"
+              v-for="term in reference.terms.filter(t => ['D','Y','F'].includes(t.toView)).sort((a, b) => ['D','Y','F'].indexOf(a.toView) - ['D','Y','F'].indexOf(b.toView))"
               :key="term.id"
               :value="term.id"
             >{{ term.termName }}{{ term.toView === 'F' ? ' (Future)' : '' }}</option>
@@ -246,8 +245,15 @@ fetch()
             Search
           </button>
         </div>
+      </div>
+      <p v-if="!isLoading && total" class="mt-3 text-center text-xs text-gray-500">
+        {{ total.toLocaleString() }} courses available
+      </p>
+    </div>
 
-        <!-- Key dates ticker -->
+    <!-- Key dates ticker + results count (scrolls away) -->
+    <div class="bg-white px-4 pb-6">
+      <div class="mx-auto max-w-3xl">
         <div
           v-if="upcomingKeyDates.length"
           class="mt-4 rounded bg-canvas motion-safe:overflow-hidden motion-reduce:overflow-x-auto"
@@ -269,11 +275,6 @@ fetch()
             </span>
           </div>
         </div>
-
-        <!-- Results count -->
-        <p v-if="!isLoading && total" class="mt-3 text-center text-xs text-gray-500">
-          {{ total.toLocaleString() }} courses available
-        </p>
       </div>
     </div>
 
@@ -305,8 +306,10 @@ fetch()
       <div class="space-y-5 text-sm">
         <div>
           <label class="mb-1.5 block font-medium text-gray-700">Subject Code</label>
-          <input v-model="filters.subjectCode" type="text" placeholder="e.g. ACC, ENG, ART"
-            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson" />
+          <select v-model="filters.subjectCode"
+            class="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-crimson">
+            <option v-for="code in reference.subjectCodes" :key="code.id" :value="code.id">{{ code.dspValue }}</option>
+          </select>
         </div>
 
         <div>
@@ -395,10 +398,11 @@ fetch()
         <!-- Course card list -->
         <ul v-else class="space-y-3">
           <li v-for="course in sortedResults" :key="course.id"
-            class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            class="rounded-lg border border-gray-200 bg-white shadow-sm">
 
             <!-- Card header (click to expand) -->
             <button
+              :class="expanded === course.id ? 'rounded-t-lg' : 'rounded-lg'"
               class="w-full px-5 py-4 text-left hover:bg-gray-50 transition-colors"
               @click="toggleCard(course)"
               :aria-expanded="expanded === course.id"
@@ -415,9 +419,34 @@ fetch()
                         ? course.minCreditHours
                         : `${course.minCreditHours}–${course.maxCreditHours}` }} cr
                     </span>
+                    <span class="flex items-center gap-1">
+                      <span v-if="course.proficiencyExamAvailable === 'Y'" class="group relative inline-block">
+                        <img src="@/assets/new_prof_exam_icon.png" class="h-5 w-5" alt="Proficiency Testing Available" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">Proficiency testing is available for this class! Qualified students may earn credit via testing without enrolling in the class. Please call 937-512-3700 to schedule an appointment with an Academic Advisor to learn more.</span>
+                      </span>
+                      <span v-if="course.isF2F" class="group relative inline-block">
+                        <img src="@/assets/new_f2f_modality_icon.png" class="h-5 w-5" alt="In Person" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">In Person - Course meets in person on scheduled days and times.</span>
+                      </span>
+                      <span v-if="course.isFlexpace" class="group relative inline-block">
+                        <img src="@/assets/new_flexpace_modality_icon.png" class="h-5 w-5" alt="FlexPace" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">FlexPace - Complete work independently online when it fits your schedule, without weekly due dates. Requires self-motivation as well as a computer and high-speed Internet, Webcam and Microphone.</span>
+                      </span>
+                      <span v-if="course.isHybrid" class="group relative inline-block">
+                        <img src="@/assets/new_blended_f2f-online_icon.png" class="h-5 w-5" alt="Blended" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">Blended - Course meets in person on scheduled days and times with additional online content. Check the schedule to confirm the days and times your class will meet in-person. Requires computer with high-speed Internet, Webcam and Microphone.</span>
+                      </span>
+                      <span v-if="course.isVirtual" class="group relative inline-block">
+                        <img src="@/assets/new_virtual_modality_icon.png" class="h-5 w-5" alt="Online with meeting times" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">Online with scheduled meeting times - Course meets online during scheduled days and times, with additional online content. Check the schedule to confirm the days and times your class will meet online. Requires computer with high-speed Internet, Webcam and Microphone.</span>
+                      </span>
+                      <span v-if="!course.isF2F && !course.isVirtual && !course.isHybrid && !course.isFlexpace" class="group relative inline-block">
+                        <img src="@/assets/new_online_modality_icon.png" class="h-5 w-5" alt="Online Learning" />
+                        <span class="pointer-events-none absolute bottom-full left-0 z-50 mb-1 hidden w-64 rounded bg-gray-900 px-2 py-1.5 text-xs font-normal text-white group-hover:block">Online with no scheduled meeting times - Complete work online when it fits your schedule, while adhering to weekly deadlines. No scheduled meeting times. Requires computer with high-speed Internet, Webcam and Microphone.</span>
+                      </span>
+                    </span>
                   </div>
                   <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span>{{ modalityText(course) }}</span>
                     <span v-if="course.preReqs && course.preReqs !== 'None'" class="text-gray-600">
                       Prereq: {{ course.preReqs }}
                     </span>
@@ -441,7 +470,7 @@ fetch()
             </button>
 
             <!-- Expanded: course details + section rows -->
-            <div v-if="expanded === course.id" class="border-t border-gray-100 bg-gray-50">
+            <div v-if="expanded === course.id" class="rounded-b-lg border-t border-gray-100 bg-gray-50">
               <!-- Course details -->
               <div class="px-5 py-3 border-b border-gray-100">
                 <p class="text-xs text-gray-600 leading-relaxed">{{ course.Description }}</p>
@@ -478,17 +507,16 @@ fetch()
               <!-- Section rows -->
               <ul v-else class="divide-y divide-gray-100">
                 <li v-for="sec in sectionsToShow(course.id)" :key="sec.SectionNo"
-                  class="flex items-end justify-between gap-3 px-5 py-3 hover:bg-white transition-colors">
+                  class="flex items-start justify-between gap-3 px-5 py-3 hover:bg-white transition-colors">
                   <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <div class="flex flex-wrap items-end gap-2 text-sm">
                       <span class="font-mono font-semibold text-crimson">{{ sec.SectionNo }}</span>
-                      <span class="text-gray-600">{{ sec.Faculty }}</span>
-                      <span class="text-gray-500">
+                      <span class="text-gray-600">{{ sectionLocation(sec) }}</span>
+                      <span class="ms-0.5 text-xs text-gray-500">
                         {{ formatDays(sec.Days) || 'Online' }}
                         <template v-if="sec.StartTime">{{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
                       </span>
                     </div>
-                    <p v-if="sectionLocation(sec)" class="mt-0.5 text-xs text-gray-500">{{ sectionLocation(sec) }}</p>
                     <div
                       v-for="(entry, i) in sec.additionalSched"
                       :key="i"
@@ -497,13 +525,22 @@ fetch()
                       {{ formatDays(entry.Days) }} {{ formatTimeRange(entry.startTime, entry.endTime) }}
                       <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
                     </div>
+                    <p v-if="sec.Faculty" class="mt-0.5 text-xs text-gray-500">Faculty: {{ sec.Faculty }}</p>
                     <p v-if="sec.printedComments" class="mt-0.5 text-xs text-gray-500">{{ sec.printedComments }}</p>
                     <p v-if="sec.startDate && !/CBE/i.test(sec.restrictions || '')" class="mt-0.5 text-xs text-gray-500">
-                      {{ formatDate(sec.startDate) }}{{ sec.endDate ? ` – ${formatDate(sec.endDate)}` : '' }}
+                      Runs: {{ formatDate(sec.startDate) }}{{ sec.endDate ? ` – ${formatDate(sec.endDate)}` : '' }}
                     </p>
-                    <div v-if="sec.otherFee || sec.labFee" class="mt-0.5 flex flex-wrap gap-1">
+                    <div v-if="sec.otherFee || sec.labFee || /independent/i.test(sec.restrictions) || sec.specialProperty === 'Y'" class="mt-0.5 flex flex-wrap gap-1">
                       <span v-if="sec.otherFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">+ ${{ sec.otherFee }} fee</span>
                       <span v-if="sec.labFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">+ ${{ sec.labFee }} fee</span>
+                      <span v-if="/independent/i.test(sec.restrictions)" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">Independent Study</span>
+                      <span v-if="sec.specialProperty === 'Y'" class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">Learning Community</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <!-- TODO:
+                        - add link to booklist modal
+                        - add link to master syllabus (ex: https://apps.sinclair.edu/syllabus/index.cfm?subjectCode=ACC&courseNo=1210&term=26FA) modal(?)
+                        -->
                     </div>
                   </div>
                   <div class="flex shrink-0 flex-col items-end gap-1.5">
@@ -518,7 +555,7 @@ fetch()
                         <button
                           v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
                           @click="cart.add(sec)"
-                          class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
+                          class="rounded border border-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors"
                         >
                           Add to Cart
                         </button>
@@ -541,7 +578,7 @@ fetch()
                           v-else
                           @click="registerNow(sec)"
                           :disabled="registeringSections.has(sec.CourseKey) || maintenanceStore.isBackendDown"
-                          class="rounded border border-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="rounded bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {{ sec.status === 'Open' ? 'Register Now' : 'Waitlist Now' }}
                         </button>

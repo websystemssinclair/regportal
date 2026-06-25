@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
   },
   getters: {
     isAdmin: (state) => state.currentRole === 'Admin' || state.currentRole === 'Developer',
-    isStudent: (state) => state.currentRole === 'Student',
+    isStudent: (state) => state.currentRole === 'Student' || state.currentRole === 'Admin' || state.currentRole === 'Developer',
   },
   actions: {
     async login() {
