@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useCart } from '@/composables/useCart'
 import { useReferenceStore } from '@/stores/reference'
@@ -52,6 +52,17 @@ async function registerSection(termId, sec) {
 }
 
 const activeBooksSection = ref(null)
+const pendingRemove = reactive(new Set())
+const yesRefs = {}
+
+function startRemove(courseKey) {
+  pendingRemove.add(courseKey)
+  nextTick(() => yesRefs[courseKey]?.focus())
+}
+function cancelRemove(courseKey) { pendingRemove.delete(courseKey) }
+function confirmRemove(courseKey) {
+  try { cart.remove(courseKey) } finally { pendingRemove.delete(courseKey) }
+}
 const groupedSections = computed(() => groupSectionsByTerm(cartStore.sections, refStore.terms))
 
 async function registerAll(group) {
@@ -141,17 +152,36 @@ async function registerAll(group) {
                       @click="registerSection(group.termId, sec)"
                       :disabled="isTermRegistering(group.termId) || maintenanceStore.isBackendDown"
                       class="rounded bg-crimson px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >{{ sec.status === 'Open' ? 'Add' : 'Waitlist' }}</button>
+                    >{{ sec.status === 'Open' ? 'Register' : 'Waitlist' }}</button>
                     <button
                       @click="activeBooksSection = sec"
                       class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
                     >Books</button>
-                    <button
-                      @click="cart.remove(sec.CourseKey)"
-                      class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+                    <span
+                      v-if="pendingRemove.has(sec.CourseKey)"
+                      role="group"
+                      aria-label="Confirm removal"
+                      class="flex items-center gap-2"
                     >
-                      Remove
-                    </button>
+                      <span class="text-xs text-gray-600" aria-hidden="true">Remove?</span>
+                      <button
+                        :ref="el => { if (el) yesRefs[sec.CourseKey] = el; else delete yesRefs[sec.CourseKey] }"
+                        @click="confirmRemove(sec.CourseKey)"
+                        @keydown.esc="cancelRemove(sec.CourseKey)"
+                        aria-label="Yes, remove this section"
+                        class="rounded border border-red-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                      >Yes</button>
+                      <button
+                        @click="cancelRemove(sec.CourseKey)"
+                        @keydown.esc="cancelRemove(sec.CourseKey)"
+                        class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-gray-400 transition-colors"
+                      >Cancel</button>
+                    </span>
+                    <button
+                      v-else
+                      @click="startRemove(sec.CourseKey)"
+                      class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+                    >Remove</button>
                   </div>
                 </li>
               </ul>

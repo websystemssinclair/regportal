@@ -231,6 +231,56 @@ describe('CartView — registration actions', () => {
     })
   })
 
+  describe('inline remove confirmation', () => {
+    it('clicking Remove does not remove the section and shows confirmation UI', async () => {
+      useCartStore().sections = [makeSection({ CourseKey: '111' })]
+      const wrapper = mountView()
+      const removeBtn = wrapper.findAll('button').find((b) => b.text() === 'Remove')
+      await removeBtn?.trigger('click')
+      expect(useCartStore().sections).toHaveLength(1)
+      expect(wrapper.text()).toContain('Yes')
+      expect(wrapper.text()).toContain('Cancel')
+    })
+
+    it('clicking Yes calls cart.remove with the correct CourseKey', async () => {
+      useCartStore().sections = [makeSection({ CourseKey: '111' })]
+      const wrapper = mountView()
+      const removeBtn = wrapper.findAll('button').find((b) => b.text() === 'Remove')
+      await removeBtn?.trigger('click')
+      const yesBtn = wrapper.findAll('button').find((b) => b.text() === 'Yes')
+      await yesBtn?.trigger('click')
+      expect(useCartStore().sections).toHaveLength(0)
+    })
+
+    it('clicking Cancel restores normal row state without removing', async () => {
+      useCartStore().sections = [makeSection({ CourseKey: '111' })]
+      const wrapper = mountView()
+      const removeBtn = wrapper.findAll('button').find((b) => b.text() === 'Remove')
+      await removeBtn?.trigger('click')
+      const cancelBtn = wrapper.findAll('button').find((b) => b.text() === 'Cancel')
+      await cancelBtn?.trigger('click')
+      expect(useCartStore().sections).toHaveLength(1)
+      expect(wrapper.text()).not.toContain('Yes')
+      expect(wrapper.findAll('button').find((b) => b.text() === 'Remove')).toBeDefined()
+    })
+
+    it('only the clicked row enters confirmation state; others are unaffected', async () => {
+      useCartStore().sections = [
+        makeSection({ CourseKey: '111', SectionNo: '100' }),
+        makeSection({ CourseKey: '222', SectionNo: '200' }),
+      ]
+      const wrapper = mountView()
+      const removeBtns = wrapper.findAll('button').filter((b) => b.text() === 'Remove')
+      await removeBtns[0]?.trigger('click')
+      const yesCount = wrapper.findAll('button').filter((b) => b.text() === 'Yes').length
+      const cancelCount = wrapper.findAll('button').filter((b) => b.text() === 'Cancel').length
+      const remainingRemove = wrapper.findAll('button').filter((b) => b.text() === 'Remove').length
+      expect(yesCount).toBe(1)
+      expect(cancelCount).toBe(1)
+      expect(remainingRemove).toBe(1)
+    })
+  })
+
   describe('maintenance mode', () => {
     it('shows maintenance banner when isBackendDown', () => {
       useMaintenanceStore().setStatus({ mode: 'backend', publicMessage: 'System is down' })
