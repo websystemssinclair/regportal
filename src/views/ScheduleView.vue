@@ -267,7 +267,7 @@ import BooklistModal from '@/components/BooklistModal.vue'
 import { parseTimeMinutes, formatTime } from '@/utils/time'
 
 const DAYS = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
-const DAY_LABELS = { M: 'M', T: 'T', W: 'W', R: 'R', F: 'F', S: 'S', U: 'U' }
+const DAY_LABELS = { M: 'M', T: 'Tu', W: 'W', R: 'Th', F: 'F', S: 'Sa', U: 'Su' }
 const DAY_SHORT_LABELS = { M: 'Mon', T: 'Tue', W: 'Wed', R: 'Thu', F: 'Fri', S: 'Sat', U: 'Sun' }
 const DAY_LONG_LABELS = { M: 'Monday', T: 'Tuesday', W: 'Wednesday', R: 'Thursday', F: 'Friday', S: 'Saturday', U: 'Sunday' }
 const GRID_START_MINUTES = 6 * 60

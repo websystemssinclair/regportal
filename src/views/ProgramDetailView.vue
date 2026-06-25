@@ -7,6 +7,7 @@ import { getProgram } from '@/services/programsService'
 import { getCourseSections } from '@/services/sectionsService'
 import router from '@/router'
 import { statusBadgeClass } from '@/utils/section'
+import { formatDays } from '@/utils/time'
 
 const route = useRoute()
 const referenceStore = useReferenceStore()
@@ -153,7 +154,7 @@ function addToScheduleBuilder(courseCode) {
                 >
                   <span class="font-medium text-gray-900">Sec {{ sec.SectionNo }}</span>
                   <span v-if="sec.Faculty">{{ sec.Faculty }}</span>
-                  <span v-if="sec.Days">{{ sec.Days }} {{ sec.StartTime }}–{{ sec.EndTime }}</span>
+                  <span v-if="sec.Days">{{ formatDays(sec.Days) }} {{ sec.StartTime }}–{{ sec.EndTime }}</span>
                   <span v-if="sec.Building">{{ sec.Building }}</span>
                   <span
                     class="rounded-full px-2 py-0.5 font-medium"

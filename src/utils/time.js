@@ -35,6 +35,13 @@ export function formatTime(timeStr) {
   return m === null ? (timeStr ?? '') : formatMinutes(m)
 }
 
+const DAY_ABBR = { M: 'M', T: 'Tu', W: 'W', R: 'Th', F: 'F', S: 'Sa', U: 'Su' }
+
+export function formatDays(days) {
+  if (!days?.trim()) return ''
+  return days.split('').map((d) => DAY_ABBR[d] ?? d).join('')
+}
+
 export function formatTimeRange(start, end) {
   if (!start) return ''
   const stripZero = (t) => t.replace(/^0(\d)/, '$1')

@@ -10,7 +10,7 @@ import { useToast } from 'primevue/usetoast'
 import BooklistModal from '@/components/BooklistModal.vue'
 import { groupSectionsByTerm } from '@/utils/cart'
 import { isActionable } from '@/utils/section'
-import { formatTimeRange } from '@/utils/time'
+import { formatTimeRange, formatDays } from '@/utils/time'
 
 const cartStore = useCartStore()
 const cart = useCart()
@@ -119,7 +119,7 @@ async function registerAll(group) {
                     </div>
                     <p class="mt-0.5 text-xs text-gray-500">
                       {{ sec.Faculty || '' }}
-                      <template v-if="sec.Days">· {{ sec.Days }}</template>
+                      <template v-if="sec.Days">· {{ formatDays(sec.Days) }}</template>
                       <template v-if="sec.StartTime"> · {{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
                     </p>
                   </div>

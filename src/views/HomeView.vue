@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useFocusTrap } from '@/composables/useFocusTrap'
 import { isActionable, seatBadge } from '@/utils/section'
-import { formatTimeRange } from '@/utils/time'
+import { formatTimeRange, formatDays } from '@/utils/time'
 
 const reference = useReferenceStore()
 const tickerPaused = ref(false)
@@ -484,7 +484,7 @@ fetch()
                       <span class="font-mono font-semibold text-crimson">{{ sec.SectionNo }}</span>
                       <span class="text-gray-600">{{ sec.Faculty }}</span>
                       <span class="text-gray-500">
-                        {{ sec.Days || 'Online' }}
+                        {{ formatDays(sec.Days) || 'Online' }}
                         <template v-if="sec.StartTime">{{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
                       </span>
                     </div>
@@ -494,7 +494,7 @@ fetch()
                       :key="i"
                       class="mt-0.5 text-xs text-gray-500"
                     >
-                      {{ entry.Days }} {{ formatTimeRange(entry.startTime, entry.endTime) }}
+                      {{ formatDays(entry.Days) }} {{ formatTimeRange(entry.startTime, entry.endTime) }}
                       <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
                     </div>
                     <p v-if="sec.printedComments" class="mt-0.5 text-xs text-gray-500">{{ sec.printedComments }}</p>
@@ -514,7 +514,7 @@ fetch()
                       </span>
                     </template>
                     <template v-else>
-                      <template v-if="sec.status !== 'Cancelled'">
+                      <template v-if="sec.status == 'Open' && isActionable(sec)">
                         <button
                           v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
                           @click="cart.add(sec)"

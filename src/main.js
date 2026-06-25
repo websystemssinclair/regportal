@@ -23,7 +23,7 @@ app.use(ToastService)
 
 getApiToken()
   .then(({ data }) => {
-    if (data) setApiKey(data)
+    if (data?.token) setApiKey(data.token)
   })
   .catch(() => {})
   .then(() => useReferenceStore().load())
