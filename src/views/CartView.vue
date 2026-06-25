@@ -154,6 +154,7 @@ async function registerAll(group) {
                       class="rounded bg-crimson px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >{{ sec.status === 'Open' ? 'Register' : 'Waitlist' }}</button>
                     <button
+                      v-if="sec.status !== 'Cancelled'"
                       @click="activeBooksSection = sec"
                       class="rounded border border-gray-300 px-2.5 py-1 touch:py-3.5 touch:px-4 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
                     >Books</button>

@@ -281,6 +281,20 @@ describe('CartView — registration actions', () => {
     })
   })
 
+  describe('Books button visibility', () => {
+    it('does not render Books button for a Cancelled section', () => {
+      useCartStore().sections = [makeSection({ status: 'Cancelled' })]
+      const wrapper = mountView()
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Books')).toBe(false)
+    })
+
+    it('renders Books button for an Open section', () => {
+      useCartStore().sections = [makeSection({ status: 'Open' })]
+      const wrapper = mountView()
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Books')).toBe(true)
+    })
+  })
+
   describe('maintenance mode', () => {
     it('shows maintenance banner when isBackendDown', () => {
       useMaintenanceStore().setStatus({ mode: 'backend', publicMessage: 'System is down' })
