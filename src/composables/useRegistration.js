@@ -43,10 +43,6 @@ export function useRegistration() {
           results[id] = { status: 'success', message: SUCCESS_MESSAGES[action] ?? 'Done' }
         }
       }
-    } catch {
-      for (const { sectionId } of sections) {
-        results[String(sectionId)] = { status: 'error', message: 'Registration failed — please try again.' }
-      }
     } finally {
       for (const { sectionId } of sections) pending.delete(String(sectionId))
     }

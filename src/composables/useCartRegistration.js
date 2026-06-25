@@ -22,7 +22,12 @@ export function useCartRegistration() {
         const sec = cartStore.sections.find((s) => s.CourseKey === sectionId)
         return { sectionId, action, credits: sec?.CreditHours ?? 0 }
       })
-      await execute(sections)
+
+      try {
+        await execute(sections)
+      } catch {
+        return { succeeded: 0, termError: 'Registration failed — please try again.' }
+      }
 
       const succeededIds = registrations
         .map(({ sectionId }) => String(sectionId))

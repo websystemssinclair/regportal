@@ -73,19 +73,16 @@ describe('useRegistration', () => {
   })
 
   describe('execute() — network error', () => {
-    it('resolves (does not reject) and marks all sections error on network throw', async () => {
+    it('rejects with the thrown error on network failure', async () => {
       const authStore = useAuthStore()
       seedAuth(authStore)
       registerSections.mockRejectedValue(new Error('Network Error'))
 
-      const { execute, results } = useRegistration()
+      const { execute } = useRegistration()
       await expect(execute([
         { sectionId: '111', action: 'add', credits: 3 },
         { sectionId: '222', action: 'add', credits: 2 },
-      ])).resolves.toBeUndefined()
-
-      expect(results['111']).toEqual({ status: 'error', message: 'Registration failed — please try again.' })
-      expect(results['222']).toEqual({ status: 'error', message: 'Registration failed — please try again.' })
+      ])).rejects.toThrow('Network Error')
     })
   })
 
@@ -117,7 +114,7 @@ describe('useRegistration', () => {
       registerSections.mockRejectedValue(new Error('Network Error'))
 
       const { execute, pending } = useRegistration()
-      await execute([{ sectionId: '111', action: 'add', credits: 3 }])
+      await expect(execute([{ sectionId: '111', action: 'add', credits: 3 }])).rejects.toThrow()
 
       expect(pending.size).toBe(0)
     })

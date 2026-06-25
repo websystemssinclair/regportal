@@ -47,9 +47,12 @@ function actionableInTerm(group) {
 
 async function registerSection(termId, sec) {
   const action = sec.status === 'Open' ? 'add' : 'waitlist'
-  const { succeeded } = await register(termId, [{ sectionId: sec.CourseKey, action }])
-  if (succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${succeeded} section(s)`, life: 4000 })
+  const result = await register(termId, [{ sectionId: sec.CourseKey, action }])
+  if (result.termError) { termErrors[termId] = result.termError; return }
+  if (result.succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${result.succeeded} section(s)`, life: 4000 })
 }
+
+const termErrors = reactive({})
 
 const activeBooksSection = ref(null)
 const pendingRemove = reactive(new Set())
@@ -71,8 +74,9 @@ async function registerAll(group) {
     action: sec.status === 'Open' ? 'add' : 'waitlist',
   }))
   if (!registrations.length) return
-  const { succeeded } = await register(group.termId, registrations)
-  if (succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${succeeded} section(s)`, life: 4000 })
+  const result = await register(group.termId, registrations)
+  if (result.termError) { termErrors[group.termId] = result.termError; return }
+  if (result.succeeded > 0) toast.add({ severity: 'success', summary: `Registered for ${result.succeeded} section(s)`, life: 4000 })
 }
 </script>
 
@@ -117,6 +121,16 @@ async function registerAll(group) {
                   class="rounded bg-crimson px-2.5 py-0.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >Register All</button>
               </h3>
+              <div
+                v-if="termErrors[group.termId]"
+                class="mb-2 flex items-center justify-between rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                <span>{{ termErrors[group.termId] }}</span>
+                <button
+                  @click="delete termErrors[group.termId]"
+                  class="ml-3 text-xs text-red-500 underline hover:text-red-700"
+                >Dismiss</button>
+              </div>
 
               <ul class="space-y-2">
                 <li v-for="sec in group.sections" :key="sec.CourseKey"

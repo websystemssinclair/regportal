@@ -68,39 +68,39 @@ describe('CartView — registration actions', () => {
     return mount(CartView, { global: { plugins: [pinia] } })
   }
 
-  describe('Add / Waitlist button visibility', () => {
-    it('shows Add button for Open section in current term', () => {
+  describe('Register / Waitlist button visibility', () => {
+    it('shows Register button for Open section in current term', () => {
       useCartStore().sections = [makeSection({ status: 'Open' })]
       const wrapper = mountView()
-      expect(wrapper.text()).toContain('Add')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(true)
     })
 
     it('shows Waitlist button for Closed/Waitlist section in current term', () => {
       useCartStore().sections = [makeSection({ status: 'Closed', waitListAllowed: 'Y' })]
       const wrapper = mountView()
       expect(wrapper.text()).toContain('Waitlist')
-      expect(wrapper.text()).not.toContain('Add')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(false)
     })
 
     it('shows no action button for Cancelled section', () => {
       useCartStore().sections = [makeSection({ status: 'Cancelled' })]
       const wrapper = mountView()
-      expect(wrapper.text()).not.toContain('Add')
-      expect(wrapper.text()).not.toContain('Waitlist')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(false)
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Waitlist')).toBe(false)
     })
 
     it('shows no action button for Closed section with no waitlist', () => {
       useCartStore().sections = [makeSection({ status: 'Closed', waitListAllowed: 'N' })]
       const wrapper = mountView()
-      expect(wrapper.text()).not.toContain('Add')
-      expect(wrapper.text()).not.toContain('Waitlist')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(false)
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Waitlist')).toBe(false)
     })
 
     it('shows no action button for future-term section', () => {
       useCartStore().sections = [makeSection({ Term: TERM_FUTURE, status: 'Open' })]
       const wrapper = mountView()
-      expect(wrapper.text()).not.toContain('Add')
-      expect(wrapper.text()).not.toContain('Waitlist')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(false)
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Waitlist')).toBe(false)
     })
   })
 
@@ -125,12 +125,12 @@ describe('CartView — registration actions', () => {
   })
 
   describe('registerSection() wiring', () => {
-    it('calls register with correct termId and add action when Add is clicked', async () => {
+    it('calls register with correct termId and add action when Register is clicked', async () => {
       const sec = makeSection({ CourseKey: '111', status: 'Open' })
       useCartStore().sections = [sec]
       const wrapper = mountView()
-      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Add')
-      await addBtn?.trigger('click')
+      const registerBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      await registerBtn?.trigger('click')
       expect(registerMock).toHaveBeenCalledWith(TERM_CURRENT, [{ sectionId: '111', action: 'add' }])
     })
 
@@ -180,8 +180,8 @@ describe('CartView — registration actions', () => {
       registerMock.mockResolvedValue({ succeeded: 0 })
       useCartStore().sections = [makeSection({ status: 'Open' })]
       const wrapper = mountView()
-      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Add')
-      await addBtn?.trigger('click')
+      const registerBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      await registerBtn?.trigger('click')
       await nextTick()
       expect(toastAddMock).not.toHaveBeenCalled()
     })
@@ -194,7 +194,7 @@ describe('CartView — registration actions', () => {
       const wrapper = mountView()
       expect(wrapper.text()).toContain('Time conflict')
       expect(wrapper.text()).toContain('Dismiss')
-      expect(wrapper.text()).not.toContain('Add')
+      expect(wrapper.findAll('button').some((b) => b.text() === 'Register')).toBe(false)
     })
 
     it('calls dismiss with courseKey when Dismiss is clicked', async () => {
@@ -208,15 +208,15 @@ describe('CartView — registration actions', () => {
   })
 
   describe('in-flight state', () => {
-    it('disables Add button while isTermRegistering returns true for the termId', async () => {
+    it('disables Register button while isTermRegistering returns true for the termId', async () => {
       useCartStore().sections = [makeSection({ status: 'Open' })]
       vi.mocked(useCartRegistration).mockReturnValue({
         register: registerMock,
         isTermRegistering: (id) => id === TERM_CURRENT,
       })
       const wrapper = mountView()
-      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Add')
-      expect(addBtn?.attributes('disabled')).toBeDefined()
+      const registerBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      expect(registerBtn?.attributes('disabled')).toBeDefined()
     })
 
     it('disables Register All button while isTermRegistering returns true for the termId', async () => {
@@ -295,6 +295,41 @@ describe('CartView — registration actions', () => {
     })
   })
 
+  describe('term-level network error banner', () => {
+    it('renders a term-level banner when register returns termError', async () => {
+      registerMock.mockResolvedValue({ succeeded: 0, termError: 'Registration failed — please try again.' })
+      useCartStore().sections = [makeSection({ status: 'Open' })]
+      const wrapper = mountView()
+      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      await addBtn?.trigger('click')
+      await nextTick()
+      expect(wrapper.text()).toContain('Registration failed — please try again.')
+    })
+
+    it('does not render per-section inline errors when a termError banner is shown', async () => {
+      registerMock.mockResolvedValue({ succeeded: 0, termError: 'Registration failed — please try again.' })
+      useCartStore().sections = [makeSection({ CourseKey: '111', status: 'Open' })]
+      const wrapper = mountView()
+      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      await addBtn?.trigger('click')
+      await nextTick()
+      expect(useSectionErrorStore().errors['111']).toBeUndefined()
+    })
+
+    it('dismissing the term banner removes it', async () => {
+      registerMock.mockResolvedValue({ succeeded: 0, termError: 'Registration failed — please try again.' })
+      useCartStore().sections = [makeSection({ status: 'Open' })]
+      const wrapper = mountView()
+      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      await addBtn?.trigger('click')
+      await nextTick()
+      const dismissBtn = wrapper.findAll('button').find((b) => b.text() === 'Dismiss')
+      await dismissBtn?.trigger('click')
+      await nextTick()
+      expect(wrapper.text()).not.toContain('Registration failed — please try again.')
+    })
+  })
+
   describe('maintenance mode', () => {
     it('shows maintenance banner when isBackendDown', () => {
       useMaintenanceStore().setStatus({ mode: 'backend', publicMessage: 'System is down' })
@@ -310,12 +345,12 @@ describe('CartView — registration actions', () => {
       expect(wrapper.text()).toContain('Registration is temporarily unavailable')
     })
 
-    it('disables Add button when isBackendDown', () => {
+    it('disables Register button when isBackendDown', () => {
       useMaintenanceStore().setStatus({ mode: 'backend', publicMessage: '' })
       useCartStore().sections = [makeSection({ status: 'Open' })]
       const wrapper = mountView()
-      const addBtn = wrapper.findAll('button').find((b) => b.text() === 'Add')
-      expect(addBtn?.attributes('disabled')).toBeDefined()
+      const registerBtn = wrapper.findAll('button').find((b) => b.text() === 'Register')
+      expect(registerBtn?.attributes('disabled')).toBeDefined()
     })
 
     it('disables Register All button when isBackendDown', () => {

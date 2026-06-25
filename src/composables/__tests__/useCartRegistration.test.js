@@ -147,6 +147,31 @@ describe('useCartRegistration', () => {
     })
   })
 
+  describe('register() — network error (execute throws)', () => {
+    it('returns { succeeded: 0, termError: message } when execute throws', async () => {
+      const cartStore = useCartStore()
+      cartStore.sections = [makeSection({ CourseKey: '111' })]
+      mockExecute.mockRejectedValue(new Error('Network Error'))
+
+      const { register } = useCartRegistration()
+      const result = await register('26SU', [{ sectionId: '111', action: 'add' }])
+
+      expect(result).toEqual({ succeeded: 0, termError: 'Registration failed — please try again.' })
+    })
+
+    it('does not write to sectionErrorStore when execute throws', async () => {
+      const cartStore = useCartStore()
+      const sectionErrorStore = useSectionErrorStore()
+      cartStore.sections = [makeSection({ CourseKey: '111' })]
+      mockExecute.mockRejectedValue(new Error('Network Error'))
+
+      const { register } = useCartRegistration()
+      await register('26SU', [{ sectionId: '111', action: 'add' }])
+
+      expect(Object.keys(sectionErrorStore.errors)).toHaveLength(0)
+    })
+  })
+
   describe('register() — return value', () => {
     it('returns { succeeded: count } with count of sections that succeeded', async () => {
       const cartStore = useCartStore()
