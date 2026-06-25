@@ -26,3 +26,7 @@ Use the pre-loaded `booklist` field for registered and waitlisted Sections. Only
 
 - If the backend stops populating `booklist` on the login payload, registered/waitlisted sections will silently show "no books" rather than fetching fresh data. This would require a code change to add a fallback fetch.
 - Cart-only sections always require a live fetch — they have no login-payload cache.
+
+## Amendment — per-Section modal always fetches
+
+`BooklistModal` always calls the API on mount regardless of whether the section object carries a `booklist` property. The pre-load caching strategy applies only to the aggregate `BooklistView` (POST `/Books` per term). The per-Section modal uses GET `/Books/{subjectCode}/{courseNumber}/{term}/{sectionNo}` on every open to ensure fresh data.

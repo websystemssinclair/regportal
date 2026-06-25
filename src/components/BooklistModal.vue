@@ -49,10 +49,6 @@ onMounted(async () => {
   closeButtonRef.value?.focus()
   document.addEventListener('keydown', handleKeydown)
 
-  if (Array.isArray(props.section.booklist)) {
-    books.value = props.section.booklist
-    return
-  }
   loading.value = true
   try {
     const { data } = await getBooksBySection(
