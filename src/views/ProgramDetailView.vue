@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { getProgram } from '@/services/programsService'
 import { getCourseSections } from '@/services/sectionsService'
 import router from '@/router'
-import { statusBadgeClass } from '@/utils/section'
-import { formatDays } from '@/utils/time'
+import { seatBadge, sectionLocation, sectionRoom } from '@/utils/section'
+import { formatDays, formatTimeRange } from '@/utils/time'
 
 const route = useRoute()
 const referenceStore = useReferenceStore()
@@ -30,7 +30,8 @@ const completedCodesSet = computed(() => {
 
 onMounted(async () => {
   try {
-    const { data } = await getProgram(route.params.programCode)
+    const code = route.params.programCode.replace(/\./g, '-')
+    const { data } = await getProgram(code)
     program.value = data.rows?.[0] ?? null
   } catch (e) {
     error.value = 'Failed to load program.'
@@ -67,6 +68,16 @@ async function toggleCourse(course) {
 
 function addToScheduleBuilder(courseCode) {
   router.push(`/schedule-builder?course=${courseCode}`)
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const parts = dateStr.split(' ')[0].split('/')
+  if (parts.length !== 3) return dateStr
+  const [month, day, year] = parts.map(Number)
+  const d = new Date(year, month - 1, day)
+  if (isNaN(d.getTime())) return dateStr
+  return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(d)
 }
 
 </script>
@@ -150,16 +161,44 @@ function addToScheduleBuilder(courseCode) {
                   v-for="sec in sectionsByCode[course.CourseCode]"
                   :key="sec.SectionNo"
                   data-testid="section-row"
-                  class="flex flex-wrap items-center gap-x-4 gap-y-1 py-2 text-xs text-gray-700 border-b border-gray-200 last:border-b-0"
+                  class="flex items-start justify-between gap-3 py-2 text-xs text-gray-700 border-b border-gray-200 last:border-b-0"
                 >
-                  <span class="font-medium text-gray-900">Sec {{ sec.SectionNo }}</span>
-                  <span v-if="sec.Faculty">{{ sec.Faculty }}</span>
-                  <span v-if="sec.Days">{{ formatDays(sec.Days) }} {{ sec.StartTime }}–{{ sec.EndTime }}</span>
-                  <span v-if="sec.Building">{{ sec.Building }}</span>
-                  <span
-                    class="rounded-full px-2 py-0.5 font-medium"
-                    :class="statusBadgeClass(sec.Status)"
-                  >{{ sec.Status }}</span>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-mono font-medium text-gray-900">Sec {{ sec.SectionNo }}</span>
+                      <span class="text-gray-600">{{ sectionLocation(sec) }}</span>
+                      <span class="text-gray-500">
+                        {{ formatDays(sec.Days) || 'Online' }}
+                        <template v-if="sec.StartTime">{{ formatTimeRange(sec.StartTime, sec.EndTime) }}</template>
+                      </span>
+                    </div>
+                    <div
+                      v-for="(entry, i) in sec.additionalSched"
+                      :key="i"
+                      class="mt-0.5 text-gray-500"
+                    >
+                      {{ formatDays(entry.Days) }} {{ formatTimeRange(entry.startTime, entry.endTime) }}
+                      <template v-if="sectionRoom(entry)"> · {{ sectionRoom(entry) }}</template>
+                    </div>
+                    <p v-if="sec.Faculty" class="mt-0.5 text-gray-500">{{ sec.Faculty }}</p>
+                    <p v-if="sec.printedComments" class="mt-0.5 text-gray-500">{{ sec.printedComments }}</p>
+                    <p v-if="sec.startDate" class="mt-0.5 text-gray-500">
+                      Runs: {{ formatDate(sec.startDate) }}{{ sec.endDate ? ` – ${formatDate(sec.endDate)}` : '' }}
+                    </p>
+                    <div v-if="sec.otherFee || sec.labFee || /independent/i.test(sec.restrictions || '') || sec.specialProperty === 'Y'" class="mt-0.5 flex flex-wrap gap-1">
+                      <span v-if="sec.otherFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">+ ${{ sec.otherFee }} fee</span>
+                      <span v-if="sec.labFee" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">+ ${{ sec.labFee }} fee</span>
+                      <span v-if="/independent/i.test(sec.restrictions || '')" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">Independent Study</span>
+                      <span v-if="sec.specialProperty === 'Y'" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">Learning Community</span>
+                    </div>
+                  </div>
+                  <div class="shrink-0">
+                    <span
+                      v-for="b in [seatBadge(sec)]" :key="'b'"
+                      :class="b.cls"
+                      class="rounded-full px-2.5 py-0.5 font-medium"
+                    >{{ b.label }}</span>
+                  </div>
                 </div>
               </div>
             </template>

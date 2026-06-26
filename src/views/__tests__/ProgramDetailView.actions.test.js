@@ -58,8 +58,19 @@ const SECTIONS = [
     EndTime: '10:15 AM',
     Building: 'SCC',
     Status: 'Open',
+    status: 'Open',
+    openSeats: 5,
     SeatsAvailable: 5,
     TotalSeats: 25,
+    SectionLoc: '110',
+    additionalSched: [{ Days: 'F', startTime: '9:00 AM', endTime: '10:00 AM', satLocation: '' }],
+    printedComments: 'Lab required on Fridays',
+    startDate: '8/25/2026',
+    endDate: '12/14/2026',
+    otherFee: '25.00',
+    labFee: '10.00',
+    specialProperty: 'Y',
+    restrictions: 'Independent Study Eligible',
   },
 ]
 
@@ -196,6 +207,72 @@ describe('ProgramDetailView', () => {
   it('getProgram is called with the programCode from route params', async () => {
     mountView()
     await nextTick()
-    expect(getProgram).toHaveBeenCalledWith('ACC.S.AAS')
+    expect(getProgram).toHaveBeenCalledWith('ACC-S-AAS')
+  })
+
+  describe('enriched section row display', () => {
+    async function expandFirstCourse() {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      const courseRow = wrapper.find('[data-testid="course-row"]')
+      await courseRow.trigger('click')
+      await nextTick()
+      await nextTick()
+      return wrapper.find('[data-testid="section-row"]')
+    }
+
+    it('renders human-readable location via sectionLocation', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Centerville Campus')
+    })
+
+    it('renders meeting time via formatTimeRange', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('9:00')
+      expect(row.text()).toContain('10:15')
+    })
+
+    it('renders additional meeting slots from additionalSched', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('F')
+      expect(row.text()).toContain('9:00')
+    })
+
+    it('renders printed comments when present', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Lab required on Fridays')
+    })
+
+    it('renders start and end dates when present', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Aug 25, 2026')
+      expect(row.text()).toContain('Dec 14, 2026')
+    })
+
+    it('renders lab fee badge when labFee is truthy', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('$10.00')
+    })
+
+    it('renders other fee badge when otherFee is truthy', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('$25.00')
+    })
+
+    it('renders Independent Study badge when restrictions contains "independent"', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Independent Study')
+    })
+
+    it('renders Learning Community badge when specialProperty is "Y"', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Learning Community')
+    })
+
+    it('renders seat availability badge from seatBadge', async () => {
+      const row = await expandFirstCourse()
+      expect(row.text()).toContain('Open · 5 seats')
+    })
   })
 })
