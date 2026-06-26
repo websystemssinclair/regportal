@@ -71,6 +71,11 @@
                 :aria-label="`Remove ${course.subjectCode}-${course.courseNo}`"
               >&times;</button>
             </span>
+            <button
+              data-testid="clear-builder-btn"
+              @click="clearAllCourses"
+              class="self-center text-xs text-gray-500 underline hover:text-gray-700"
+            >Clear all</button>
           </div>
 
           <!-- Soft-cap warning -->
@@ -297,7 +302,7 @@ import { useAuthStore } from '@/stores/auth'
 import { searchCourses, getCourseSections } from '@/services/sectionsService'
 import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
 import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
-import { useRoute } from 'vue-router'
+import { useBuilderCourses } from '@/composables/useBuilderCourses'
 import router from '@/router'
 import { formatMinutes } from '@/utils/time'
 
@@ -323,6 +328,7 @@ const ALL_DAYS = [
     const authStore = useAuthStore()
     const { schedules, isBuilding, error, count, build, selectSchedule, getCredits } = useScheduleBuilder()
     const { scheduleResults, registeringSchedules, registerSchedule, reset: resetRegistration } = useRegisterSchedule()
+    const builderCourses = useBuilderCourses()
     const locations = computed(() => referenceStore.locations)
 
     const registrationTerms = computed(() =>
@@ -427,7 +433,14 @@ const ALL_DAYS = [
     }
 
     function removeCourse(idx) {
+      const course = selectedCourses.value[idx]
+      builderCourses.remove(`${course.subjectCode}-${course.courseNo}`)
       selectedCourses.value.splice(idx, 1)
+    }
+
+    function clearAllCourses() {
+      builderCourses.clear()
+      selectedCourses.value = []
     }
 
     function applyPreset(preset) {
@@ -458,16 +471,14 @@ const ALL_DAYS = [
       registerSchedule(schedule, idx, getCredits)
     }
 
-    const route = useRoute()
     onMounted(async () => {
-      const courseParam = route.query.course
-      if (!courseParam) return
-      const dashIdx = courseParam.indexOf('-')
-      if (dashIdx < 1) return
-      const subject = courseParam.slice(0, dashIdx)
-      const number = courseParam.slice(dashIdx + 1)
-      await addCourse({ SubjectCode: subject, CourseNumber: number, LongName: courseParam })
-      router.replace({ path: '/schedule-builder' })
+      for (const code of builderCourses.codes.value) {
+        const dashIdx = code.indexOf('-')
+        if (dashIdx < 1) continue
+        const subject = code.slice(0, dashIdx)
+        const number = code.slice(dashIdx + 1)
+        await addCourse({ SubjectCode: subject, CourseNumber: number, LongName: code })
+      }
     })
 
 </script>
