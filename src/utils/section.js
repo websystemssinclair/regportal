@@ -63,5 +63,5 @@ export function sectionLocation(sec) {
   if (room === 'RMT' || room === 'VIR') return 'Blended Learning'
   const campus = SECTION_LOC_LABELS[sec.SectionLoc]
   if (campus) return room ? `${campus} · ${room}` : campus
-  return room ? `Downtown Dayton Campus · ${room}` : 'Downtown Dayton Campus'
+  return room || 'Downtown Dayton Campus'
 }

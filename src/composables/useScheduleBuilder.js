@@ -62,7 +62,7 @@ export function useScheduleBuilder() {
       error.value = e.message ?? 'Worker error'
     }
 
-    _worker.postMessage({ type: 'build', courses: allCourseSections, filters })
+    _worker.postMessage({ type: 'build', courses: allCourseSections, filters: { ...filters, days: Array.from(filters.days) } })
   }
 
   function selectSchedule(schedule) {
