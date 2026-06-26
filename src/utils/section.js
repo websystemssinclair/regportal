@@ -37,3 +37,31 @@ export function statusBadgeClass(status) {
   if (status === 'Waitlist') return 'bg-yellow-100 text-yellow-800'
   return 'bg-red-100 text-red-800'
 }
+
+export const SECTION_LOC_LABELS = {
+  '110': 'Centerville Campus', '329': 'Centerville Campus',
+  '310': 'Huber Heights Learning Center', '328': 'Huber Heights Learning Center',
+  '300': 'Englewood Learning Center', '327': 'Englewood Learning Center',
+  '210': 'Preble County Learning Center',
+  '200': 'Courseview Campus Center (Mason)', '326': 'Courseview Campus Center (Mason)',
+  '330': 'Other Off Campus Location', 'OFF': 'Other Off Campus Location',
+}
+
+export function stripZzz(val) {
+  return (val || '').replace(/zzz$/i, '').trim()
+}
+
+export function sectionRoom(sec) {
+  return sec.satLocation ? stripZzz(sec.satLocation) : stripZzz(sec.building)
+}
+
+export function sectionLocation(sec) {
+  if (sec.isFlexpace) return 'FlexPace'
+  if (sec.SectionLoc === '320') return 'Online Learning'
+  if (sec.SectionLoc === '321' || sec.SectionLoc === '345') return 'Online Learning with Meeting Times'
+  const room = sectionRoom(sec)
+  if (room === 'RMT' || room === 'VIR') return 'Blended Learning'
+  const campus = SECTION_LOC_LABELS[sec.SectionLoc]
+  if (campus) return room ? `${campus} · ${room}` : campus
+  return 'Downtown Dayton Campus'
+}

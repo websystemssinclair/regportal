@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { isActionable, seatBadge, statusBadgeClass } from '@/utils/section'
+import { isActionable, seatBadge, statusBadgeClass, sectionLocation, sectionRoom, stripZzz, SECTION_LOC_LABELS } from '@/utils/section'
 
 const sec = (overrides = {}) => ({
   status: 'Open',
@@ -108,5 +108,47 @@ describe('statusBadgeClass', () => {
 
   it('Closed returns red classes', () => {
     expect(statusBadgeClass('Closed')).toBe('bg-red-100 text-red-800')
+  })
+})
+
+describe('sectionLocation', () => {
+  it('FlexPace returns FlexPace', () => {
+    expect(sectionLocation({ isFlexpace: true, SectionLoc: '320' })).toBe('FlexPace')
+  })
+
+  it('SectionLoc 320 returns Online Learning', () => {
+    expect(sectionLocation({ SectionLoc: '320' })).toBe('Online Learning')
+  })
+
+  it('SectionLoc 321 returns Online Learning with Meeting Times', () => {
+    expect(sectionLocation({ SectionLoc: '321' })).toBe('Online Learning with Meeting Times')
+  })
+
+  it('SectionLoc 345 returns Online Learning with Meeting Times', () => {
+    expect(sectionLocation({ SectionLoc: '345' })).toBe('Online Learning with Meeting Times')
+  })
+
+  it('room RMT returns Blended Learning', () => {
+    expect(sectionLocation({ SectionLoc: '100', building: 'RMT' })).toBe('Blended Learning')
+  })
+
+  it('campus with room returns label plus room', () => {
+    expect(sectionLocation({ SectionLoc: '110', building: 'RM101' })).toBe('Centerville Campus · RM101')
+  })
+
+  it('campus without room returns label only', () => {
+    expect(sectionLocation({ SectionLoc: '110' })).toBe('Centerville Campus')
+  })
+
+  it('unknown SectionLoc falls back to Downtown Dayton Campus', () => {
+    expect(sectionLocation({ SectionLoc: '999' })).toBe('Downtown Dayton Campus')
+  })
+
+  it('stripZzz strips trailing zzz from building', () => {
+    expect(sectionLocation({ SectionLoc: '110', building: 'RM101zzz' })).toBe('Centerville Campus · RM101')
+  })
+
+  it('satLocation takes priority over building for room', () => {
+    expect(sectionLocation({ SectionLoc: '110', satLocation: 'SAT1', building: 'BLD1' })).toBe('Centerville Campus · SAT1')
   })
 })
