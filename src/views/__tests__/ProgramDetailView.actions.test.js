@@ -8,8 +8,10 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useRegisterNow } from '@/composables/useRegisterNow'
+import { useBuilderCourses } from '@/composables/useBuilderCourses'
 
 vi.mock('@/composables/useRegisterNow')
+vi.mock('@/composables/useBuilderCourses')
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({ params: { programCode: 'ACC.S.AAS' } })),
@@ -85,6 +87,7 @@ const SECTIONS = [
 ]
 
 let pinia
+let mockBuilderAdd
 
 function mountView() {
   return mount(ProgramDetailView, {
@@ -112,6 +115,14 @@ describe('ProgramDetailView', () => {
       registerNow: vi.fn(),
       dismissResult: vi.fn(),
       reset: vi.fn(),
+    })
+
+    mockBuilderAdd = vi.fn()
+    vi.mocked(useBuilderCourses).mockReturnValue({
+      add: mockBuilderAdd,
+      remove: vi.fn(),
+      clear: vi.fn(),
+      codes: { value: [] },
     })
   })
 
@@ -279,13 +290,50 @@ describe('ProgramDetailView', () => {
     })
   })
 
-  it('"Add to Schedule Builder" button on Course row navigates with query param', async () => {
-    const wrapper = mountView()
-    await nextTick()
-    await nextTick()
-    const addBtn = wrapper.find('[data-testid="add-to-schedule-btn"]')
-    await addBtn.trigger('click')
-    expect(router.push).toHaveBeenCalledWith('/schedule-builder?course=ACC-1210')
+  describe('checkbox multi-select and action bar', () => {
+    it('Course rows render a checkbox; Add.Req and Elective rows do not', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      expect(wrapper.findAll('[data-testid="course-checkbox"]')).toHaveLength(2)
+      expect(wrapper.find('[data-testid="addreq-row"]').find('[data-testid="course-checkbox"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="elective-row"]').find('[data-testid="course-checkbox"]').exists()).toBe(false)
+    })
+
+    it('"Add selected to builder" bar is disabled when no courses are checked', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      const bar = wrapper.find('[data-testid="add-to-builder-bar"]')
+      expect(bar.attributes('disabled')).not.toBeUndefined()
+    })
+
+    it('"Add selected to builder" bar label shows count of checked courses', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      await wrapper.find('[data-testid="course-checkbox"]').setChecked(true)
+      const bar = wrapper.find('[data-testid="add-to-builder-bar"]')
+      expect(bar.text()).toContain('Add selected to builder (1)')
+    })
+
+    it('clicking the bar calls useBuilderCourses.add() with selected course codes', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      await wrapper.find('[data-testid="course-checkbox"]').setChecked(true)
+      await wrapper.find('[data-testid="add-to-builder-bar"]').trigger('click')
+      expect(mockBuilderAdd).toHaveBeenCalledWith(['ACC-1210'])
+    })
+
+    it('clicking the bar navigates to /schedule-builder', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      await wrapper.find('[data-testid="course-checkbox"]').setChecked(true)
+      await wrapper.find('[data-testid="add-to-builder-bar"]').trigger('click')
+      expect(router.push).toHaveBeenCalledWith('/schedule-builder')
+    })
   })
 
   it('shows Completed badge for Student with matching completedCourses', async () => {

@@ -7,6 +7,7 @@ import { useCartStore } from '@/stores/cart'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCart } from '@/composables/useCart'
 import { useRegisterNow } from '@/composables/useRegisterNow'
+import { useBuilderCourses } from '@/composables/useBuilderCourses'
 import { getProgram } from '@/services/programsService'
 import { getCourseSections } from '@/services/sectionsService'
 import router from '@/router'
@@ -20,6 +21,7 @@ const cartStore = useCartStore()
 const maintenanceStore = useMaintenanceStore()
 const cart = useCart()
 const { sectionResults, registeringSections, registerNow, dismissResult } = useRegisterNow()
+const builderCourses = useBuilderCourses()
 
 const program = ref(null)
 const isLoading = ref(true)
@@ -28,6 +30,7 @@ const error = ref(null)
 const expandedCourses = ref(new Set())
 const sectionsByCode = ref({})
 const loadingSections = ref(new Set())
+const selectedCodes = ref([])
 
 const dTermId = computed(() => referenceStore.terms.find((t) => t.toView === 'D')?.id ?? null)
 
@@ -74,8 +77,9 @@ async function toggleCourse(course) {
   }
 }
 
-function addToScheduleBuilder(courseCode) {
-  router.push(`/schedule-builder?course=${courseCode}`)
+function addSelectedToBuilder() {
+  builderCourses.add([...selectedCodes.value])
+  router.push('/schedule-builder')
 }
 
 function formatDate(dateStr) {
@@ -125,7 +129,17 @@ function formatDate(dateStr) {
 
         <!-- Course list -->
         <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <h2 class="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700">Required Courses</h2>
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h2 class="text-sm font-semibold text-gray-700">Required Courses</h2>
+            <button
+              data-testid="add-to-builder-bar"
+              :disabled="selectedCodes.length === 0"
+              @click="addSelectedToBuilder"
+              class="rounded-md bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Add selected to builder ({{ selectedCodes.length }})
+            </button>
+          </div>
 
           <div
             v-for="(course, idx) in program.programcourses"
@@ -151,13 +165,14 @@ function formatDate(dateStr) {
                 >
                   Completed
                 </span>
-                <button
-                  data-testid="add-to-schedule-btn"
-                  @click.stop="addToScheduleBuilder(course.CourseCode)"
-                  class="shrink-0 rounded-md bg-crimson px-3 py-1.5 touch:py-3.5 touch:px-4 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
-                >
-                  Add to Schedule Builder
-                </button>
+                <input
+                  type="checkbox"
+                  data-testid="course-checkbox"
+                  :value="course.CourseCode"
+                  v-model="selectedCodes"
+                  @click.stop
+                  class="shrink-0 h-4 w-4 cursor-pointer accent-crimson"
+                />
               </div>
 
               <!-- Sections accordion -->
