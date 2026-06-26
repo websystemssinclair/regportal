@@ -347,7 +347,7 @@ describe('HomeView — additional schedule rows', () => {
     const wrapper = mountWithSection({
       additionalSched: [{ Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'LAB1', satLocation: '' }],
     })
-    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('TuTh')
     expect(wrapper.text()).toContain('LAB1')
   })
 
@@ -358,7 +358,7 @@ describe('HomeView — additional schedule rows', () => {
         { Days: 'F', startTime: '09:00 AM', endTime: '10:00 AM', building: 'BLDG2', satLocation: '' },
       ],
     })
-    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('TuTh')
     expect(wrapper.text()).toContain('LAB1')
     expect(wrapper.text()).toContain('F')
     expect(wrapper.text()).toContain('BLDG2')
@@ -373,7 +373,7 @@ describe('HomeView — additional schedule rows', () => {
     const wrapper = mountWithSection({
       additionalSched: [{ Days: 'TR', startTime: '01:00 PM', endTime: '04:30 PM', building: 'LAB1zzz', satLocation: '' }],
     })
-    expect(wrapper.text()).toContain('TR')
+    expect(wrapper.text()).toContain('TuTh')
     expect(wrapper.text()).toContain('1:00–4:30 PM')
     expect(wrapper.text()).toContain('LAB1')
     expect(wrapper.text()).not.toContain('zzz')

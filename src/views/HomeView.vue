@@ -523,7 +523,7 @@ fetch()
                       </span>
                     </template>
                     <template v-else>
-                      <template v-if="sec.status == 'Open' && isActionable(sec)">
+                      <template v-if="sec.status == 'Open' && (!isActionable(sec) || authStore.isAuthenticated)">
                         <button
                           v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
                           @click="cart.add(sec)"
@@ -538,7 +538,7 @@ fetch()
                           In Cart
                         </span>
                       </template>
-                      <template v-if="authStore.isStudent && isActionable(sec)">
+                      <template v-if="authStore.canRegister && isActionable(sec)">
                         <template v-if="sectionResults[sec.CourseKey]?.status === 'error'">
                           <span class="text-xs text-red-600">{{ sectionResults[sec.CourseKey].message }}</span>
                           <button

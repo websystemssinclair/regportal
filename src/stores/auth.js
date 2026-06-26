@@ -39,10 +39,11 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAdmin: (state) => state.currentRole === 'Admin' || state.currentRole === 'Developer',
     isStudent: (state) => state.currentRole === 'Student' || state.currentRole === 'Admin' || state.currentRole === 'Developer',
+    canRegister: (state) => state.currentRole === 'Student' || state.currentRole === 'Developer',
   },
   actions: {
     async login() {
-      sessionStorage.setItem(RETURN_TO_KEY, window.location.pathname + window.location.search + window.location.hash)
+      sessionStorage.setItem(RETURN_TO_KEY, window.location.href)
       const { data: id } = await sendSamlRequest()
       window.location.href = `${SSO_BASE}?ID=${id}`
     },

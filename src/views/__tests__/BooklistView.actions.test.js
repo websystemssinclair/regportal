@@ -94,7 +94,7 @@ describe('BooklistView — aggregate view', () => {
       useAuthStore().currentCourses = [makeSection({ booklist: [] })]
       const wrapper = mountView()
       await nextTick()
-      expect(wrapper.text()).toContain('Buy Books at Campus Store')
+      expect(wrapper.text()).toContain('Buy Books at eCampus Store')
     })
   })
 

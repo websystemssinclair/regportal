@@ -58,8 +58,8 @@ onMounted(async () => {
       props.section.Term,
       String(props.section.SectionNo).trim(),
     )
-    const rows = Array.isArray(data) ? data : []
-    books.value = rows.filter((r) => r.CourseResult === 'SUCCESS')
+    const rows = Array.isArray(data?.rows) ? data.rows : []
+    books.value = rows.filter((r) => r.Result === 'SUCCESS')
   } catch {
     error.value = true
   } finally {
@@ -113,15 +113,28 @@ onUnmounted(() => {
           <div
             v-for="book in books"
             :key="book.ISBN"
-            class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
+            class="flex gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
           >
-            <p class="text-sm font-medium text-gray-800">{{ book.Title }}</p>
-            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
-              <span>{{ book.Author }}</span>
-              <span>ISBN {{ book.ISBN }}</span>
-              <span
-                :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-500'"
-              >{{ book.Required }}</span>
+            <img
+              v-if="book.SecureImage && !book.SecureImage.includes('noimage')"
+              :src="book.SecureImage"
+              :alt="book.Title"
+              class="h-16 w-12 flex-shrink-0 rounded object-cover"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-gray-800">{{ book.Title }}</p>
+              <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
+                <span>{{ book.Author }}</span>
+                <span>ISBN {{ book.ISBN }}</span>
+                <span v-if="book.Edition">{{ book.Edition }}</span>
+                <span
+                  :class="book.Required === 'Required' ? 'text-crimson font-medium' : 'text-gray-500'"
+                >{{ book.Required }}</span>
+              </div>
+              <div v-if="book.NewPrice != null || book.UsedPrice != null" class="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-600">
+                <span v-if="book.NewPrice != null">New ${{ book.NewPrice.toFixed(2) }}</span>
+                <span v-if="book.UsedPrice != null">Used ${{ book.UsedPrice.toFixed(2) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -133,7 +146,7 @@ onUnmounted(() => {
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block rounded bg-crimson px-4 py-2 touch:py-3.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
-        >Buy Books at Campus Store</a>
+        >Buy Books at eCampus Store</a>
       </div>
     </div>
   </div>

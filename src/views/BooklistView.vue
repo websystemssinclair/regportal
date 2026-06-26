@@ -95,7 +95,7 @@ onMounted(async () => {
         }
         try {
           const { data } = await getBooksByTerm(courseCodes, term)
-          const rows = Array.isArray(data) ? data : []
+          const rows = Array.isArray(data?.rows) ? data.rows : []
           for (const row of rows) {
             if (row.CourseResult !== 'SUCCESS') continue
             const key = `${row.SubjectCode.trim()}-${row.CourseNo.trim()}-${row.SectionNo.trim()}`
@@ -184,7 +184,7 @@ onMounted(async () => {
             rel="noopener noreferrer"
             class="inline-block rounded bg-crimson px-4 py-2 touch:py-3.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors"
             data-testid="buy-books-btn"
-          >Buy Books at Campus Store</a>
+          >Buy Books at eCampus Store</a>
         </div>
       </section>
     </main>
