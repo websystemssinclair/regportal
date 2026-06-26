@@ -43,7 +43,7 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login() {
-      sessionStorage.setItem(RETURN_TO_KEY, window.location.href)
+      sessionStorage.setItem(RETURN_TO_KEY, window.location.pathname)
       const { data: id } = await sendSamlRequest()
       window.location.href = `${SSO_BASE}?ID=${id}`
     },

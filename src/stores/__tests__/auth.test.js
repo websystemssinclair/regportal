@@ -22,15 +22,15 @@ describe('authStore', () => {
   })
 
   describe('login()', () => {
-    it('saves current URL to sessionStorage then redirects to SSO', async () => {
-      const location = { href: 'http://localhost/search' }
+    it('saves current path to sessionStorage then redirects to SSO', async () => {
+      const location = { href: '', pathname: '/search' }
       vi.stubGlobal('location', location)
       sendSamlRequest.mockResolvedValue({ data: 'ABC123' })
 
       const store = useAuthStore()
       await store.login()
 
-      expect(sessionStorage.getItem('regportal:returnTo')).toBe('http://localhost/search')
+      expect(sessionStorage.getItem('regportal:returnTo')).toBe('/search')
       expect(location.href).toBe(
         'https://sso.sinclair.edu/EasyConnect/REST/default.aspx?ID=ABC123',
       )
@@ -141,14 +141,14 @@ describe('authStore', () => {
       expect(store.currentRole).toBe('Visitor')
     })
 
-    it('returns the sessionStorage returnTo URL as targetUrl and clears it', async () => {
-      sessionStorage.setItem('regportal:returnTo', 'http://localhost/courses')
+    it('returns the sessionStorage returnTo path as targetUrl and clears it', async () => {
+      sessionStorage.setItem('regportal:returnTo', '/courses')
       retrieveUserFromSaml.mockResolvedValue({ data: samlResponse })
 
       const store = useAuthStore()
       const result = await store.handleCallback('SAML_ID')
 
-      expect(result.targetUrl).toBe('http://localhost/courses')
+      expect(result.targetUrl).toBe('/courses')
       expect(sessionStorage.getItem('regportal:returnTo')).toBeNull()
     })
 
@@ -273,7 +273,7 @@ describe('authStore', () => {
       store.isAuthenticated = true
       store.currentRole = 'Student'
       store.user = { firstName: 'Brian' }
-      sessionStorage.setItem('regportal:returnTo', 'http://localhost/courses')
+      sessionStorage.setItem('regportal:returnTo', '/courses')
 
       store.logout()
 
