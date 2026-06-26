@@ -3,15 +3,23 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
+import { useMaintenanceStore } from '@/stores/maintenance'
+import { useCart } from '@/composables/useCart'
+import { useRegisterNow } from '@/composables/useRegisterNow'
 import { getProgram } from '@/services/programsService'
 import { getCourseSections } from '@/services/sectionsService'
 import router from '@/router'
-import { seatBadge, sectionLocation, sectionRoom } from '@/utils/section'
+import { isActionable, seatBadge, sectionLocation, sectionRoom } from '@/utils/section'
 import { formatDays, formatTimeRange } from '@/utils/time'
 
 const route = useRoute()
 const referenceStore = useReferenceStore()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
+const maintenanceStore = useMaintenanceStore()
+const cart = useCart()
+const { sectionResults, registeringSections, registerNow, dismissResult } = useRegisterNow()
 
 const program = ref(null)
 const isLoading = ref(true)
@@ -192,12 +200,48 @@ function formatDate(dateStr) {
                       <span v-if="sec.specialProperty === 'Y'" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">Learning Community</span>
                     </div>
                   </div>
-                  <div class="shrink-0">
+                  <div class="shrink-0 flex flex-col items-end gap-1.5">
                     <span
                       v-for="b in [seatBadge(sec)]" :key="'b'"
                       :class="b.cls"
                       class="rounded-full px-2.5 py-0.5 font-medium"
                     >{{ b.label }}</span>
+                    <template v-if="sectionResults[sec.CourseKey]?.status === 'success'">
+                      <span class="rounded bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
+                        {{ sectionResults[sec.CourseKey].message }}
+                      </span>
+                    </template>
+                    <template v-else>
+                      <template v-if="authStore.isStudent && sec.status === 'Open' && isActionable(sec)">
+                        <button
+                          v-if="!cartStore.sections.some((c) => c.CourseKey === sec.CourseKey)"
+                          @click="cart.add(sec)"
+                          class="rounded border border-crimson px-3 py-1.5 text-xs font-medium text-crimson hover:bg-crimson hover:text-white transition-colors"
+                        >Add to Cart</button>
+                        <span v-else class="rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500">In Cart</span>
+                      </template>
+                      <template v-if="authStore.isStudent && isActionable(sec)">
+                        <template v-if="sectionResults[sec.CourseKey]?.status === 'error'">
+                          <span class="text-xs text-red-600">{{ sectionResults[sec.CourseKey].message }}</span>
+                          <button @click="dismissResult(sec.CourseKey)" class="text-xs text-gray-500 underline hover:text-gray-600">Dismiss</button>
+                        </template>
+                        <button
+                          v-else
+                          @click="registerNow(sec)"
+                          :disabled="registeringSections.has(String(sec.CourseKey)) || maintenanceStore.isBackendDown"
+                          class="rounded bg-crimson px-3 py-1.5 text-xs font-medium text-white hover:bg-crimson-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >{{ sec.status === 'Open' ? 'Register Now' : 'Waitlist Now' }}</button>
+                      </template>
+                      <button
+                        v-else-if="!authStore.isAuthenticated && isActionable(sec)"
+                        @click="authStore.login()"
+                        class="text-xs text-crimson hover:underline"
+                      >Sign in to register</button>
+                      <span
+                        v-else-if="sec.isFuture"
+                        class="text-xs text-gray-500"
+                      >Registration opens {{ formatDate(sec.regStartDate) }}</span>
+                    </template>
                   </div>
                 </div>
               </div>

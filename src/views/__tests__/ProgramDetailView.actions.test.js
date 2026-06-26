@@ -1,10 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import { nextTick } from 'vue'
+import { nextTick, reactive } from 'vue'
 import ProgramDetailView from '@/views/ProgramDetailView.vue'
 import { useReferenceStore } from '@/stores/reference'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
+import { useMaintenanceStore } from '@/stores/maintenance'
+import { useRegisterNow } from '@/composables/useRegisterNow'
+
+vi.mock('@/composables/useRegisterNow')
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({ params: { programCode: 'ACC.S.AAS' } })),
@@ -52,6 +57,7 @@ const PROGRAM = {
 const SECTIONS = [
   {
     SectionNo: '100',
+    CourseKey: '111',
     Faculty: 'Smith, John',
     Days: 'MW',
     StartTime: '9:00 AM',
@@ -63,6 +69,10 @@ const SECTIONS = [
     SeatsAvailable: 5,
     TotalSeats: 25,
     SectionLoc: '110',
+    waitListAllowed: 'N',
+    isFuture: false,
+    regStartDate: '08/24/2026 00:00',
+    regEndDate: '12/31/2099 23:59',
     additionalSched: [{ Days: 'F', startTime: '9:00 AM', endTime: '10:00 AM', satLocation: '' }],
     printedComments: 'Lab required on Fridays',
     startDate: '8/25/2026',
@@ -95,6 +105,14 @@ describe('ProgramDetailView', () => {
 
     const refStore = useReferenceStore()
     refStore.terms = [{ id: '26SU', termName: 'Summer 2026', toView: 'D' }]
+
+    vi.mocked(useRegisterNow).mockReturnValue({
+      sectionResults: reactive({}),
+      registeringSections: reactive(new Set()),
+      registerNow: vi.fn(),
+      dismissResult: vi.fn(),
+      reset: vi.fn(),
+    })
   })
 
   it('renders program name and metadata after load', async () => {
@@ -157,19 +175,108 @@ describe('ProgramDetailView', () => {
     expect(wrapper.text()).toContain('MW')
   })
 
-  it('section rows have no action buttons', async () => {
-    const wrapper = mountView()
-    await nextTick()
-    await nextTick()
-    const courseRow = wrapper.find('[data-testid="course-row"]')
-    await courseRow.trigger('click')
-    await nextTick()
-    await nextTick()
-    const sectionRows = wrapper.findAll('[data-testid="section-row"]')
-    expect(sectionRows.length).toBeGreaterThan(0)
-    for (const row of sectionRows) {
-      expect(row.find('button').exists()).toBe(false)
+  describe('section action buttons', () => {
+    let sectionResults, dismissResult
+
+    beforeEach(() => {
+      sectionResults = reactive({})
+      dismissResult = vi.fn()
+      vi.mocked(useRegisterNow).mockReturnValue({
+        sectionResults,
+        registeringSections: reactive(new Set()),
+        registerNow: vi.fn(),
+        dismissResult,
+        reset: vi.fn(),
+      })
+    })
+
+    async function expandFirstCourse(authOverrides = {}) {
+      Object.assign(useAuthStore(), authOverrides)
+      const wrapper = mountView()
+      await nextTick()
+      await nextTick()
+      const courseRow = wrapper.find('[data-testid="course-row"]')
+      await courseRow.trigger('click')
+      await nextTick()
+      await nextTick()
+      return wrapper
     }
+
+    function firstRow(wrapper) {
+      return wrapper.find('[data-testid="section-row"]')
+    }
+
+    it('Student sees Add to Cart on an open actionable Section', async () => {
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      expect(firstRow(wrapper).text()).toContain('Add to Cart')
+    })
+
+    it('Student sees In Cart indicator when Section is already in cart', async () => {
+      useCartStore().sections = [{ CourseKey: '111' }]
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      const row = firstRow(wrapper)
+      expect(row.text()).toContain('In Cart')
+      expect(row.text()).not.toContain('Add to Cart')
+    })
+
+    it('Student sees Register Now on an open actionable Section', async () => {
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      expect(firstRow(wrapper).text()).toContain('Register Now')
+    })
+
+    it('Student sees Waitlist Now on a closed waitlistable Section', async () => {
+      getCourseSections.mockResolvedValue({
+        data: { rows: [{ ...SECTIONS[0], status: 'Closed', waitListAllowed: 'Y' }] },
+      })
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      expect(firstRow(wrapper).text()).toContain('Waitlist Now')
+    })
+
+    it('Register Now button is disabled during a maintenance window', async () => {
+      useMaintenanceStore().mode = 'backend'
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      const row = firstRow(wrapper)
+      const buttons = row.findAll('button')
+      const registerBtn = buttons.find((b) => b.text() === 'Register Now')
+      expect(registerBtn?.attributes('disabled')).not.toBeUndefined()
+    })
+
+    it('Future section shows "Registration opens [date]" instead of action buttons', async () => {
+      getCourseSections.mockResolvedValue({
+        data: { rows: [{ ...SECTIONS[0], isFuture: true, regStartDate: '08/24/2026 00:00' }] },
+      })
+      const wrapper = await expandFirstCourse()
+      const row = firstRow(wrapper)
+      expect(row.text()).toContain('Registration opens Aug 24, 2026')
+      expect(row.text()).not.toContain('Add to Cart')
+      expect(row.text()).not.toContain('Register Now')
+    })
+
+    it('shows per-Section success message after registration', async () => {
+      sectionResults['111'] = { status: 'success', message: 'Registered' }
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      expect(firstRow(wrapper).text()).toContain('Registered')
+    })
+
+    it('shows per-Section error message with Dismiss after failed registration', async () => {
+      sectionResults['111'] = { status: 'error', message: 'Section is full' }
+      const wrapper = await expandFirstCourse({ isAuthenticated: true, currentRole: 'Student' })
+      const row = firstRow(wrapper)
+      expect(row.text()).toContain('Section is full')
+      expect(row.text()).toContain('Dismiss')
+    })
+
+    it('Visitor sees no Cart or Register Now buttons', async () => {
+      const wrapper = await expandFirstCourse({ isAuthenticated: false, currentRole: 'Visitor' })
+      const row = firstRow(wrapper)
+      expect(row.text()).not.toContain('Add to Cart')
+      expect(row.text()).not.toContain('Register Now')
+    })
+
+    it('Unauthenticated user sees "Sign in to register" on an actionable Section', async () => {
+      const wrapper = await expandFirstCourse({ isAuthenticated: false, currentRole: 'Visitor' })
+      expect(firstRow(wrapper).text()).toContain('Sign in to register')
+    })
   })
 
   it('"Add to Schedule Builder" button on Course row navigates with query param', async () => {
