@@ -4,22 +4,7 @@
     <div class="mx-auto max-w-6xl px-4 py-6">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold tracking-tight text-gray-900">Schedule Builder</h1>
-        <select
-          v-if="registrationTerms.length > 1"
-          data-testid="term-selector"
-          v-model="selectedTermId"
-          aria-label="Select term"
-          class="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700"
-        >
-          <option
-            v-for="term in registrationTerms"
-            :key="term.id"
-            :value="term.id"
-          >{{ term.termName }}</option>
-        </select>
-        <span v-else-if="registrationTerms.length === 1" class="text-sm text-gray-500">
-          {{ registrationTerms[0].termName }}
-        </span>
+        <span class="text-sm text-gray-500">{{ selectedTermName }}</span>
       </div>
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
 
@@ -91,6 +76,23 @@
           <!-- Filters -->
           <div class="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
             <h2 class="text-sm font-semibold text-gray-700">Filters</h2>
+
+            <!-- Term selector -->
+            <div v-if="registrationTerms.length > 1">
+              <label class="mb-1 block text-xs font-medium text-gray-500">Term</label>
+              <select
+                data-testid="term-selector"
+                v-model="selectedTermId"
+                aria-label="Select term"
+                class="w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
+              >
+                <option
+                  v-for="term in sortedRegistrationTerms"
+                  :key="term.id"
+                  :value="term.id"
+                >{{ term.termName }}{{ term.toView === 'F' ? ' (Future)' : '' }}</option>
+              </select>
+            </div>
 
             <!-- Time range presets -->
             <div>
@@ -171,15 +173,11 @@
               </select>
             </div>
 
-            <!-- Modality -->
+            <!-- Term Part -->
             <div>
-              <label class="mb-1 block text-xs font-medium text-gray-500">Modality</label>
+              <label class="mb-1 block text-xs font-medium text-gray-500">Term Part</label>
               <select v-model="filters.termFormat" class="w-full rounded-md border border-gray-200 px-2 py-1 text-sm">
-                <option value="all">Any</option>
-                <option value="LEC">Lecture (In-Person)</option>
-                <option value="ONL">Online</option>
-                <option value="HYB">Hybrid</option>
-                <option value="WEB">Web-Enhanced</option>
+                <option v-for="o in TERM_FORMAT_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
               </select>
             </div>
           </div>
@@ -324,6 +322,15 @@ const ALL_DAYS = [
   { value: 'F', label: 'Fri' },
 ]
 
+const TERM_FORMAT_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'Full', label: 'Full Term' },
+  { value: 'A', label: 'A Term' },
+  { value: 'B', label: 'B Term' },
+  { value: '12', label: '12 Week' },
+  { value: 'ST', label: 'All Short Term' },
+]
+
     const referenceStore = useReferenceStore()
     const authStore = useAuthStore()
     const { schedules, isBuilding, error, count, build, selectSchedule, getCredits } = useScheduleBuilder()
@@ -343,6 +350,15 @@ const ALL_DAYS = [
       if (!selectedTermId.value && id) selectedTermId.value = id
     }, { immediate: true })
     const resolvedTermId = computed(() => selectedTermId.value ?? defaultTermId.value)
+
+    const sortedRegistrationTerms = computed(() => {
+      const order = { D: 0, Y: 1, F: 2 }
+      return [...registrationTerms.value].sort((a, b) => (order[a.toView] ?? 3) - (order[b.toView] ?? 3))
+    })
+
+    const selectedTermName = computed(() =>
+      registrationTerms.value.find((t) => t.id === resolvedTermId.value)?.termName ?? '',
+    )
 
     const selectedCourses = ref([])
     const searchQuery = ref('')

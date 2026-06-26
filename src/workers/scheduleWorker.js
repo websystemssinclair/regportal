@@ -8,6 +8,18 @@ export function conflictsWithAny(section, placed) {
   return placed.some((p) => conflicts(section, p))
 }
 
+const CVCC_ALIASES = ['KHS', 'VOA', 'VALC', 'AMC', 'WCCC', 'WCCS', 'GHSA']
+
+export function matchesLocation(sec, _location) {
+  if (!_location || _location === 'any') return true
+  const location = sec.location ?? ''
+  if (_location === 'SCC') return !location
+  if (_location === 'CvCC') {
+    return location.startsWith('CvCC') || location.startsWith('CV') || CVCC_ALIASES.includes(location)
+  }
+  return location.startsWith(_location)
+}
+
 export function applyFilters(sections, filters) {
   return sections.filter((sec) => {
     if (sec.startMin !== null) {
@@ -17,11 +29,13 @@ export function applyFilters(sections, filters) {
       if (!sec.days.every((d) => filters.days.includes(d))) return false
     }
     if (filters.termFormat && filters.termFormat !== 'all') {
-      if (sec.termFormat !== filters.termFormat) return false
+      if (filters.termFormat === 'ST') {
+        if (sec.termFormat === 'Full') return false
+      } else {
+        if (sec.termFormat !== filters.termFormat) return false
+      }
     }
-    if (filters.location && filters.location !== 'any') {
-      if (sec.building !== filters.location) return false
-    }
+    if (!matchesLocation(sec, filters.location)) return false
     return true
   })
 }

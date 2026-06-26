@@ -31,8 +31,9 @@ const rawSection = (overrides = {}) => ({
   Days: 'MWF',
   StartTime: '09:00',
   EndTime: '09:50',
-  TermFormat: 'LEC',
   Building: 'BLDG-A',
+  comments: '',
+  flexFlag: '',
   ...overrides,
 })
 
@@ -122,6 +123,40 @@ describe('useScheduleBuilder — build()', () => {
     build([{ rawSections: [rawSection()] }], DEFAULT_FILTERS)
     mockWorkerInstance.onmessage({ data: { type: 'result', schedules: [['a'], ['b'], ['c']] } })
     expect(count.value).toBe(3)
+  })
+})
+
+describe('useScheduleBuilder — termFormat derivation', () => {
+  const termFormatOf = (overrides) => {
+    const { build } = useScheduleBuilder()
+    build([{ rawSections: [rawSection(overrides)] }], DEFAULT_FILTERS)
+    const [msg] = mockWorkerInstance.postMessage.mock.calls[0]
+    return msg.courses[0][0].termFormat
+  }
+
+  it('derives Full when comments is empty and flexFlag is empty', () => {
+    expect(termFormatOf({ comments: '', flexFlag: '' })).toBe('Full')
+  })
+
+  it('derives A from comments containing "A Term" (case-insensitive)', () => {
+    expect(termFormatOf({ comments: 'A TERM', flexFlag: 'Y' })).toBe('A')
+    expect(termFormatOf({ comments: 'a term', flexFlag: 'Y' })).toBe('A')
+  })
+
+  it('derives B from comments containing "B Term"', () => {
+    expect(termFormatOf({ comments: 'B Term', flexFlag: 'Y' })).toBe('B')
+  })
+
+  it('derives 12 from comments containing "12 Week"', () => {
+    expect(termFormatOf({ comments: '12 Week Term', flexFlag: 'Y' })).toBe('12')
+  })
+
+  it('derives ST when flexFlag is Y but no A/B/12 comment', () => {
+    expect(termFormatOf({ comments: '', flexFlag: 'Y' })).toBe('ST')
+  })
+
+  it('derives Full when flexFlag is empty and comments has unrelated text', () => {
+    expect(termFormatOf({ comments: 'Some other note', flexFlag: '' })).toBe('Full')
   })
 })
 

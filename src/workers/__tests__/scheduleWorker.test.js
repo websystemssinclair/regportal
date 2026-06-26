@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   conflicts,
   conflictsWithAny,
+  matchesLocation,
   applyFilters,
   buildSchedules,
 } from '@/workers/scheduleWorker'
@@ -92,6 +93,53 @@ describe('conflictsWithAny()', () => {
   })
 })
 
+// --- matchesLocation() ---
+
+describe('matchesLocation()', () => {
+  it('matches any section when location is "any"', () => {
+    expect(matchesLocation({ location: 'SCC' }, 'any')).toBe(true)
+    expect(matchesLocation({ location: '' }, 'any')).toBe(true)
+    expect(matchesLocation({ location: null }, 'any')).toBe(true)
+  })
+
+  it('SCC matches sections with empty or null location (main campus default)', () => {
+    expect(matchesLocation({ location: '' }, 'SCC')).toBe(true)
+    expect(matchesLocation({ location: null }, 'SCC')).toBe(true)
+  })
+
+  it('SCC does not match sections with a non-empty location code', () => {
+    expect(matchesLocation({ location: 'CENT' }, 'SCC')).toBe(false)
+    expect(matchesLocation({ location: 'WWW' }, 'SCC')).toBe(false)
+  })
+
+  it('CvCC matches location codes starting with CvCC or CV', () => {
+    expect(matchesLocation({ location: 'CvCC' }, 'CvCC')).toBe(true)
+    expect(matchesLocation({ location: 'CvCC-101' }, 'CvCC')).toBe(true)
+    expect(matchesLocation({ location: 'CV123' }, 'CvCC')).toBe(true)
+  })
+
+  it('CvCC matches known alias location codes', () => {
+    for (const alias of ['KHS', 'VOA', 'VALC', 'AMC', 'WCCC', 'WCCS', 'GHSA']) {
+      expect(matchesLocation({ location: alias }, 'CvCC')).toBe(true)
+    }
+  })
+
+  it('CvCC does not match unrelated location codes', () => {
+    expect(matchesLocation({ location: 'SCC' }, 'CvCC')).toBe(false)
+    expect(matchesLocation({ location: '' }, 'CvCC')).toBe(false)
+  })
+
+  it('other locations match by prefix (e.g. WWW matches WWWzzz)', () => {
+    expect(matchesLocation({ location: 'WWWzzz' }, 'WWW')).toBe(true)
+    expect(matchesLocation({ location: 'CENT-202' }, 'CENT')).toBe(true)
+  })
+
+  it('other locations do not match a different prefix', () => {
+    expect(matchesLocation({ location: 'SCC' }, 'WWW')).toBe(false)
+    expect(matchesLocation({ location: '' }, 'CENT')).toBe(false)
+  })
+})
+
 // --- applyFilters() ---
 
 describe('applyFilters()', () => {
@@ -160,19 +208,31 @@ describe('applyFilters()', () => {
     expect(result).toHaveLength(2)
   })
 
+  it('ST filter excludes Full term but passes A, B, 12, and ST sections', () => {
+    const sections = [
+      sec('1', ['M'], 540, 630, { termFormat: 'Full' }),
+      sec('2', ['M'], 540, 630, { termFormat: 'A' }),
+      sec('3', ['M'], 540, 630, { termFormat: 'B' }),
+      sec('4', ['M'], 540, 630, { termFormat: '12' }),
+      sec('5', ['M'], 540, 630, { termFormat: 'ST' }),
+    ]
+    const result = applyFilters(sections, { ...DEFAULT_FILTERS, termFormat: 'ST' })
+    expect(result.map((s) => s.id)).toEqual(['2', '3', '4', '5'])
+  })
+
   it('excludes sections not matching the location filter', () => {
     const sections = [
-      sec('1', ['M'], 540, 630, { building: 'BLDG-A' }),
-      sec('2', ['M'], 540, 630, { building: 'BLDG-B' }),
+      sec('1', ['M'], 540, 630, { location: 'CENT' }),
+      sec('2', ['M'], 540, 630, { location: 'WWW' }),
     ]
-    const result = applyFilters(sections, { ...DEFAULT_FILTERS, location: 'BLDG-A' })
+    const result = applyFilters(sections, { ...DEFAULT_FILTERS, location: 'CENT' })
     expect(result.map((s) => s.id)).toEqual(['1'])
   })
 
   it('passes all locations when filter is "any"', () => {
     const sections = [
-      sec('1', ['M'], 540, 630, { building: 'BLDG-A' }),
-      sec('2', ['M'], 540, 630, { building: 'BLDG-B' }),
+      sec('1', ['M'], 540, 630, { location: 'CENT' }),
+      sec('2', ['M'], 540, 630, { location: 'WWW' }),
     ]
     const result = applyFilters(sections, { ...DEFAULT_FILTERS, location: 'any' })
     expect(result).toHaveLength(2)

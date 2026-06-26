@@ -2,13 +2,23 @@ import { ref, computed, onUnmounted } from 'vue'
 import { useCart } from '@/composables/useCart'
 import { parseTimeMinutes } from '@/utils/time'
 
+function deriveTermFormat(comments, flexFlag) {
+  const c = (comments ?? '').toLowerCase()
+  if (c.includes('a term')) return 'A'
+  if (c.includes('b term')) return 'B'
+  if (c.includes('12 week')) return '12'
+  if (flexFlag === 'Y') return 'ST'
+  return 'Full'
+}
+
 function normalizeSection(sec) {
   return {
     id: sec.CourseKey,
     days: (sec.Days ?? '').split('').filter(Boolean),
     startMin: parseTimeMinutes(sec.StartTime),
     endMin: parseTimeMinutes(sec.EndTime),
-    termFormat: sec.TermFormat ?? sec.termFormat ?? null,
+    termFormat: deriveTermFormat(sec.comments, sec.flexFlag),
+    location: sec.Location ?? sec.location ?? null,
     building: sec.Building ?? sec.building ?? null,
     creditHours: sec.CreditHours,
     subjectCode: (sec.SubjectCode ?? '').trim(),

@@ -194,9 +194,12 @@ describe('ScheduleBuilderView — location filter', () => {
   let pinia
 
   const LOCATIONS = [
-    { id: 'any', building: 'All Locations' },
-    { id: 'SCC', building: 'Sinclair Dayton Campus' },
-    { id: 'CENT', building: 'Centerville Campus' },
+    { building: "All Locations", id: "any" },
+    { building: "Sinclair Dayton Campus", id: "SCC" },
+    { building: "Centerville Campus", id: "CENT" },
+    { building: "Courseview Campus Center - Mason", id: "CvCC" },
+    { building: "Online", id: "WWW" },
+    { building: "Off Campus Locations", id: "other" }
   ]
 
   beforeEach(() => {
