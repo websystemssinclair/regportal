@@ -224,10 +224,10 @@
 
                 <!-- Two-column layout: mini-grid left, detail panel right -->
                 <div class="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <!-- Left: mini-grid -->
-                  <div class="flex gap-px overflow-hidden rounded border border-gray-100 bg-gray-100" style="height: 120px">
+                  <!-- Left: mini-grid; hidden when all sections are online (no meeting days) -->
+                  <div v-if="summarizeSchedule(schedule).days.length" class="flex min-h-[120px] gap-px overflow-hidden rounded border border-gray-100 bg-gray-100">
                     <div
-                      v-for="day in GRID_DAYS"
+                      v-for="day in summarizeSchedule(schedule).days"
                       :key="day"
                       class="relative flex flex-1 flex-col bg-white"
                     >
@@ -237,7 +237,7 @@
                           v-for="sec in blocksForDay(schedule, day)"
                           :key="sec.id"
                           class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-crimson px-0.5 text-[8px] text-white"
-                          :style="blockStyle(sec)"
+                          :style="blockStyle(sec, gridRange(schedule))"
                         >{{ sec.subjectCode }}-{{ sec.courseNo }}</div>
                       </div>
                     </div>
@@ -322,11 +322,8 @@ import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 import { useBuilderCourses } from '@/composables/useBuilderCourses'
 import router from '@/router'
 import { formatMinutes, formatDays, formatTimeRange } from '@/utils/time'
-import { sortByCampusDays, summarizeSchedule } from '@/utils/schedule'
+import { sortByCampusDays, summarizeSchedule, gridRange } from '@/utils/schedule'
 
-const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
-const GRID_START = 360   // 6am
-const GRID_SPAN = 900    // 15 hours (6am-9pm)
 
 const TIME_PRESETS = [
   { label: 'Mornings', start: 360, end: 720 },
@@ -513,12 +510,14 @@ const TERM_FORMAT_OPTIONS = [
     }
 
     function blocksForDay(schedule, day) {
-      return schedule.filter((s) => s.days.includes(day) && s.startMin !== null)
+      return schedule.filter((s) => s.days.includes(day) && s.startMin !== null && s.endMin !== null)
     }
 
-    function blockStyle(sec) {
-      const top = Math.max(0, ((sec.startMin - GRID_START) / GRID_SPAN) * 100)
-      const height = Math.max(4, ((sec.endMin - sec.startMin) / GRID_SPAN) * 100)
+    function blockStyle(sec, range) {
+      const span = range.maxMin - range.minMin
+      if (span === 0) return { top: '0%', height: '100%' }
+      const top = Math.max(0, ((sec.startMin - range.minMin) / span) * 100)
+      const height = Math.max(4, ((sec.endMin - sec.startMin) / span) * 100)
       return { top: `${top}%`, height: `${height}%` }
     }
 

@@ -179,4 +179,24 @@ describe('useRegisterSchedule — reset()', () => {
     expect(Object.keys(scheduleResults)).toHaveLength(0)
     expect(registeringSchedules.size).toBe(0)
   })
+
+  it('discards stale result when reset() is called while registerSchedule is in flight', async () => {
+    const authStore = useAuthStore()
+    authStore.user = { tartanId: 1, username: 'jdoe' }
+
+    let resolveAvailability
+    vi.mocked(getAvailability).mockReturnValue(
+      new Promise((resolve) => { resolveAvailability = resolve }),
+    )
+
+    const { registerSchedule, scheduleResults, reset } = useRegisterSchedule()
+    const inFlight = registerSchedule(schedule, '111', getCredits)
+
+    reset()
+
+    resolveAvailability({ data: { rows: [{ CourseKey: '111', Status: 'Open' }] } })
+    await inFlight
+
+    expect(scheduleResults['111']).toBeUndefined()
+  })
 })
