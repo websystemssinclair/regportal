@@ -214,8 +214,8 @@
             <p class="mb-4 text-sm text-gray-500">{{ count }} schedule{{ count === 1 ? '' : 's' }} found</p>
             <div class="grid grid-cols-1 gap-4">
               <div
-                v-for="(schedule, idx) in sortedSchedules"
-                :key="idx"
+                v-for="schedule in sortedSchedules"
+                :key="scheduleKey(schedule)"
                 data-testid="schedule-card"
                 class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
               >
@@ -242,8 +242,24 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Right: detail panel (placeholder) -->
-                  <div></div>
+                  <!-- Right: section detail rows -->
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full text-[11px] text-gray-700">
+                      <tbody class="divide-y divide-gray-50">
+                        <tr
+                          v-for="sec in schedule"
+                          :key="sec.id"
+                          data-testid="schedule-section-row"
+                        >
+                          <td class="py-0.5 pr-2 font-mono whitespace-nowrap font-medium text-gray-900">{{ sec.subjectCode }}-{{ sec.courseNo }}-{{ sec.sectionNo }}</td>
+                          <td class="py-0.5 pr-2 truncate max-w-[120px]">{{ sec.longName }}</td>
+                          <td class="py-0.5 pr-2 whitespace-nowrap">{{ sectionDaysTime(sec) }}</td>
+                          <td class="py-0.5 pr-2 whitespace-nowrap">{{ isOnlineSection(sec) ? '—' : (sec.building ?? '—') }}</td>
+                          <td class="py-0.5 whitespace-nowrap">{{ sec.faculty }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <button
@@ -257,12 +273,12 @@
                 <!-- Register Now — Students only -->
                 <div v-if="authStore.isStudent" class="mt-2">
                   <p
-                    v-if="scheduleResults[idx]?._error"
+                    v-if="scheduleResults[scheduleKey(schedule)]?._error"
                     data-testid="register-card-error"
                     class="mb-1 text-xs text-red-600"
-                  >{{ scheduleResults[idx]._error }}</p>
+                  >{{ scheduleResults[scheduleKey(schedule)]._error }}</p>
 
-                  <ul v-else-if="scheduleResults[idx]" class="mb-2 space-y-0.5">
+                  <ul v-else-if="scheduleResults[scheduleKey(schedule)]" class="mb-2 space-y-0.5">
                     <li
                       v-for="sec in schedule"
                       :key="sec.id"
@@ -270,20 +286,20 @@
                       class="text-[11px]"
                     >
                       {{ sec.subjectCode }}-{{ sec.courseNo }} —
-                      <span :class="scheduleResults[idx][String(sec.id)]?.status === 'error' ? 'text-red-600' : 'text-green-700'">
-                        {{ scheduleResults[idx][String(sec.id)]?.message }}
+                      <span :class="scheduleResults[scheduleKey(schedule)][String(sec.id)]?.status === 'error' ? 'text-red-600' : 'text-green-700'">
+                        {{ scheduleResults[scheduleKey(schedule)][String(sec.id)]?.message }}
                       </span>
                     </li>
                   </ul>
 
                   <button
-                    v-if="!scheduleResults[idx] || scheduleResults[idx]._error"
+                    v-if="!scheduleResults[scheduleKey(schedule)] || scheduleResults[scheduleKey(schedule)]._error"
                     data-testid="register-now-btn"
-                    @click="onRegisterSchedule(schedule, idx)"
-                    :disabled="registeringSchedules.has(idx)"
+                    @click="onRegisterSchedule(schedule, scheduleKey(schedule))"
+                    :disabled="registeringSchedules.has(scheduleKey(schedule))"
                     class="w-full rounded-lg border border-crimson bg-white px-3 py-1.5 touch:py-3.5 text-xs font-semibold text-crimson hover:bg-crimson hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 mt-1"
                   >
-                    {{ registeringSchedules.has(idx) ? 'Registering…' : 'Register Now' }}
+                    {{ registeringSchedules.has(scheduleKey(schedule)) ? 'Registering…' : 'Register Now' }}
                   </button>
                 </div>
               </div>
@@ -305,7 +321,7 @@ import { useScheduleBuilder } from '@/composables/useScheduleBuilder'
 import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 import { useBuilderCourses } from '@/composables/useBuilderCourses'
 import router from '@/router'
-import { formatMinutes } from '@/utils/time'
+import { formatMinutes, formatDays, formatTimeRange } from '@/utils/time'
 import { sortByCampusDays, summarizeSchedule } from '@/utils/schedule'
 
 const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
@@ -485,6 +501,17 @@ const TERM_FORMAT_OPTIONS = [
       return filters.rangeStart === preset.start && filters.rangeEnd === preset.end
     }
 
+    function isOnlineSection(sec) {
+      return sec.days.length === 0 || sec.startMin === null
+    }
+
+    function sectionDaysTime(sec) {
+      if (isOnlineSection(sec)) return 'Online'
+      const days = formatDays(sec.days.join(''))
+      const time = formatTimeRange(formatMinutes(sec.startMin), formatMinutes(sec.endMin))
+      return `${days} ${time}`.trim()
+    }
+
     function blocksForDay(schedule, day) {
       return schedule.filter((s) => s.days.includes(day) && s.startMin !== null)
     }
@@ -500,8 +527,12 @@ const TERM_FORMAT_OPTIONS = [
       router.push('/cart')
     }
 
-    function onRegisterSchedule(schedule, idx) {
-      registerSchedule(schedule, idx, getCredits)
+    function scheduleKey(schedule) {
+      return schedule.map((s) => s.id).sort().join('|')
+    }
+
+    function onRegisterSchedule(schedule, key) {
+      registerSchedule(schedule, key, getCredits)
     }
 
     onMounted(async () => {

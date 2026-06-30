@@ -295,13 +295,13 @@ describe('ScheduleBuilderView — Register Now', () => {
     wrapper.vm.hasBuilt = true
     await nextTick()
     await wrapper.find('[data-testid="register-now-btn"]').trigger('click')
-    expect(registerScheduleMock).toHaveBeenCalledWith(fakeSchedule, 0, expect.any(Function))
+    expect(registerScheduleMock).toHaveBeenCalledWith(fakeSchedule, '111', expect.any(Function))
   })
 
   it('shows Registering… and disables button when in flight', async () => {
     const authStore = useAuthStore()
     authStore.currentRole = 'Student'
-    registeringSchedulesSet.add(0)
+    registeringSchedulesSet.add('111')
 
     const wrapper = mountView()
     wrapper.vm.hasBuilt = true
@@ -314,7 +314,7 @@ describe('ScheduleBuilderView — Register Now', () => {
   it('shows per-section results and hides button after successful registration', async () => {
     const authStore = useAuthStore()
     authStore.currentRole = 'Student'
-    scheduleResultsObj[0] = { '111': { status: 'registered', message: 'Registered' } }
+    scheduleResultsObj['111'] = { '111': { status: 'registered', message: 'Registered' } }
 
     const wrapper = mountView()
     wrapper.vm.hasBuilt = true
@@ -329,7 +329,7 @@ describe('ScheduleBuilderView — Register Now', () => {
   it('shows card-level error and keeps button for availability fetch failure', async () => {
     const authStore = useAuthStore()
     authStore.currentRole = 'Student'
-    scheduleResultsObj[0] = { _error: 'Could not check seat availability. Please try again.' }
+    scheduleResultsObj['111'] = { _error: 'Could not check seat availability. Please try again.' }
 
     const wrapper = mountView()
     wrapper.vm.hasBuilt = true
@@ -452,5 +452,104 @@ describe('ScheduleBuilderView — schedule sort order', () => {
     // First card should be the online-only schedule (fewer campus days)
     expect(summaries[0].text()).toContain('Online')
     expect(summaries[1].text()).toContain('MTWRF')
+  })
+})
+
+describe('ScheduleBuilderView — section detail rows', () => {
+  let pinia
+
+  const inPerson = {
+    id: '111',
+    subjectCode: 'ACC',
+    courseNo: '1100',
+    sectionNo: '100',
+    longName: 'Intro Accounting',
+    days: ['M', 'W', 'F'],
+    startMin: 540,
+    endMin: 630,
+    building: 'Bldg A',
+    faculty: 'Smith',
+    creditHours: 3,
+    termFormat: 'Full',
+  }
+
+  const online = {
+    id: '222',
+    subjectCode: 'ENG',
+    courseNo: '1100',
+    sectionNo: '200',
+    longName: 'English Comp',
+    days: [],
+    startMin: null,
+    endMin: null,
+    building: null,
+    faculty: 'Jones',
+    creditHours: 3,
+    termFormat: 'Full',
+  }
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+  })
+
+  function mountView() {
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
+  }
+
+  it('renders one schedule-section-row per section in each card', async () => {
+    seedComposable({ schedules: [[inPerson, online]] })
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    expect(wrapper.findAll('[data-testid="schedule-section-row"]')).toHaveLength(2)
+  })
+
+  it('each row shows the section ID in subjectCode-courseNo-sectionNo format', async () => {
+    seedComposable({ schedules: [[inPerson]] })
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const row = wrapper.find('[data-testid="schedule-section-row"]')
+    expect(row.text()).toContain('ACC-1100-100')
+  })
+
+  it('online sections render "Online" text in their row', async () => {
+    seedComposable({ schedules: [[inPerson, online]] })
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const rows = wrapper.findAll('[data-testid="schedule-section-row"]')
+    expect(rows[0].text()).not.toContain('Online')
+    expect(rows[1].text()).toContain('Online')
+  })
+
+  it('online rows show "—" in the building column; in-person rows show building value', async () => {
+    seedComposable({ schedules: [[inPerson, online]] })
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const rows = wrapper.findAll('[data-testid="schedule-section-row"]')
+    expect(rows[0].text()).toContain('Bldg A')
+    expect(rows[1].text()).toContain('—')
+  })
+
+  it('two cards each render one row per section independently', async () => {
+    seedComposable({ schedules: [[inPerson], [online]] })
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const cards = wrapper.findAll('[data-testid="schedule-card"]')
+    expect(cards[0].findAll('[data-testid="schedule-section-row"]')).toHaveLength(1)
+    expect(cards[1].findAll('[data-testid="schedule-section-row"]')).toHaveLength(1)
   })
 })
