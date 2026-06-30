@@ -6,9 +6,11 @@ import { useAuthStore } from '@/stores/auth'
 export function useRegisterSchedule() {
   const scheduleResults = reactive({})
   const registeringSchedules = reactive(new Set())
+  let currentGen = 0
 
-  async function registerSchedule(schedule, scheduleIndex, getCredits) {
-    registeringSchedules.add(scheduleIndex)
+  async function registerSchedule(schedule, scheduleKey, getCredits) {
+    const myGen = currentGen
+    registeringSchedules.add(scheduleKey)
     try {
       const courseKeys = schedule.map((s) => s.id)
       let availabilityMap = {}
@@ -19,19 +21,21 @@ export function useRegisterSchedule() {
           availabilityMap[String(row.CourseKey)] = row.Status
         }
       } catch {
-        scheduleResults[scheduleIndex] = { _error: 'Could not check seat availability. Please try again.' }
+        if (myGen !== currentGen) return
+        scheduleResults[scheduleKey] = { _error: 'Could not check seat availability. Please try again.' }
         return
       }
 
+      if (myGen !== currentGen) return
       const missingKey = schedule.find((sec) => !(String(sec.id) in availabilityMap))
       if (missingKey) {
-        scheduleResults[scheduleIndex] = { _error: 'Could not check seat availability. Please try again.' }
+        scheduleResults[scheduleKey] = { _error: 'Could not check seat availability. Please try again.' }
         return
       }
 
       const authStore = useAuthStore()
       if (!authStore.user) {
-        scheduleResults[scheduleIndex] = { _error: 'Registration failed. Please try again.' }
+        scheduleResults[scheduleKey] = { _error: 'Registration failed. Please try again.' }
         return
       }
 
@@ -44,6 +48,7 @@ export function useRegisterSchedule() {
 
       await execute(sections)
 
+      if (myGen !== currentGen) return
       const result = {}
       for (const sec of schedule) {
         const key = String(sec.id)
@@ -58,13 +63,14 @@ export function useRegisterSchedule() {
           }
         }
       }
-      scheduleResults[scheduleIndex] = result
+      scheduleResults[scheduleKey] = result
     } finally {
-      registeringSchedules.delete(scheduleIndex)
+      if (myGen === currentGen) registeringSchedules.delete(scheduleKey)
     }
   }
 
   function reset() {
+    currentGen++
     for (const key in scheduleResults) delete scheduleResults[key]
     registeringSchedules.clear()
   }
