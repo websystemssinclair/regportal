@@ -237,7 +237,7 @@
                           v-for="sec in blocksForDay(schedule, day)"
                           :key="sec.id"
                           class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-crimson px-0.5 text-[8px] text-white"
-                          :style="blockStyle(sec, gridRange(schedule))"
+                          :style="blockStyle(sec, scheduleRanges.get(scheduleKey(schedule)))"
                         >{{ sec.subjectCode }}-{{ sec.courseNo }}</div>
                       </div>
                     </div>
@@ -354,6 +354,14 @@ const TERM_FORMAT_OPTIONS = [
     const { scheduleResults, registeringSchedules, registerSchedule, reset: resetRegistration } = useRegisterSchedule()
 
     const sortedSchedules = computed(() => sortByCampusDays(schedules.value))
+
+    const scheduleRanges = computed(() => {
+      const map = new Map()
+      for (const s of sortedSchedules.value) {
+        map.set(scheduleKey(s), gridRange(s))
+      }
+      return map
+    })
 
     function summaryFor(schedule) {
       const { days, hasOnline, totalCredits, termTypes, locations } = summarizeSchedule(schedule)
