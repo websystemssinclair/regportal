@@ -86,6 +86,7 @@ describe('useScheduleBuilder — build()', () => {
       days: ['M', 'W', 'F'],
       startMin: expect.any(Number),
       endMin: expect.any(Number),
+      sectionNo: expect.any(String),
     })
     expect(msg.filters).toEqual(DEFAULT_FILTERS)
   })

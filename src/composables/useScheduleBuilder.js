@@ -18,6 +18,7 @@ function normalizeSection(sec) {
     startMin: parseTimeMinutes(sec.StartTime),
     endMin: parseTimeMinutes(sec.EndTime),
     termFormat: deriveTermFormat(sec.comments, sec.flexFlag),
+    sectionNo: sec.SectionNo ?? '',
     location: sec.Location ?? sec.location ?? null,
     building: sec.Building ?? sec.building ?? null,
     creditHours: sec.CreditHours,
