@@ -212,36 +212,39 @@
 
           <div v-else>
             <p class="mb-4 text-sm text-gray-500">{{ count }} schedule{{ count === 1 ? '' : 's' }} found</p>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4">
               <div
-                v-for="(schedule, idx) in schedules"
+                v-for="(schedule, idx) in sortedSchedules"
                 :key="idx"
                 data-testid="schedule-card"
                 class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
               >
-                <!-- Mini-grid -->
-                <div class="mb-2 flex gap-px overflow-hidden rounded border border-gray-100 bg-gray-100" style="height: 120px">
-                  <div
-                    v-for="day in GRID_DAYS"
-                    :key="day"
-                    class="relative flex flex-1 flex-col bg-white"
-                  >
-                    <div class="flex-shrink-0 py-0.5 text-center text-[9px] font-medium text-gray-500">{{ day }}</div>
-                    <div class="relative flex-1">
-                      <div
-                        v-for="sec in blocksForDay(schedule, day)"
-                        :key="sec.id"
-                        class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-crimson px-0.5 text-[8px] text-white"
-                        :style="blockStyle(sec)"
-                      >{{ sec.subjectCode }}-{{ sec.courseNo }}</div>
+                <!-- Summary line -->
+                <p data-testid="schedule-summary" class="mb-2 text-xs text-gray-600">{{ summaryFor(schedule) }}</p>
+
+                <!-- Two-column layout: mini-grid left, detail panel right -->
+                <div class="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <!-- Left: mini-grid -->
+                  <div class="flex gap-px overflow-hidden rounded border border-gray-100 bg-gray-100" style="height: 120px">
+                    <div
+                      v-for="day in GRID_DAYS"
+                      :key="day"
+                      class="relative flex flex-1 flex-col bg-white"
+                    >
+                      <div class="flex-shrink-0 py-0.5 text-center text-[9px] font-medium text-gray-500">{{ day }}</div>
+                      <div class="relative flex-1">
+                        <div
+                          v-for="sec in blocksForDay(schedule, day)"
+                          :key="sec.id"
+                          class="absolute left-0.5 right-0.5 overflow-hidden rounded bg-crimson px-0.5 text-[8px] text-white"
+                          :style="blockStyle(sec)"
+                        >{{ sec.subjectCode }}-{{ sec.courseNo }}</div>
+                      </div>
                     </div>
                   </div>
+                  <!-- Right: detail panel (placeholder) -->
+                  <div></div>
                 </div>
-
-                <!-- Course list -->
-                <p class="mb-2 text-[11px] text-gray-500">
-                  {{ schedule.map((s) => `${s.subjectCode}-${s.courseNo}`).join(' · ') }}
-                </p>
 
                 <button
                   data-testid="select-schedule-btn"
@@ -303,6 +306,7 @@ import { useRegisterSchedule } from '@/composables/useRegisterSchedule'
 import { useBuilderCourses } from '@/composables/useBuilderCourses'
 import router from '@/router'
 import { formatMinutes } from '@/utils/time'
+import { sortByCampusDays, summarizeSchedule } from '@/utils/schedule'
 
 const GRID_DAYS = ['M', 'T', 'W', 'R', 'F']
 const GRID_START = 360   // 6am
@@ -335,6 +339,19 @@ const TERM_FORMAT_OPTIONS = [
     const authStore = useAuthStore()
     const { schedules, isBuilding, error, count, build, selectSchedule, getCredits } = useScheduleBuilder()
     const { scheduleResults, registeringSchedules, registerSchedule, reset: resetRegistration } = useRegisterSchedule()
+
+    const sortedSchedules = computed(() => sortByCampusDays(schedules.value))
+
+    function summaryFor(schedule) {
+      const { days, hasOnline, totalCredits, termTypes, locations } = summarizeSchedule(schedule)
+      const daysStr = days.length
+        ? days.join('') + (hasOnline ? ' + Online' : '')
+        : hasOnline ? 'Online' : ''
+      const creditsStr = totalCredits + ' cr'
+      const termStr = termTypes.join(' · ')
+      const locStr = locations.join(' · ')
+      return [daysStr, creditsStr, termStr, locStr].filter(Boolean).join(' · ')
+    }
     const builderCourses = useBuilderCourses()
     const locations = computed(() => referenceStore.locations)
 

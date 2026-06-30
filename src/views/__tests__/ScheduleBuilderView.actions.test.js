@@ -339,3 +339,118 @@ describe('ScheduleBuilderView — Register Now', () => {
     expect(wrapper.find('[data-testid="register-now-btn"]').exists()).toBe(true)
   })
 })
+
+describe('ScheduleBuilderView — schedule summary', () => {
+  let pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+  })
+
+  function mountView() {
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
+  }
+
+  it('each card renders a schedule-summary element', async () => {
+    const schedule = [
+      { id: '101', subjectCode: 'ACC', courseNo: '1100', days: ['M', 'W', 'F'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'Full Term', building: 'Dayton' },
+    ]
+    seedComposable({ schedules: [schedule, schedule] })
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const cards = wrapper.findAll('[data-testid="schedule-card"]')
+    expect(cards).toHaveLength(2)
+    for (const card of cards) {
+      expect(card.find('[data-testid="schedule-summary"]').exists()).toBe(true)
+    }
+  })
+
+  it('summary text matches the expected format', async () => {
+    const schedule = [
+      { id: '101', subjectCode: 'ACC', courseNo: '1100', days: ['M', 'W', 'F'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'Full Term', building: 'Dayton' },
+      { id: '102', subjectCode: 'ENG', courseNo: '1100', days: [], startMin: null, endMin: null, creditHours: 3, termFormat: 'Full Term', building: null },
+    ]
+    seedComposable({ schedules: [schedule] })
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const summary = wrapper.find('[data-testid="schedule-summary"]')
+    expect(summary.text()).toBe('MWF + Online · 6 cr · Full Term · Dayton')
+  })
+
+  it('summary shows "Multiple" when schedule spans 3+ distinct term formats', async () => {
+    const schedule = [
+      { id: '101', subjectCode: 'ACC', courseNo: '1100', days: ['M'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'Full Term', building: 'Dayton' },
+      { id: '102', subjectCode: 'ENG', courseNo: '1100', days: ['T'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'A Term', building: 'Dayton' },
+      { id: '103', subjectCode: 'MAT', courseNo: '1470', days: ['W'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'B Term', building: 'Dayton' },
+    ]
+    seedComposable({ schedules: [schedule] })
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="schedule-summary"]').text()).toContain('Multiple')
+  })
+
+  it('summary omits "+ Online" when all sections have campus days', async () => {
+    const schedule = [
+      { id: '101', subjectCode: 'ACC', courseNo: '1100', days: ['M', 'W', 'F'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'Full Term', building: 'Dayton' },
+    ]
+    seedComposable({ schedules: [schedule] })
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="schedule-summary"]').text()).not.toContain('+ Online')
+  })
+})
+
+describe('ScheduleBuilderView — schedule sort order', () => {
+  let pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+
+    const refStore = useReferenceStore()
+    refStore.terms = [{ id: TERM_ID, termName: 'Summer 2026', toView: 'D' }]
+  })
+
+  function mountView() {
+    return mount(ScheduleBuilderView, { global: { plugins: [pinia] } })
+  }
+
+  it('renders schedules in fewest-campus-days order', async () => {
+    const scheduleMany = [
+      { id: '1', subjectCode: 'ACC', courseNo: '1100', days: ['M', 'T', 'W', 'R', 'F'], startMin: 540, endMin: 630, creditHours: 3, termFormat: 'Full Term', building: 'Dayton' },
+    ]
+    const scheduleFew = [
+      { id: '2', subjectCode: 'ENG', courseNo: '1100', days: [], startMin: null, endMin: null, creditHours: 3, termFormat: 'Full Term', building: null },
+    ]
+    // scheduleFew (0 campus days) should sort before scheduleMany (5 campus days)
+    seedComposable({ schedules: [scheduleMany, scheduleFew] })
+
+    const wrapper = mountView()
+    wrapper.vm.hasBuilt = true
+    await nextTick()
+
+    const summaries = wrapper.findAll('[data-testid="schedule-summary"]')
+    expect(summaries).toHaveLength(2)
+    // First card should be the online-only schedule (fewer campus days)
+    expect(summaries[0].text()).toContain('Online')
+    expect(summaries[1].text()).toContain('MTWRF')
+  })
+})
